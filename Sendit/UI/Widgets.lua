@@ -175,17 +175,31 @@ function W.Segmented(parent, options, get, set)
 end
 
 ---------------------------------------------------------------------------
--- Chevron "v" from two rotated hairlines (no font glyph needed)
+-- Chevron from two rotated hairlines (no font glyph needed); dir = "down"
+-- (default, "v"), "up", "left" or "right": where it points.
 ---------------------------------------------------------------------------
-function W.Chevron(parent, color)
+local CHEVRON = {  -- per direction: { x, y, angle } of both lines
+    down = { { -2, 0, -45 }, { 2, 0, 45 } }, up = { { -2, 0, 45 }, { 2, 0, -45 } },
+    right = { { 0, 2, -45 }, { 0, -2, 45 } }, left = { { 0, 2, 45 }, { 0, -2, -45 } },
+}
+function W.Chevron(parent, color, dir)
     local f = CreateFrame("Frame", nil, parent)
-    f:SetSize(8, 5)
-    for i, angle in ipairs({ -45, 45 }) do
+    local lines = CHEVRON[dir] or CHEVRON.down
+    if lines[1][1] == 0 then f:SetSize(5, 8) else f:SetSize(8, 5) end
+    f.lines = {}
+    for i = 1, #lines do
         local line = T.Fill(f, color, "ARTWORK")
         line:SetSize(6, 1.5)
-        line:SetPoint("CENTER", i == 1 and -2 or 2, 0)
-        line:SetRotation(math.rad(angle))
+        f.lines[i] = line
     end
+    function f:Point(d)
+        for i, l in ipairs(CHEVRON[d] or CHEVRON.down) do
+            self.lines[i]:ClearAllPoints()
+            self.lines[i]:SetPoint("CENTER", l[1], l[2])
+            self.lines[i]:SetRotation(math.rad(l[3]))
+        end
+    end
+    f:Point(dir)
     return f
 end
 

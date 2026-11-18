@@ -1,0 +1,19 @@
+## Interface: 16001
+## Title: Sendit: Talents
+## Notes: A leveling talent route in Blizzard's talent window: the next point glows. Part of the Sendit suite.
+## Version: 0.13.53
+## X-License: GPL-3.0
+## IconTexture: Interface\Icons\INV_Misc_Map_01
+## Dependencies: Sendit
+## SavedVariablesPerCharacter: SenditTalentsChar
+
+Locale.lua
+Init.lua
+Data\Routes.lua
+Route.lua
+Tree.lua
+UI\Markers.lua
+UI\Tab.lua
+UI\Timeline.lua
+UI\Picker.lua
+Hook.lua
