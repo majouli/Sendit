@@ -11,6 +11,8 @@
   Clicks: a player name (left click) opens our whisper conversation; every
   other link goes to Blizzard's SetItemRef as in the game's chat (item and
   spell tooltips, shift-click insert, ctrl-click dressing room, player menu).
+  A hidden message's "Show Message" (censoredmessage) is shown in place by
+  Core/Censored.lua.
   Except the community kinds (clubTicket, clubFinder, community): SetItemRef
   runs Blizzard's link handlers in our (tainted) execution, and a community
   link made Blizzard_Communities create its ticket listener tainted - its
@@ -158,6 +160,10 @@ function Links.Click(_, link, text, button)
         local kind, rest = plain:match("^([^:]+):(.*)$")
         if kind == "senditurl" then
             Links.ShowURL(rest)
+            return
+        end
+        if kind == "censoredmessage" then  -- Core/Censored.lua: shown in place, never via SetItemRef
+            ns.Censored.Show(rest)
             return
         end
         if kind == "player" and button == "LeftButton" and NoModifier() and ns.OpenWhisper then

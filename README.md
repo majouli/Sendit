@@ -62,4 +62,4 @@ one folder per module) and restart the game.
 
 ## Licence
 
-Sendit Harvest, Quests and Dungeons are GPL-3.0 (see their licence files).
+The whole suite is free software under the GNU GPL-3.0 (`LICENSE.md`).

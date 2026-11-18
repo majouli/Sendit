@@ -13,6 +13,7 @@
   ChatLines.Copy(index)      a tab's text in the copy box (UI/CopyBox.lua)
   ChatLines.Replay()         the earlier session (tests)
   ChatLines.CombatReset(kind, text, r, g, b)  Mirror's combat log reset
+  ChatLines.Uncensor(marker, text)  a hidden message shown (Core/Censored.lua)
 ]]
 local _, ns = ...
 local Safe, Links, Mirror, History, Mentions, Tabs = ns.Safe, ns.Links, ns.Mirror, ns.History, ns.Mentions, ns.Tabs
@@ -86,6 +87,37 @@ function ChatLines.Copy(index)
         if text then lines[#lines + 1] = { text } end
     end
     ns.CopyBox.Show(lines)
+end
+
+-- A hidden message the player chose to see (Core/Censored.lua): Blizzard's
+-- notice names the sender ("Message from <name> is ..."); the line becomes
+-- "<name>: text" in every tab and in the history.
+local function Sender(notice)
+    local fmt = _G["CENSORED_MESSAGE_HIDDEN"]
+    if type(fmt) ~= "string" then return nil end
+    local pattern = fmt:gsub("[%^%$%(%)%.%[%]%*%+%-%?]", "%%%0"):gsub("%%s", "(.-)", 1):gsub("%%d", "%%d+")
+    return notice:match(pattern)
+end
+
+function ChatLines.Uncensor(marker, text)
+    local found = false
+    for _, index in ipairs(Tabs.All()) do
+        for _, l in ipairs(History.Lines(index)) do
+            local notice = l[1]
+            if type(notice) == "string" and notice:find(marker, 1, true) then
+                local who = Sender(notice)
+                local line = Links.Decorate(who and (who .. ": " .. text) or text)
+                l[1] = line
+                found = true
+                local smf = SMF(index)
+                if smf.TransformMessages then
+                    smf:TransformMessages(function(m) return m == notice end,
+                        function(_, ...) return line, ... end)
+                end
+            end
+        end
+    end
+    return found
 end
 
 ns.OnReady(function()

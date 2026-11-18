@@ -51,19 +51,6 @@ function Mirror.IsCombatLog(i)
     return cf ~= nil and cf == _G["COMBATLOG"]
 end
 
--- Blizzard names its first windows in the client language when it makes
--- them (GENERAL, COMBAT_LOG; wago.tools GlobalStrings build 70938, all five
--- languages: a client language switch keeps the old name). A window that
--- still has such a name shows it in the suite language; renamed ones keep
--- the player's name.
-local DEFAULT_NAMES = {
-    ["General"] = "TAB_GENERAL", ["Allgemein"] = "TAB_GENERAL", ["Général"] = "TAB_GENERAL",
-    ["Общий"] = "TAB_GENERAL",
-    ["Combat Log"] = "TAB_COMBAT_LOG", ["Kampflog"] = "TAB_COMBAT_LOG",
-    ["Journal de combat"] = "TAB_COMBAT_LOG", ["Registro del combate"] = "TAB_COMBAT_LOG",
-    ["Журнал боя"] = "TAB_COMBAT_LOG",
-}
-
 function Mirror.Name(i)
     local fn = _G["GetChatWindowInfo"]
     local name = fn and Safe.Str((fn(i)))
@@ -71,8 +58,7 @@ function Mirror.Name(i)
         if i ~= 1 then return "Chat " .. i end
         name = "General"
     end
-    local key = DEFAULT_NAMES[name]
-    return key and ns.L[key] or name
+    return ns.DefaultName(name, "TAB_")  -- Blizzard's default names in the suite language
 end
 
 function Mirror.Indices()

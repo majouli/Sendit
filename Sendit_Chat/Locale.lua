@@ -69,6 +69,12 @@ local en = {
     OWN_TABS = "Own tabs",
     OWN_TABS_DESC = "Channels and message kinds in tabs of their own. Right-click a tab to change it.",
     DETACH = "Detach",
+    FILTER_EVERYTHING = "Everything",
+    FILTER_ME = "What happened to me?",
+    FILTER_DEFAULT = "Default",
+    FILTER_FRIENDS = "Friends",
+    FILTER_MY_ACTIONS = "My actions",
+    FILTER_KILLS = "Kills",
     TAB_GENERAL = "General",
     TAB_COMBAT_LOG = "Combat Log",
     COMBAT_SETTINGS = "Combat log settings and more filters (Blizzard's menu)",
@@ -205,6 +211,12 @@ local de = {
     OWN_TABS = "Eigene Tabs",
     OWN_TABS_DESC = "Kanäle und Nachrichtenarten in eigenen Tabs. Rechtsklick auf einen Tab ändert ihn.",
     DETACH = "Lösen",
+    FILTER_EVERYTHING = "Alles",
+    FILTER_ME = "Was ist mit mir geschehen?",
+    FILTER_DEFAULT = "Standard",
+    FILTER_FRIENDS = "Freundliche Einheiten",
+    FILTER_MY_ACTIONS = "Meine Aktionen",
+    FILTER_KILLS = "Todesstöße",
     TAB_GENERAL = "Allgemein",
     TAB_COMBAT_LOG = "Kampflog",
     COMBAT_SETTINGS = "Kampflog-Einstellungen und weitere Filter (Blizzards Menü)",
@@ -341,6 +353,12 @@ local fr = {
     OWN_TABS = "Onglets personnels",
     OWN_TABS_DESC = "Canaux et types de messages dans leurs propres onglets. Clic droit pour modifier.",
     DETACH = "Détacher",
+    FILTER_EVERYTHING = "Tout",
+    FILTER_ME = "Qu'est-ce qui m'est arrivé ?",
+    FILTER_DEFAULT = "Défaut",
+    FILTER_FRIENDS = "Contacts",
+    FILTER_MY_ACTIONS = "Mes actions",
+    FILTER_KILLS = "Tués",
     TAB_GENERAL = "Général",
     TAB_COMBAT_LOG = "Journal de combat",
     COMBAT_SETTINGS = "Réglages du journal de combat et autres filtres (menu de Blizzard)",
@@ -477,6 +495,12 @@ local es = {
     OWN_TABS = "Pestañas propias",
     OWN_TABS_DESC = "Canales y tipos de mensaje en pestañas propias. Clic derecho para cambiarla.",
     DETACH = "Separar",
+    FILTER_EVERYTHING = "Todo",
+    FILTER_ME = "Me afecta",
+    FILTER_DEFAULT = "Predeterminado",
+    FILTER_FRIENDS = "Amigos",
+    FILTER_MY_ACTIONS = "Mis acciones",
+    FILTER_KILLS = "Muertes",
     TAB_GENERAL = "General",
     TAB_COMBAT_LOG = "Registro del combate",
     COMBAT_SETTINGS = "Ajustes del registro de combate y más filtros (menú de Blizzard)",
@@ -613,6 +637,12 @@ local ru = {
     OWN_TABS = "Свои вкладки",
     OWN_TABS_DESC = "Каналы и типы сообщений в своих вкладках. Правый клик — изменить.",
     DETACH = "Открепить",
+    FILTER_EVERYTHING = "Все",
+    FILTER_ME = "Что случилось с персонажем?",
+    FILTER_DEFAULT = "По умолчанию",
+    FILTER_FRIENDS = "Друзья",
+    FILTER_MY_ACTIONS = "Мои действия",
+    FILTER_KILLS = "Убийства",
     TAB_GENERAL = "Общий",
     TAB_COMBAT_LOG = "Журнал боя",
     COMBAT_SETTINGS = "Настройки журнала боя и другие фильтры (меню Blizzard)",
@@ -687,3 +717,26 @@ local ru = {
 }
 
 ns.L = Sendit.Locale.New({ enUS = en, deDE = de, frFR = fr, esES = es, ruRU = ru })
+
+-- Blizzard names its first chat windows and its combat log filters in the
+-- client language when it makes them (GlobalStrings GENERAL, COMBAT_LOG,
+-- QUICKBUTTON_NAME_*; wago.tools build 70938) and keeps the name after a
+-- client language switch. ns.DefaultName(name, prefix) -> the suite
+-- language's text when name is such a default in any language (keys
+-- starting with prefix: "TAB_" or "FILTER_"), else name: renamed ones stay.
+local defaults = {}
+for _, t in ipairs({ en, de, fr, es, ru }) do
+    for key, text in pairs(t) do
+        if key == "TAB_GENERAL" or key == "TAB_COMBAT_LOG" or key:match("^FILTER_") then
+            defaults[text] = defaults[text] or {}
+            defaults[text][#defaults[text] + 1] = key
+        end
+    end
+end
+
+function ns.DefaultName(name, prefix)
+    for _, key in ipairs(defaults[name] or {}) do
+        if key:sub(1, #prefix) == prefix then return ns.L[key] end
+    end
+    return name
+end

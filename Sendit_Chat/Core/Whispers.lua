@@ -266,6 +266,21 @@ function W.Add(out, text, who, guid, bnID)
     return c
 end
 
+-- A hidden message the player chose to see (Core/Censored.lua): the
+-- notice holding marker becomes the original text.
+function W.Uncensor(marker, text)
+    for _, c in pairs(Convs()) do
+        for _, m in ipairs(c.msgs or {}) do
+            if type(m.m) == "string" and m.m:find(marker, 1, true) then
+                m.m = text
+                Notify(c, m, false)
+                return true
+            end
+        end
+    end
+    return false
+end
+
 function W.MarkRead(conv)
     if conv and (conv.unread or 0) > 0 then
         conv.unread = 0

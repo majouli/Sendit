@@ -22,6 +22,8 @@
   Alpha: Fade owns the strip's alpha (a top-level element; "Chat" in its
   name, so Fade treats it like the chat windows); the combat fade goes on
   the inner content frame, which Fade never touches.
+  Chip texts: Blizzard's default filter names in the suite language
+  (ns.DefaultName), the player's own names as they are.
   Blizzard makes quick buttons only for filters that fit its own (hidden)
   bar; the others are in the gear's menu.
 
@@ -140,7 +142,7 @@ local function Layout(filters)
         chips[k] = c
         c:SetAttribute("clickbutton", f[1])
         c.filterId = f[2]
-        c.text:SetText(f[3])
+        c.text:SetText(ns.DefaultName(f[3], "FILTER_"))  -- Blizzard's default names in the suite language
         local w = math.floor((c.text:GetStringWidth() or 40) + 18)
         c:SetWidth(w)
         c:ClearAllPoints()
@@ -155,7 +157,7 @@ local function Layout(filters)
 end
 
 local function Signature(filters)
-    local parts = { CombatLogTabName() or "" }
+    local parts = { CombatLogTabName() or "", ns.L.FILTER_ME }  -- a language switch lays out again
     for _, f in ipairs(filters) do parts[#parts + 1] = f[2] .. "=" .. f[3] end
     return table.concat(parts, "|")
 end
