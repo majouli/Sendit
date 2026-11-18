@@ -1,0 +1,19 @@
+## Interface: 16001
+## Title: Sendit: GearScore
+## Notes: GearScore for items, your character and every player you hover or inspect, with their talents. Part of the Sendit suite.
+## Version: 0.13.42
+## IconTexture: Interface\Icons\INV_Misc_Gem_Variety_02
+## Dependencies: Sendit
+## SavedVariables: Sendit_GearScoreDB
+
+Locale.lua
+Init.lua
+Score.lua
+Talents.lua
+Inspect.lua
+Tooltip.lua
+TalentView.lua
+Panels.lua
+Pages.lua
+Probe.lua
+JournalProbe.lua

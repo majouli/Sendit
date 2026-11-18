@@ -1,0 +1,278 @@
+--[[
+  Locale: UI text in Sendit's five languages. Quest titles come separately
+  from the pinned Forever dataset; untranslated titles keep their English
+  source name rather than a made-up translation.
+]]
+local _, ns = ...
+local keys = {
+    "subtitle", "search", "empty", "open", "page", "pageDesc", "chain", "done", "active", "pending", "unknown", "all", "any", "nextQuest", "isolated", "cycle", "count", "exclusive",
+}
+local rows = {
+    enUS = {
+        "Quest chains",
+        "Quest name or ID…",
+        "No quests found.",
+        "Open",
+        "Quest browser",
+        "Find quests, prerequisites and follow-ups in a separate window.",
+        "Quest chain",
+        "Completed",
+        "In quest log",
+        "Not completed",
+        "Progress unknown",
+        "Requires all",
+        "Requires one",
+        "Next",
+        "No chain links recorded for this quest.",
+        "Conflicting chain links in the reference; order is uncertain.",
+        "%d quests",
+        "Alternatives",
+    },
+    deDE = {
+        "Questketten",
+        "Questname oder ID…",
+        "Keine Quests gefunden.",
+        "Öffnen",
+        "Questübersicht",
+        "Quests, Voraussetzungen und Folgequests in einem eigenen Fenster suchen.",
+        "Questkette",
+        "Abgeschlossen",
+        "Im Questlog",
+        "Offen",
+        "Fortschritt unbekannt",
+        "Benötigt alle",
+        "Benötigt eine",
+        "Nachfolger",
+        "Für diese Quest sind keine Kettenverbindungen hinterlegt.",
+        "Widersprüchliche Kettenverbindungen: Reihenfolge unklar.",
+        "%d Quests",
+        "Alternativen",
+    },
+    frFR = {
+        "Suites de quêtes",
+        "Nom ou ID de quête…",
+        "Aucune quête trouvée.",
+        "Ouvrir",
+        "Navigateur de quêtes",
+        "Rechercher les quêtes, prérequis et suites dans une fenêtre dédiée.",
+        "Suite de quêtes",
+        "Terminée",
+        "Dans le journal",
+        "Non terminée",
+        "Progression inconnue",
+        "Toutes requises",
+        "Une requise",
+        "Suivantes",
+        "Aucun lien de suite enregistré pour cette quête.",
+        "Liens contradictoires : ordre incertain.",
+        "%d quêtes",
+        "Alternatives",
+    },
+    esES = {
+        "Cadenas de misiones",
+        "Nombre o ID de misión…",
+        "No se encontraron misiones.",
+        "Abrir",
+        "Buscador de misiones",
+        "Busca misiones, requisitos y continuaciones en una ventana propia.",
+        "Cadena de misiones",
+        "Completada",
+        "En el registro",
+        "Sin completar",
+        "Progreso desconocido",
+        "Requiere todas",
+        "Requiere una",
+        "Siguientes",
+        "No hay conexiones registradas para esta misión.",
+        "Conexiones contradictorias: orden incierto.",
+        "%d misiones",
+        "Alternativas",
+    },
+    ruRU = {
+        "Цепочки заданий",
+        "Название или ID задания…",
+        "Задания не найдены.",
+        "Открыть",
+        "Поиск заданий",
+        "Поиск заданий, условий и продолжений в отдельном окне.",
+        "Цепочка заданий",
+        "Завершено",
+        "В журнале",
+        "Не завершено",
+        "Прогресс неизвестен",
+        "Требуются все",
+        "Требуется одно",
+        "Следующие",
+        "Для этого задания связи не записаны.",
+        "Противоречивые связи: порядок неизвестен.",
+        "%d заданий",
+        "Альтернативы",
+    },
+}
+local tables = {}
+local additions = {
+    enUS = { "XP", "AH tradable", "Partial", "All branches" },
+    deDE = { "EP", "AH-handelbar", "Unvollständig", "Alle Zweige" },
+    frFR = { "EXP", "Échangeable à l'hôtel des ventes", "Partiel", "Toutes les branches" },
+    esES = { "EXP", "Comerciable en subasta", "Parcial", "Todas las ramas" },
+    ruRU = { "Опыт", "Можно продать на аукционе", "Неполные данные", "Все ветви" },
+}
+local rewardKeys = { "rewards", "fixedRewards", "chooseReward", "chainRewards", "branchRewards", "resize" }
+local rewardText = {
+    enUS = { "Rewards", "Guaranteed items", "Choose one", "Chain rewards", "All branches · alternatives cannot all be earned", "Drag to resize" },
+    deDE = { "Belohnungen", "Feste Gegenstände", "Eines auswählen", "Belohnungen der Kette", "Alle Zweige · Alternativen nicht gemeinsam verdienbar", "Ziehen zum Vergrößern" },
+    frFR = { "Récompenses", "Objets garantis", "Choisir un objet", "Récompenses de la suite", "Toutes les branches · alternatives non cumulables", "Glisser pour redimensionner" },
+    esES = { "Recompensas", "Objetos garantizados", "Elige uno", "Recompensas de la cadena", "Todas las ramas · alternativas no acumulables", "Arrastra para cambiar el tamaño" },
+    ruRU = { "Награды", "Гарантированные предметы", "Выберите один", "Награды цепочки", "Все ветви · альтернативы нельзя получить вместе", "Потяните для изменения размера" },
+}
+local extraKeys = {
+    "allGroups", "noGroup", "place", "category", "findGroup", "allProgress", "unfinished", "noDescription", "summary", "choose",
+}
+local extra = {
+    enUS = { "All places and categories", "Uncategorized", "Place", "Category", "Find a place or category…",
+        "Any progress", "Unfinished", "No objective text recorded.", "%d of %d completed",
+        "Select a quest to see its chain and objectives." },
+    deDE = { "Alle Orte und Kategorien", "Ohne Zuordnung", "Ort", "Kategorie", "Ort oder Kategorie suchen…",
+        "Jeder Fortschritt", "Noch offen", "Kein Questziel hinterlegt.", "%d von %d abgeschlossen",
+        "Wähle eine Quest, um ihre Kette und Ziele zu sehen." },
+    frFR = { "Tous les lieux et catégories", "Sans catégorie", "Lieu", "Catégorie", "Chercher un lieu ou une catégorie…",
+        "Toute progression", "Non terminées", "Aucun objectif enregistré.", "%d sur %d terminées",
+        "Choisissez une quête pour voir sa suite et ses objectifs." },
+    esES = { "Todos los lugares y categorías", "Sin categoría", "Lugar", "Categoría", "Buscar lugar o categoría…",
+        "Cualquier progreso", "Sin completar", "No hay objetivo registrado.", "%d de %d completadas",
+        "Elige una misión para ver su cadena y objetivos." },
+    ruRU = { "Все места и категории", "Без категории", "Место", "Категория", "Найти место или категорию…",
+        "Любой прогресс", "Незавершённые", "Цель задания не записана.", "%d из %d завершено",
+        "Выберите задание, чтобы увидеть цепочку и цели." },
+}
+-- Journal layout (UI/Style.lua, QuestRow, Timeline). thousands = digit group mark.
+local journalKeys = { "thousands", "stepNext", "locked", "questID", "levelShort", "clickExpand", "clickCollapse",
+    "choiceShort", "valuesPending" }
+local journal = {
+    enUS = { ",", "Next step", "Locked", "Quest ID %d", "Level %d", "Click to open the details", "Click to close the details",
+        "choice", "XP and money not known yet (the client loads them)" },
+    deDE = { ".", "Nächster Schritt", "Gesperrt", "Quest-ID %d", "Stufe %d", "Klicken: Details öffnen", "Klicken: Details schließen",
+        "Auswahl", "EP und Geld noch unbekannt (der Client lädt sie)" },
+    frFR = { " ", "Étape suivante", "Verrouillée", "ID de quête %d", "Niveau %d", "Cliquer pour ouvrir les détails", "Cliquer pour fermer les détails",
+        "au choix", "EXP et argent pas encore connus (le client les charge)" },
+    esES = { ".", "Siguiente paso", "Bloqueada", "ID de misión %d", "Nivel %d", "Clic para abrir los detalles", "Clic para cerrar los detalles",
+        "a elegir", "EXP y dinero aún desconocidos (el cliente los carga)" },
+    ruRU = { " ", "Следующий шаг", "Закрыто", "ID задания %d", "Ур. %d", "Нажмите, чтобы открыть подробности", "Нажмите, чтобы закрыть подробности",
+        "на выбор", "Опыт и деньги пока неизвестны (клиент загружает их)" },
+}
+-- Reward headings of an opened step: what you get vs what you pick.
+local rewardHeads = {
+    enUS = { "You receive", "Choose one reward" }, deDE = { "Du erhältst", "Wähle eine Belohnung" },
+    frFR = { "Vous recevrez", "Choisissez une récompense" }, esES = { "Recibirás", "Elige una recompensa" },
+    ruRU = { "Вы получите", "Выберите награду" },
+}
+-- Gear boost (Boost.lua) and Sendit's map pin (UI/MapPin.lua).
+local boostKeys = { "boost", "boostHelp", "boostNeedsUpgrade", "boostCount", "boostRating", "boostEmpty", "decimal",
+    "pinGiver", "pinTurnIn", "pinTarget", "pinClear", "vsSlot", "newSlot", "beatsSlot",
+    "detailVs", "detailNew", "detailBeats" }
+local boost = {
+    enUS = { "Gear boost", "Quests whose reward makes your character stronger (Sendit Upgrade, %s), the biggest gain first - the same number as Upgrade's item tooltip.",
+        "Needs Sendit: Upgrade (switched on).", "%d quests with at least %s %% upgrade", "rating %d / %d …",
+        "No quest you can take now gives an upgrade of at least %s %%.", ".",
+        "Quest giver: pick it up here", "Turn it in here", "Quest objective", "right click: remove",
+        "%s vs %s", "new: %s", "beats %s",
+        "Your whole character's %s with this item instead of your worn one - the same number as Sendit Upgrade's item tooltip.",
+        "That slot is empty. The number: how much stronger your whole character gets.",
+        "Your worn item adds nothing for your spec, so there is no percentage against it. The number: how much stronger your whole character gets." },
+    deDE = { "Gear-Boost", "Quests, deren Belohnung deinen Charakter stärker macht (Sendit Upgrade, %s), größter Gewinn zuerst - dieselbe Zahl wie im Item-Tooltip von Upgrade.",
+        "Benötigt Sendit: Upgrade (eingeschaltet).", "%d Quests mit mindestens %s %% Upgrade", "bewerte %d / %d …",
+        "Keine Quest, die du jetzt machen kannst, bringt mindestens %s %% Upgrade.", ",",
+        "Questgeber: hier annehmen", "Hier abgeben", "Questziel", "Rechtsklick: entfernen",
+        "%s ggü. %s", "neu: %s", "besser als %s",
+        "%s deines ganzen Charakters mit diesem Teil statt deinem getragenen - dieselbe Zahl wie im Item-Tooltip von Sendit Upgrade.",
+        "Der Platz ist leer. Die Zahl: um wie viel dein ganzer Charakter stärker wird.",
+        "Dein getragenes Teil bringt für deine Spec nichts, deshalb gibt es keine Prozentzahl dagegen. Die Zahl: um wie viel dein ganzer Charakter stärker wird." },
+    frFR = { "Boost d'équipement", "Quêtes dont la récompense améliore votre équipement (Sendit Upgrade, %s), la plus grande d'abord. Le nombre : amélioration minimale.",
+        "Nécessite Sendit : Upgrade (activé).", "%d quêtes avec au moins %s %% d'amélioration", "évaluation %d / %d …",
+        "Aucune quête faisable maintenant n'apporte au moins %s %%.", ",",
+        "Donneur de quête : à prendre ici", "À rendre ici", "Objectif de quête", "clic droit : retirer",
+        "%s vs %s", "nouveau : %s", "mieux que %s",
+        "%s de tout votre personnage avec cet objet au lieu de celui porté - le même nombre que l'infobulle de Sendit Upgrade.",
+        "Cet emplacement est vide. Le nombre : de combien tout votre personnage devient plus fort.",
+        "Votre objet porté n'apporte rien à votre spécialisation : pas de pourcentage. Le nombre : de combien tout votre personnage devient plus fort." },
+    esES = { "Impulso de equipo", "Misiones cuya recompensa mejora tu equipo (Sendit Upgrade, %s), la mayor primero. El número: mejora mínima.",
+        "Requiere Sendit: Upgrade (activado).", "%d misiones con al menos %s %% de mejora", "evaluando %d / %d …",
+        "Ninguna misión disponible ahora mejora al menos un %s %%.", ",",
+        "Instructor: recógela aquí", "Entrégala aquí", "Objetivo de la misión", "clic derecho: quitar",
+        "%s frente a %s", "nuevo: %s", "mejor que %s",
+        "%s de todo tu personaje con este objeto en lugar del actual: el mismo número que la descripción de Sendit Upgrade.",
+        "Esa ranura está vacía. El número: cuánto más fuerte se vuelve todo tu personaje.",
+        "Tu objeto actual no aporta nada a tu especialización: no hay porcentaje. El número: cuánto más fuerte se vuelve todo tu personaje." },
+    ruRU = { "Улучшение снаряжения", "Задания, награда которых улучшает снаряжение (Sendit Upgrade, %s), лучшие сверху. Число: минимальное улучшение.",
+        "Нужен Sendit: Upgrade (включён).", "%d заданий с улучшением не менее %s %%", "оценка %d / %d …",
+        "Нет доступного задания с улучшением не менее %s %%.", ",",
+        "Квестодатель: взять здесь", "Сдать здесь", "Цель задания", "ПКМ: убрать",
+        "%s к: %s", "новое: %s", "лучше, чем %s",
+        "%s всего персонажа с этим предметом вместо надетого - то же число, что в подсказке Sendit Upgrade.",
+        "Ячейка пуста. Число: насколько сильнее становится весь персонаж.",
+        "Надетый предмет ничего не даёт вашей специализации, поэтому процента нет. Число: насколько сильнее становится весь персонаж." },
+}
+-- The gear boost's dialog (UI/BoostDialog.lua) and chip.
+local dialogKeys = { "boostOn", "boostStale", "boostFor", "boostMinLabel", "boostMinHint", "boostLocked",
+    "boostGo", "boostAgain", "boostEnd", "boostCancel", "boostSlots", "slotsAll", "slotsNone",
+    "slotWeapon", "slotOffhand", "slotRanged", "boostMissing", "boostCountOne" }
+local dialog = {
+    enUS = { "Gear boost >= %s %%", "stale", "Rated by Sendit Upgrade for: %s", "Your character at least this much stronger",
+        "The same number as Sendit Upgrade's item tooltip. One armour piece gives 0,5-2 %, a weapon more. Decimals allowed (0,5).",
+        "Also quests of a chain that are still locked", "Boost", "Rate again", "End boost", "Cancel",
+        "Slots", "All", "None", "Weapon", "Off hand / shield", "Ranged",
+        "· %d items the server did not send (/sq boost)", "%d quest with at least %s %% upgrade" },
+    deDE = { "Gear-Boost ≥ %s %%", "veraltet", "Bewertet von Sendit Upgrade für: %s", "Dein Charakter mindestens so viel stärker",
+        "Dieselbe Zahl wie im Item-Tooltip von Sendit Upgrade. Ein Rüstungsteil bringt 0,5-2 %, eine Waffe mehr. Dezimalwerte erlaubt (0,5).",
+        "Auch Quests einer Kette, die noch gesperrt sind", "Boost", "Neu bewerten", "Boost beenden", "Abbrechen",
+        "Plätze", "Alle", "Keine", "Waffe", "Nebenhand / Schild", "Distanz",
+        "· %d Items hat der Server nicht geschickt (/sq boost)", "%d Quest mit mindestens %s %% Upgrade" },
+    frFR = { "Boost ≥ %s %%", "obsolète", "Évalué par Sendit Upgrade pour : %s", "Votre personnage au moins autant plus fort",
+        "Le même nombre que l'infobulle de Sendit Upgrade. Une armure donne 0,5-2 %, une arme plus. Décimales permises (0,5).",
+        "Aussi les quêtes d'une suite encore verrouillées", "Boost", "Réévaluer", "Arrêter le boost", "Annuler",
+        "Emplacements", "Tous", "Aucun", "Arme", "Main gauche / bouclier", "Distance",
+        "· %d objets non envoyés par le serveur (/sq boost)", "%d quête avec au moins %s %% d'amélioration" },
+    esES = { "Impulso ≥ %s %%", "desactualizado", "Evaluado por Sendit Upgrade para: %s", "Tu personaje al menos esto más fuerte",
+        "El mismo número que la descripción de Sendit Upgrade. Una armadura da 0,5-2 %, un arma más. Se permiten decimales (0,5).",
+        "También misiones de una cadena aún bloqueadas", "Impulsar", "Evaluar de nuevo", "Terminar", "Cancelar",
+        "Ranuras", "Todas", "Ninguna", "Arma", "Mano izquierda / escudo", "A distancia",
+        "· %d objetos que el servidor no envió (/sq boost)", "%d misión con al menos %s %% de mejora" },
+    ruRU = { "Улучшение ≥ %s %%", "устарело", "Оценка Sendit Upgrade для: %s", "Персонаж минимум насколько сильнее",
+        "То же число, что в подсказке Sendit Upgrade. Броня даёт 0,5-2 %, оружие больше. Можно дробные (0,5).",
+        "Также закрытые задания цепочки", "Запуск", "Пересчитать", "Завершить", "Отмена",
+        "Ячейки", "Все", "Ни одной", "Оружие", "Левая рука / щит", "Дальний бой",
+        "· %d предметов сервер не прислал (/sq boost)", "%d задание с улучшением не менее %s %%" },
+}
+-- Right click "continue the chain" (Track.lua).
+local trackKeys = { "rightTrack", "trackLog", "trackGiver", "trackNoPin", "trackDone", "trackNone",
+    "trackTurnIn", "trackTarget", "chainLine", "itemCount" }
+local track = {
+    enUS = { "Right click: continue the chain", "Tracking: %s", "Map pin on the quest giver: %s",
+        "%s is next - its quest giver's position is not known", "Chain completed", "No reachable step known for you",
+        "Map pin on the turn-in: %s", "Map pin on the objective: %s", "Chain %d of %d", "%d items" },
+    deDE = { "Rechtsklick: Kette weiterverfolgen", "Verfolgt: %s", "Kartenmarker beim Questgeber: %s",
+        "Als Nächstes: %s - Position des Questgebers unbekannt", "Kette abgeschlossen", "Kein erreichbarer Schritt für dich bekannt",
+        "Kartenmarker bei der Abgabe: %s", "Kartenmarker beim Questziel: %s", "Kette %d von %d", "%d Gegenstände" },
+    frFR = { "Clic droit : poursuivre la suite", "Suivi : %s", "Repère sur le donneur de quête : %s",
+        "Ensuite : %s - position du donneur inconnue", "Suite terminée", "Aucune étape accessible connue pour vous",
+        "Repère sur la remise : %s", "Repère sur l'objectif : %s", "Suite %d sur %d", "%d objets" },
+    esES = { "Clic derecho: continuar la cadena", "Siguiendo: %s", "Marcador en el instructor: %s",
+        "Siguiente: %s - posición del instructor desconocida", "Cadena completada", "No se conoce ningún paso accesible para ti",
+        "Marcador en la entrega: %s", "Marcador en el objetivo: %s", "Cadena %d de %d", "%d objetos" },
+    ruRU = { "ПКМ: продолжить цепочку", "Отслеживается: %s", "Метка на карте у квестодателя: %s",
+        "Далее: %s - положение квестодателя неизвестно", "Цепочка завершена", "Доступный шаг для вас не найден",
+        "Метка на карте у сдачи: %s", "Метка на карте у цели: %s", "Цепочка %d из %d", "Предметов: %d" },
+}
+for code, values in pairs(rows) do
+    tables[code] = {}
+    for i, key in ipairs(trackKeys) do tables[code][key] = track[code][i] end
+    for i, key in ipairs(boostKeys) do tables[code][key] = boost[code][i] end
+    for i, key in ipairs(dialogKeys) do tables[code][key] = dialog[code][i] end
+    for i, key in ipairs({ "xp", "ahItem", "partial", "branches" }) do tables[code][key] = additions[code][i] end
+    for i, key in ipairs(keys) do tables[code][key] = values[i] end
+    for i, key in ipairs(extraKeys) do tables[code][key] = extra[code][i] end
+    for i, key in ipairs(rewardKeys) do tables[code][key] = rewardText[code][i] end
+    for i, key in ipairs(journalKeys) do tables[code][key] = journal[code][i] end
+    tables[code].fixedRewards, tables[code].chooseReward = rewardHeads[code][1], rewardHeads[code][2]
+end
+ns.L = Sendit.Locale.New(tables)

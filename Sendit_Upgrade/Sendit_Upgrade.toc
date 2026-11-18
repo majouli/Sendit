@@ -1,0 +1,42 @@
+## Interface: 16001
+## Title: Sendit: Upgrade
+## Notes: Compares items by recalculating your character: how much better an item really is. Part of the Sendit suite.
+## Version: 0.13.42
+## IconTexture: Interface\Icons\INV_Misc_Spyglass_02
+## Dependencies: Sendit
+## SavedVariables: Sendit_UpgradeDB
+## SavedVariablesPerCharacter: Sendit_UpgradeCharDB
+
+Locale.lua
+Init.lua
+Settings.lua
+Stats.lua
+Data\SchoolDamage.lua
+Data\ItemProcs.lua
+Effects.lua
+Data\Leveling.lua
+Mobs.lua
+Model.lua
+Calibrate.lua
+Character.lua
+Data\Spells.lua
+Spells.lua
+Specs\Common.lua
+Specs\Paladin.lua
+Specs\Warrior.lua
+Specs\Rogue.lua
+Specs\Hunter.lua
+Specs\Casters.lua
+Specs\Priest.lua
+Specs\Druid.lua
+Specs\Shaman.lua
+Compare.lua
+Service.lua
+Weights.lua
+Tooltip.lua
+UI\Window.lua
+UI\MeasureWindow.lua
+ItemClick.lua
+UI\Page.lua
+Probe.lua
+Measure.lua

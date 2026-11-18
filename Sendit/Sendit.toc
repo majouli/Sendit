@@ -1,0 +1,29 @@
+## Interface: 16001
+## Title: Sendit
+## Notes: Core of the Sendit suite: one window, one design and shared profiles for every Sendit module.
+## Version: 0.13.42
+## IconTexture: Interface\Icons\INV_Misc_Gear_01
+## AddonCompartmentFunc: Sendit_OnAddonCompartmentClick
+## SavedVariables: SenditDB, SenditLogDB
+## SavedVariablesPerCharacter: SenditCharDB
+
+Core\Init.lua
+Core\Locale.lua
+Core\Strings.lua
+Core\Profiles.lua
+Core\ErrorLog.lua
+Core\Suite.lua
+Core\ItemRatings.lua
+UI\Fonts.lua
+UI\Theme.lua
+UI\Ornaments.lua
+UI\Widgets.lua
+UI\Chip.lua
+UI\Layout.lua
+UI\Options.lua
+UI\Search.lua
+UI\Pages.lua
+UI\ErrorPage.lua
+UI\ModulePage.lua
+UI\MinimapButton.lua
+Core\Commands.lua

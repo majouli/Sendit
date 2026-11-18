@@ -1,0 +1,22 @@
+## Interface: 16001
+## Title: Sendit: Dungeons
+## Notes: Dungeons, their bosses and what they drop - with the gear boost. Part of the Sendit suite.
+## Version: 0.13.42
+## IconTexture: Interface\Icons\INV_Misc_Head_Dragon_01
+## Dependencies: Sendit
+
+Locale.lua
+Init.lua
+Data\Dungeons.lua
+Data\Names.lua
+Database.lua
+Boost.lua
+UI\Style.lua
+UI\Art.lua
+UI\LootIcon.lua
+UI\DungeonRow.lua
+UI\BossCard.lua
+UI\Layout.lua
+UI\Toolbar.lua
+UI\Window.lua
+UI\Page.lua

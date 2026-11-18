@@ -1,0 +1,404 @@
+--[[
+  Whispers: the messenger's data. One conversation per partner, saved per
+  character (ns.char.convs), newest conversations first.
+
+  conversation = {
+    key, name (display), target (whisper name or BattleTag), bn (true for
+    Battle.net), class (English class file, optional), realm (players),
+    kname (Battle.net account token, this session only), unread, last (epoch),
+    archived (epoch, while in the archive),
+    msgs = { { t = epoch, o = true for outgoing, m = text }, ... }
+  }
+
+  W.List()                 active conversations, most recent first
+  W.Archived()             archived ones, most recently archived first
+  W.Archive(key) / W.Restore(key)   into / out of the archive (reversible:
+                           "deleting" in the messenger archives). An archived
+                           conversation is deleted for good ARCHIVE_DAYS after
+                           archiving (W.Purge, on login and on every look at
+                           the archive); a new message brings it back.
+  W.Get(key) / W.Open(name) existing / new-or-existing conversation
+  W.Send(conv, text)       true | false, reason ("lockdown", "offline", "empty")
+  W.Split(text, max)       chunks <= max bytes; never cuts a link or a
+                           UTF-8 character
+  W.MarkRead(conv), W.Delete(key) (for good)
+  W.OnChange(fn)           fn(conv, msg, incoming) after every change
+  W.viewing                set by the UI: fn(key) -> true while the user is
+                           in that conversation (its input has the focus);
+                           anything else counts as unread until read
+  W.UnreadChats()          conversations with unread messages
+  W.RealmOf(conv)          the partner's realm (players)
+  W.BNGame(conv)           "Bob (Realm)" while a Battle.net friend plays WoW
+
+  Secret texts or senders (chat lockdown) are skipped: they cannot be
+  compared, keyed or saved. Those lines stay in the main chat (Mirror).
+]]
+local _, ns = ...
+local Safe = ns.Safe
+
+local W = {}
+ns.Whispers = W
+
+local MAX_MSGS = 200
+local MAX_CONVS = 80
+local MAX_BYTES = 255
+local ARCHIVE_DAYS = 30
+W.ARCHIVE_DAYS = ARCHIVE_DAYS
+
+local listeners = {}
+function W.OnChange(fn) listeners[#listeners + 1] = fn end
+local function Notify(conv, msg, incoming)
+    for i = 1, #listeners do listeners[i](conv, msg, incoming) end
+end
+
+local function Convs() return ns.char and ns.char.convs or {} end
+
+function W.Get(key) return Convs()[key] end
+
+function W.List()
+    local list = {}
+    for _, c in pairs(Convs()) do if not c.archived then list[#list + 1] = c end end
+    table.sort(list, function(a, b)
+        if a.last ~= b.last then return (a.last or 0) > (b.last or 0) end
+        return a.key < b.key
+    end)
+    return list
+end
+
+-- Seconds until an archived conversation is deleted for good.
+function W.ArchiveLeft(conv, now)
+    return (conv.archived or 0) + ARCHIVE_DAYS * 86400 - (now or time())
+end
+
+function W.Purge(now)
+    now = now or time()
+    for key, c in pairs(Convs()) do
+        if c.archived and W.ArchiveLeft(c, now) <= 0 then Convs()[key] = nil end
+    end
+end
+
+function W.Archived()
+    W.Purge()
+    local list = {}
+    for _, c in pairs(Convs()) do if c.archived then list[#list + 1] = c end end
+    table.sort(list, function(a, b)
+        if a.archived ~= b.archived then return a.archived > b.archived end
+        return a.key < b.key
+    end)
+    return list
+end
+
+function W.Unread()
+    local n = 0
+    for _, c in pairs(Convs()) do n = n + (c.unread or 0) end
+    return n
+end
+
+function W.UnreadChats()
+    local n = 0
+    for _, c in pairs(Convs()) do if (c.unread or 0) > 0 then n = n + 1 end end
+    return n
+end
+
+local function OwnRealm()
+    return Safe.Str(Safe.Call(_G["GetRealmName"])) or Safe.Str(Safe.Call(_G["GetNormalizedRealmName"])) or "?"
+end
+
+function W.RealmOf(conv)
+    return conv.realm or OwnRealm()
+end
+
+local function RealmPart(full)
+    local realm = full:match("%-(.+)$")
+    return realm or OwnRealm()
+end
+
+---------------------------------------------------------------------------
+-- Names
+---------------------------------------------------------------------------
+local function Short(full)
+    local amb = _G["Ambiguate"]
+    if amb then
+        local ok, s = pcall(amb, full, "short")
+        if ok and Safe.Str(s) then return s end
+    end
+    return (full:gsub("%-.*$", ""))
+end
+
+local function PlayerKey(full)
+    local name, realm = full:match("^([^%-]+)%-?(.*)$")
+    local own = Safe.Str(Safe.Call(_G["GetNormalizedRealmName"])) or ""
+    if realm == "" or realm == own then return "p:" .. name:lower() end
+    return "p:" .. (name .. "-" .. realm):lower()
+end
+
+local function ClassOf(guid)
+    guid = Safe.Str(guid)
+    local fn = _G["GetPlayerInfoByGUID"]
+    if not guid or guid == "" or not fn then return nil end
+    local ok, _, class = pcall(fn, guid)
+    return ok and Safe.Str(class) or nil
+end
+
+local function Trim(conv)
+    local msgs = conv.msgs
+    while #msgs > MAX_MSGS do table.remove(msgs, 1) end
+end
+
+local function TrimConvs()
+    local list = W.List()
+    for i = MAX_CONVS + 1, #list do Convs()[list[i].key] = nil end
+end
+
+local function Ensure(key, fields)
+    local all = Convs()
+    local c = all[key]
+    if not c then
+        c = { key = key, msgs = {}, unread = 0, last = time() }
+        all[key] = c
+    end
+    for k, v in pairs(fields) do if v ~= nil then c[k] = v end end
+    return c
+end
+
+-- New or existing conversation with a player name typed or clicked.
+function W.Open(name)
+    name = Safe.Str(name)
+    if not name then return nil end
+    name = strtrim(name)
+    if name == "" then return nil end
+    name = name:sub(1, 1):upper() .. name:sub(2)
+    local c = Ensure(PlayerKey(name), { target = name, realm = RealmPart(name) })
+    c.name = c.name or Short(name)
+    c.archived = nil
+    TrimConvs()
+    Notify(c, nil, false)
+    return c
+end
+
+---------------------------------------------------------------------------
+-- Battle.net
+---------------------------------------------------------------------------
+local function BNTag(id)
+    local bn = _G["C_BattleNet"]
+    local info = bn and bn.GetAccountInfoByID and Safe.Call(bn.GetAccountInfoByID, id)
+    return type(info) == "table" and Safe.Str(info.battleTag) or nil
+end
+
+function W.BNGame(conv)
+    local bn = _G["C_BattleNet"]
+    local id = conv.bn and conv.bnID
+    if not bn or not bn.GetAccountInfoByID or not id then return nil end
+    local info = Safe.Call(bn.GetAccountInfoByID, id)
+    local game = type(info) == "table" and info.gameAccountInfo
+    if type(game) ~= "table" or not game.isOnline then return nil end
+    local char = Safe.Str(game.characterName)
+    if not char or char == "" then return nil end
+    local realm = Safe.Str(game.realmName)
+    return realm and realm ~= "" and (char .. " (" .. realm .. ")") or char
+end
+
+-- presence id of a BattleTag this session (ids change between sessions).
+local function BNResolve(tag)
+    local bn, num = _G["C_BattleNet"], _G["BNGetNumFriends"]
+    if not bn or not bn.GetFriendAccountInfo or not num then return nil end
+    for i = 1, Safe.Num(Safe.Call(num)) or 0 do
+        local info = Safe.Call(bn.GetFriendAccountInfo, i)
+        if type(info) == "table" and Safe.Str(info.battleTag) == tag then
+            return Safe.Num(info.bnetAccountID)
+        end
+    end
+    return nil
+end
+
+-- New or existing conversation with a Battle.net friend, by the account
+-- name Blizzard passes around (a |K token string, comparable as a string).
+function W.OpenBN(accountName)
+    accountName = Safe.Str(accountName)
+    local bn, num = _G["C_BattleNet"], _G["BNGetNumFriends"]
+    if not accountName or not bn or not bn.GetFriendAccountInfo or not num then return nil end
+    for i = 1, Safe.Num(Safe.Call(num)) or 0 do
+        local info = Safe.Call(bn.GetFriendAccountInfo, i)
+        if type(info) == "table" and Safe.Str(info.accountName) == accountName then
+            local tag, id = Safe.Str(info.battleTag), Safe.Num(info.bnetAccountID)
+            if not tag or not id then return nil end
+            local c = Ensure("bn:" .. tag:lower(), { bn = true, target = tag, bnID = id, kname = accountName })
+            c.name = tag:match("^([^#]+)") or tag
+            c.archived = nil
+            TrimConvs()
+            Notify(c, nil, false)
+            return c
+        end
+    end
+    return nil
+end
+
+---------------------------------------------------------------------------
+-- Receiving
+---------------------------------------------------------------------------
+function W.Add(out, text, who, guid, bnID)
+    text = Safe.Str(text)
+    if not text then return nil end
+    local c
+    if bnID ~= nil then
+        local id = Safe.Num(bnID)
+        if not id then return nil end
+        local tag = BNTag(id)
+        local key = tag and ("bn:" .. tag:lower()) or ("bnid:" .. id)
+        c = Ensure(key, { bn = true, target = tag, bnID = id, kname = Safe.Str(who) })
+        c.name = (tag and tag:match("^([^#]+)")) or c.name or Safe.Str(who) or "Battle.net"
+    else
+        local full = Safe.Str(who)
+        if not full or full == "" then return nil end
+        c = Ensure(PlayerKey(full), { target = full, class = ClassOf(guid), realm = RealmPart(full) })
+        c.name = Short(full)
+    end
+    local msg = { t = time(), o = out or nil, m = text }
+    c.archived = nil  -- a new message brings it back from the archive
+    c.msgs[#c.msgs + 1] = msg
+    c.last = msg.t
+    Trim(c)
+    if not out and not (W.viewing and W.viewing(c.key)) then
+        c.unread = (c.unread or 0) + 1
+    end
+    TrimConvs()
+    Notify(c, msg, not out)
+    return c
+end
+
+function W.MarkRead(conv)
+    if conv and (conv.unread or 0) > 0 then
+        conv.unread = 0
+        Notify(conv, nil, false)
+    end
+end
+
+function W.Archive(key)
+    local c = Convs()[key]
+    if not c or c.archived then return end
+    c.archived = time()
+    c.unread = 0
+    Notify(c, nil, false)
+end
+
+function W.Restore(key)
+    local c = Convs()[key]
+    if not c or not c.archived then return end
+    c.archived = nil
+    Notify(c, nil, false)
+end
+
+function W.Delete(key)
+    local c = Convs()[key]
+    if not c then return end
+    Convs()[key] = nil
+    Notify(c, nil, false)
+end
+
+---------------------------------------------------------------------------
+-- Sending
+---------------------------------------------------------------------------
+-- Character length of the UTF-8 sequence starting with byte b.
+local function SeqLen(b)
+    if b >= 0xF0 then return 4 elseif b >= 0xE0 then return 3 elseif b >= 0xC0 then return 2 end
+    return 1
+end
+
+local function HardCut(word, max, out)
+    local i, n, start = 1, #word, 1
+    while i <= n do
+        local len = SeqLen(word:byte(i))
+        if i + len - start > max then
+            out[#out + 1] = word:sub(start, i - 1)
+            start = i
+        end
+        i = i + len
+    end
+    if start <= n then out[#out + 1] = word:sub(start) end
+end
+
+function W.Split(text, max)
+    max = max or MAX_BYTES
+    if #text <= max then return { text } end
+    -- Links are atoms: "[Mitstreiter Claymore]" has spaces but must not split.
+    local links = {}
+    local function Protect(l)
+        links[#links + 1] = l
+        return "\001" .. #links .. "\001"
+    end
+    local masked = text:gsub("|c[^|]*|H.-|h.-|h|r", Protect):gsub("|H.-|h.-|h", Protect)
+    local function Restore(s) return (s:gsub("\001(%d+)\001", function(n) return links[tonumber(n)] end)) end
+
+    local out, line = {}, ""
+    for word in masked:gmatch("%S+") do
+        local real = Restore(word)
+        local candidate = line == "" and real or (line .. " " .. real)
+        if #candidate <= max then
+            line = candidate
+        else
+            if line ~= "" then out[#out + 1] = line end
+            if #real <= max then
+                line = real
+            else
+                HardCut(real, max, out)
+                line = table.remove(out)
+            end
+        end
+    end
+    if line ~= "" then out[#out + 1] = line end
+    return out
+end
+
+-- The Forever server strips spell links whose text carries a rank or a note
+-- in brackets ("[Siegel des Kreuzfahrers (Rang 4)]", "[Parieren (Passiv)]"):
+-- they arrive as plain (sometimes mangled) text, from Blizzard's chat too;
+-- talent links without brackets arrive. So the bracket part goes before
+-- sending; the spell id in the link stays.
+function W.CleanSpellLinks(text)
+    return (text:gsub("(|Hspell:[^|]*|h%[)(.-)%s*%b()(%]|h)", "%1%2%3"))
+end
+
+function W.Send(conv, text)
+    text = Safe.Str(text) and strtrim(text) or ""
+    text = W.CleanSpellLinks(text)
+    if not conv or text == "" then return false, "empty" end
+    if Safe.InLockdown() then return false, "lockdown" end
+    local chunks = W.Split(text, MAX_BYTES)
+    if conv.bn then
+        local id = (conv.target and BNResolve(conv.target)) or conv.bnID
+        local send = _G["BNSendWhisper"]
+        if not id or not send then return false, "offline" end
+        conv.bnID = id
+        for _, c in ipairs(chunks) do send(id, c) end
+        return true
+    end
+    local info = _G["C_ChatInfo"]
+    local legacy = "SendChatMessage"  -- older clients only have the global
+    local send = (info and info.SendChatMessage) or _G[legacy]
+    if not send or not conv.target then return false, "offline" end
+    for _, c in ipairs(chunks) do send(c, "WHISPER", nil, conv.target) end
+    return true
+end
+
+---------------------------------------------------------------------------
+-- Events
+---------------------------------------------------------------------------
+ns.OnReady(function()
+    -- Battle.net ids and account tokens are only valid in the session that got them.
+    for _, c in pairs(Convs()) do c.kname, c.bnID = nil, nil end
+    W.Purge()
+    ns.Listen("CHAT_MSG_WHISPER", function(_, text, sender, ...)
+        local guid = select(10, ...)
+        W.Add(false, text, sender, guid)
+    end)
+    ns.Listen("CHAT_MSG_WHISPER_INFORM", function(_, text, target, ...)
+        local guid = select(10, ...)
+        W.Add(true, text, target, guid)
+    end)
+    ns.Listen("CHAT_MSG_BN_WHISPER", function(_, text, sender, ...)
+        W.Add(false, text, sender, nil, select(11, ...) or false)
+    end)
+    ns.Listen("CHAT_MSG_BN_WHISPER_INFORM", function(_, text, target, ...)
+        W.Add(true, text, target, nil, select(11, ...) or false)
+    end)
+end)
