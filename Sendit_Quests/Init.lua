@@ -9,7 +9,7 @@ ns.names = {}
 ns.objectives = {}
 ns.module = Sendit:RegisterModule({
     key = "quests", title = "Quests", addon = "Sendit_Quests",
-    icon = "Interface\\Icons\\INV_Misc_Book_09",
+    icon = "Interface\\AddOns\\Sendit_Quests\\Media\\Icon",
     accountDefaults = { width = 960, height = 720, boostMin = 1, boostLocked = true },
 })
 SLASH_SENDITQUESTS1 = "/sq"

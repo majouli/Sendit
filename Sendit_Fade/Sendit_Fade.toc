@@ -1,9 +1,9 @@
 ## Interface: 16001
 ## Title: Sendit: Fade
 ## Notes: Detects every UI element - from any addon - and fades it elegantly. Part of the Sendit suite.
-## Version: 0.13.63
+## Version: 0.14.0
 ## X-License: GPL-3.0
-## IconTexture: Interface\Icons\Spell_Nature_Invisibilty
+## IconTexture: Interface\AddOns\Sendit_Fade\Media\Icon
 ## Dependencies: Sendit
 
 Locale.lua

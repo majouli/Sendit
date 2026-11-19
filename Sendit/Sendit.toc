@@ -1,9 +1,9 @@
 ## Interface: 16001
 ## Title: Sendit
 ## Notes: Core of the Sendit suite: one window, one design and shared profiles for every Sendit module.
-## Version: 0.13.63
+## Version: 0.14.0
 ## X-License: GPL-3.0
-## IconTexture: Interface\Icons\INV_Misc_Gear_01
+## IconTexture: Interface\AddOns\Sendit\Media\Icon
 ## AddonCompartmentFunc: Sendit_OnAddonCompartmentClick
 ## SavedVariables: SenditDB, SenditLogDB
 ## SavedVariablesPerCharacter: SenditCharDB
@@ -27,4 +27,5 @@ UI\Pages.lua
 UI\ErrorPage.lua
 UI\ModulePage.lua
 UI\MinimapButton.lua
+UI\AppBar.lua
 Core\Commands.lua

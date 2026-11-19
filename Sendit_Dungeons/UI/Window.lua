@@ -240,5 +240,13 @@ end
 
 function Window:Hide() if frame then frame:Hide() end end
 
+function Window:IsShown() return frame ~= nil and frame:IsShown() end
+
 -- Settings change all the time in the suite: repaint texts (language, palette).
 Sendit.OnSettingsChanged(function() if frame then Window:Refresh() end end)
+
+Sendit:AddLauncher({
+    key = "dungeons", order = 40, icon = "Interface\\AddOns\\Sendit_Dungeons\\Media\\Icon", title = "Dungeons",
+    toggle = function() if Window:IsShown() then Window:Hide() else Window:Open() end end,
+    shown = function() return Window:IsShown() end,
+})

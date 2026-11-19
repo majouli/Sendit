@@ -30,7 +30,7 @@ ns.module = Sendit:RegisterModule({
     addon = "Sendit_Upgrade",
     key = "upgrade",
     title = "Upgrade",
-    icon = "Interface\\Icons\\INV_Misc_Spyglass_02",
+    icon = "Interface\\AddOns\\Sendit_Upgrade\\Media\\Icon",
     status = function()
         local ok, ctx = pcall(function() return ns.charDB and ns.Compare.Context() end)
         return ok and ctx and L.specs[ctx.specKey] or nil

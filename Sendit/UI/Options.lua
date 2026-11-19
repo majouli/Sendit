@@ -112,10 +112,9 @@ local function NavButton(parent, text, icon, sub, onClick)
     if icon then
         b.icon = b:CreateTexture(nil, "ARTWORK")
         b.icon:SetTexture(icon)
-        b.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-        b.icon:SetSize(18, 18)
-        b.icon:SetPoint("LEFT", 22, 0)
-        x = 48
+        b.icon:SetSize(28, 28)
+        b.icon:SetPoint("LEFT", 18, 0)
+        x = 56
     end
     b.text = T.Text(b, sub and "label" or "body", "textDim")
     b.text:SetPoint("LEFT", x, 0)

@@ -67,7 +67,7 @@ ns.module = Sendit:RegisterModule({
     addon = "Sendit_GearScore",
     key = "gearscore",
     title = "GearScore",
-    icon = "Interface\\Icons\\INV_Misc_Gem_Variety_02",
+    icon = "Interface\\AddOns\\Sendit_GearScore\\Media\\Icon",
     defaults = ns.defaults,
     status = function()
         if not ns.Score then return nil end

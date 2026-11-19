@@ -434,3 +434,9 @@ events:SetScript("OnEvent", function(_, event)
         Soon()
     end
 end)
+
+Sendit:AddLauncher({
+    key = "dribbler", order = 50, icon = ns.ICON, title = function() return L.dribTitle end,
+    toggle = Window.Toggle,
+    shown = Window.Shown,
+})

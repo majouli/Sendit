@@ -8,7 +8,7 @@
 
   Saved variables
     SenditDB      account: version, profiles, each module's account section,
-                  core UI (minimap)
+                  core UI (minimap, app bar)
     SenditCharDB  character: { profile = name } (Profiles.lua)
   Format changes of the core get a step in Migrate below; a module's own
   format changes go into its def.migrate(section, from) (see RegisterModule).
@@ -39,7 +39,8 @@
                                  (e.g. "upgrade": item ratings); nil when that
                                  module is switched off or not installed
     Sendit.Locale (Locale.lua), Sendit.Theme / Widgets / Options (UI/*),
-    Sendit.Profiles, Sendit:AddQuickToggle (UI/MinimapButton.lua)
+    Sendit.Profiles, Sendit:AddQuickToggle (UI/MinimapButton.lua),
+    Sendit:AddLauncher (UI/AppBar.lua: a module window in the app bar)
   Everything else on `Sendit` is internal. Registration works before and
   after the core's ADDON_LOADED.
 ]]
@@ -56,7 +57,7 @@ function ns.Provide(name, api) services[name] = api end
 function ns.Service(name) return services[name] end
 ns.name = ADDON
 ns.version = C_AddOns.GetAddOnMetadata(ADDON, "Version") or "dev"
-ns.ICON = "Interface\\Icons\\INV_Misc_Gear_01"
+ns.ICON = "Interface\\AddOns\\Sendit\\Media\\Icon"
 ns.ownFrames = {}  -- frames of the suite; Sendit_Fade never fades them
 ns.modules = {}    -- registration order
 ns.commands = {}   -- /sendit sub commands
@@ -107,6 +108,7 @@ end
 ---------------------------------------------------------------------------
 ns.defaults = {  -- core account settings
     minimap = { hide = false, angle = 200 },
+    appbar = { hide = false, open = false },
 }
 
 local byKey = {}

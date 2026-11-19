@@ -3,7 +3,7 @@ local Sendit = Sendit
 
 ns.SetLanguage("auto")
 
-ns.ICON = "Interface\\Icons\\Trade_Herbalism"
+ns.ICON = "Interface\\AddOns\\Sendit_Harvest\\Media\\Icon"
 ns.DB_VERSION = 1
 
 ns.defaults = {

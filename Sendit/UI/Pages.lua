@@ -58,6 +58,11 @@ Options:Register({
                 ns.db.minimap.hide = not v
                 Changed()
             end))
+        Lay:Row(Tx("APPBAR"), Tx("APPBAR_DESC"),
+            W.Switch(c, function() return not ns.db.appbar.hide end, function(v)
+                ns.db.appbar.hide = not v
+                Changed()
+            end))
         Lay:EndSection()
     end),
 })

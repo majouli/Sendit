@@ -308,6 +308,7 @@ end
 local function Animated()
     return not Design() or Design().animations
 end
+Theme.Animated = Animated
 
 -- Fade a frame in, optionally rising `rise` px into place.
 function Theme.FadeIn(frame, duration, rise)

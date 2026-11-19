@@ -10,7 +10,7 @@
 local _, ns = ...
 ns.module = Sendit:RegisterModule({
     key = "talents", title = "Talents", addon = "Sendit_Talents",
-    icon = "Interface\\Icons\\INV_Misc_Map_01",
+    icon = "Interface\\AddOns\\Sendit_Talents\\Media\\Icon",
     accountDefaults = { timeline = false },  -- route timeline folded out
 })
 

@@ -78,7 +78,7 @@ ns.module = Sendit:RegisterModule({
     addon = "Sendit_Chat",
     key = "chat",
     title = "Chat",
-    icon = "Interface\\Icons\\INV_Letter_15",
+    icon = "Interface\\AddOns\\Sendit_Chat\\Media\\Icon",
     defaults = ns.defaults,
     accountDefaults = ns.acctDefaults,
     -- 2: popupWhispers (boolean) became whisperAlert; on -> the bubble

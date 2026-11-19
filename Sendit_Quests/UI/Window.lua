@@ -402,6 +402,8 @@ end
 
 function Window:Hide() if frame then frame:Hide() end end
 
+function Window:IsShown() return frame ~= nil and frame:IsShown() end
+
 -- Right click on a quest: continue its chain; the result shows under the chain title.
 function Window:Track(id)
     local text = ns.Track.Go(id)
@@ -422,3 +424,9 @@ Sendit.OnSettingsChanged(function()
     ns.GroupPicker.Hide()
     if frame then Window:Refresh() end
 end)
+
+Sendit:AddLauncher({
+    key = "quests", order = 30, icon = "Interface\\AddOns\\Sendit_Quests\\Media\\Icon", title = "Quests",
+    toggle = function() if Window:IsShown() then Window:Hide() else Window:Open() end end,
+    shown = function() return Window:IsShown() end,
+})

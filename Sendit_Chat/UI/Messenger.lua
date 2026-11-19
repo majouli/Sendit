@@ -328,6 +328,8 @@ function Messenger.Close()
     end)
 end
 
+function Messenger.IsOpen() return IsOpen() and not frame.closing end
+
 function Messenger.Toggle()
     if IsOpen() and not frame.closing then Messenger.Close() else Messenger.Show() end
 end
@@ -386,3 +388,9 @@ ns.OnReady(function()
         ns.Conversation.ApplyLook()
     end)
 end)
+
+Sendit:AddLauncher({
+    key = "chat", order = 10, icon = "Interface\\AddOns\\Sendit_Chat\\Media\\Icon", title = function() return ns.L.MESSENGER end,
+    toggle = function() if ns.active then Messenger.Toggle() end end,
+    shown = Messenger.IsOpen,
+})

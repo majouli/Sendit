@@ -7,7 +7,7 @@
 local _, ns = ...
 ns.module = Sendit:RegisterModule({
     key = "dungeons", title = "Dungeons", addon = "Sendit_Dungeons",
-    icon = "Interface\\Icons\\INV_Misc_Head_Dragon_01",
+    icon = "Interface\\AddOns\\Sendit_Dungeons\\Media\\Icon",
     accountDefaults = { width = 980, height = 700, filter = "all", boostMin = 1, boostAhead = 0 },
 })
 SLASH_SENDITDUNGEONS1 = "/sd"
