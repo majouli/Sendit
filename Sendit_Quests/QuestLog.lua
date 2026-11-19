@@ -11,7 +11,10 @@ local lastSelection
 local hooked = {}
 local function Remember(id)
     if issecretvalue and issecretvalue(id) then return end
-    if type(id) == "number" and id > 0 then lastSelection = id end
+    if type(id) == "number" and id > 0 then
+        lastSelection = id
+        if ns.LogRoute then ns.LogRoute.Show(id) end
+    end
 end
 local function Hooks()
     for _, name in ipairs({ "QuestMapFrame_ShowQuestDetails", "QuestMapQuestOptions_TrackQuest" }) do

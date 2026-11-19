@@ -1,6 +1,6 @@
 --[[
-  Page: a single entry in Sendit's settings/search opens the independent
-  quest browser. No redundant settings or second minimap button.
+  Page: Sendit's settings/search entry: opens the independent quest browser;
+  switches the quest route beside Blizzard's quest log (account: route).
 ]]
 local _, ns = ...
 local O, W = Sendit.Options, Sendit.Widgets
@@ -13,6 +13,12 @@ O:Register({
             O:Hide()
             ns.Window:Open()
         end))
+        Lay:Row(Tx("routeSetting"), Tx("routeSettingDesc"), W.Switch(content,
+            function() return ns.module.db == nil or ns.module.db.route ~= false end,
+            function(on)
+                if ns.module.db then ns.module.db.route = on and true or false end
+                Sendit.SettingsChanged()
+            end))
         Lay:EndSection()
     end),
 })

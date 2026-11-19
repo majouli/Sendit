@@ -404,19 +404,43 @@ function Window:Hide() if frame then frame:Hide() end end
 
 function Window:IsShown() return frame ~= nil and frame:IsShown() end
 
+-- The menu opens at the mouse, not below the clicked row (an open step card is tall).
+local cursor
+local function AtCursor()
+    cursor = cursor or CreateFrame("Frame", nil, UIParent)
+    cursor:SetSize(1, 1)
+    local x, y = GetCursorPosition()
+    local scale = UIParent:GetEffectiveScale()
+    cursor:ClearAllPoints()
+    cursor:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", (x or 0) / scale, (y or 0) / scale)
+    return cursor
+end
+
 -- Right click on a quest: a menu - continue the chain, or a map pin on its giver /
 -- objective / turn-in (any quest, done or not). The result shows under the chain title.
-function Window:Menu(id, anchor)
+function Window:Menu(id)
     local spots, options = ns.Track.Places(id), { { "chain", L.menuChain } }
-    for _, entry in ipairs({ { "g", L.menuGiver }, { "t", L.menuTarget }, { "f", L.menuTurnIn } }) do
-        if spots[entry[1]] then options[#options + 1] = entry end
+    local g, f = spots.g, spots.f
+    -- the same NPC gives and takes the quest: one entry, said so
+    local same = g and f and g[1] == f[1] and g[2] == f[2] and g[3] == f[3]
+    for _, entry in ipairs({ { "g", same and L.menuGiverTurnIn or L.menuGiver }, { "t", L.menuTarget },
+                             { "f", L.menuTurnIn } }) do
+        if spots[entry[1]] and not (same and entry[1] == "f") then options[#options + 1] = entry end
     end
-    W.ShowMenu(anchor, options, nil, function(key)
-        if key == "chain" then self:Track(id) else self:Notice(ns.Track.Pin(id, key)) end
+    if ns.Guide.Following() then options[#options + 1] = { "stop", L.guideStop } end
+    W.ShowMenu(AtCursor(), options, nil, function(key)
+        if key == "chain" then self:Track(id)
+        elseif key == "stop" then ns.Guide.Stop() if ns.LogRoute then ns.LogRoute.Refresh() end
+        else self:Notice(ns.Track.Pin(id, key)) end
     end)
 end
 
-function Window:Track(id) return self:Notice(ns.Track.Go(id)) end
+-- Follow the chain: every known step (Guide.lua) - with Shortest Path Forever when it is there.
+function Window:Track(id)
+    local text = self:Notice(ns.Guide.Start(id))
+    if ns.LogRoute then ns.LogRoute.Refresh() end
+    return text
+end
 
 function Window:Notice(text)
     if not frame then return text end
