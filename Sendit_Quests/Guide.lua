@@ -28,12 +28,7 @@ local OWNER = "Sendit Quests"
 local MAX_STOPS = 64  -- Shortest Path Forever's limit per itinerary
 local following, viaSPF, sent
 
-local function Read(fn, ...)
-    if type(fn) ~= "function" then return nil end
-    local ok, value = pcall(fn, ...)
-    if not ok or (issecretvalue and issecretvalue(value)) then return nil end
-    return value
-end
+local Read = ns.Read
 
 local function Done(id) return ns.Progress.State(id) == "done" end
 

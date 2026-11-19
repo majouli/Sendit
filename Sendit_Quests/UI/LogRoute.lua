@@ -30,7 +30,7 @@ ns.LogRoute = Route
 
 local WIDTH, HEADER, TAB_GAP = 320, 50, 48
 local TOP, LINE, BOTTOM, MINI = 9, 17, 9, 24  -- a row: top pad, name line, meta line, rewards line
-local panel, current, closedFor
+local panel, current, closed
 local rows = {}
 
 local function Row(i)
@@ -107,7 +107,7 @@ local function Create()
     panel.sub = T.Text(panel, "small", "textMuted")
     panel.sub:SetPoint("TOPLEFT", panel.title, "BOTTOMLEFT", 0, -4)
     panel.close = W.Close(panel, function()
-        closedFor = current
+        closed = true
         panel:Hide()
     end)
     panel.close:SetPoint("TOPRIGHT", -8, -8)
@@ -213,10 +213,10 @@ function Route.Show(id, hovered)
     if type(id) == "number" and id > 0 then
         current = id
         -- a closed route comes back with the next pick, not with a mere hover
-        if not hovered then closedFor = nil end
+        if not hovered then closed = false end
     end
     if not Create() then return end
-    panel:SetShown(closedFor == nil)
+    panel:SetShown(not closed)
     Paint()
 end
 
@@ -241,12 +241,12 @@ for _, e in ipairs({ "ADDON_LOADED", "PLAYER_LOGIN", "QUEST_LOG_UPDATE", "QUEST_
 end
 events:SetScript("OnEvent", function(_, event)
     if event == "ADDON_LOADED" or event == "PLAYER_LOGIN" then
-        if Enabled() and Create() and closedFor == nil then panel:Show() end
+        if Enabled() and Create() and not closed then panel:Show() end
     end
     Paint()
 end)
 Sendit.OnSettingsChanged(function()
-    if panel and not Enabled() then panel:Hide() elseif panel and closedFor == nil and _G["QuestMapFrame"] then
+    if panel and not Enabled() then panel:Hide() elseif panel and not closed and _G["QuestMapFrame"] then
         panel:Show()
     end
 end)

@@ -56,13 +56,25 @@ function Boost.SetAhead(n)
     if ns.module.db then ns.module.db.boostAhead = math.max(0, math.min(10, math.floor(tonumber(n) or 0))) end
 end
 
--- The level a quest asks for: its required level, else (unknown) its quest level - LEVEL_AHEAD;
--- the preview (Ahead) moves the player's level up.
+-- The level a quest asks for: its required level, else (unknown) its quest level - LEVEL_AHEAD.
+local function Needed(q)
+    if q.requiredLevel then return q.requiredLevel end
+    return (q.questLevel or 0) - LEVEL_AHEAD
+end
+
+-- The level from which a quest can be taken, while that is above the player's (the preview shows such
+-- quests: the list says "from level X"); nil when it can be taken now or the level is unknown.
+function Boost.NeedsLevel(q)
+    local ok, level = pcall(UnitLevel, "player")
+    if not q or not ok or (issecretvalue and issecretvalue(level)) or type(level) ~= "number" then return nil end
+    local need = Needed(q)
+    return need > level and need or nil
+end
+
+-- The preview (Ahead) moves the player's level up.
 function Boost.TooHigh(q, level)
     if not level or not q then return false end
-    level = level + Boost.Ahead()
-    if q.requiredLevel then return q.requiredLevel > level end
-    return (q.questLevel or 0) > level + LEVEL_AHEAD
+    return Needed(q) > level + Boost.Ahead()
 end
 
 local function Service() return Sendit.Service("upgrade") end

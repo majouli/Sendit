@@ -243,31 +243,31 @@ local dialog = {
         "Ячейки", "Все", "Ни одной", "Оружие", "Левая рука / щит", "Дальний бой",
         "· %d предметов сервер не прислал (/sq boost)", "%d задание с улучшением не менее %s %%" },
 }
--- Right click "continue the chain" (Track.lua).
-local trackKeys = { "rightTrack", "trackLog", "trackGiver", "trackNoPin", "trackDone", "trackNone",
-    "trackTurnIn", "trackTarget", "chainLine", "itemCount" }
+-- Pins, chain line and the right click hint (Track.lua, Window.lua).
+local trackKeys = { "rightTrack", "trackGiver", "trackDone", "trackTurnIn", "trackTarget", "chainLine", "itemCount" }
 local track = {
-    enUS = { "Right click: map pins and chain", "Tracking: %s", "Map pin on the quest giver: %s",
-        "%s is next - its quest giver's position is not known", "Chain completed", "No reachable step known for you",
+    enUS = {
+        "Right click: map pins and chain", "Map pin on the quest giver: %s", "Chain completed",
         "Map pin on the turn-in: %s", "Map pin on the objective: %s", "Chain %d of %d", "%d items" },
-    deDE = { "Rechtsklick: Kartenmarker und Kette", "Verfolgt: %s", "Kartenmarker beim Questgeber: %s",
-        "Als Nächstes: %s - Position des Questgebers unbekannt", "Kette abgeschlossen", "Kein erreichbarer Schritt für dich bekannt",
-        "Kartenmarker bei der Abgabe: %s", "Kartenmarker beim Questziel: %s", "Kette %d von %d", "%d Gegenstände" },
-    frFR = { "Clic droit : repères et suite", "Suivi : %s", "Repère sur le donneur de quête : %s",
-        "Ensuite : %s - position du donneur inconnue", "Suite terminée", "Aucune étape accessible connue pour vous",
+    deDE = {
+        "Rechtsklick: Kartenmarker und Kette", "Kartenmarker beim Questgeber: %s", "Kette abgeschlossen",
+        "Kartenmarker bei der Abgabe: %s", "Kartenmarker beim Questziel: %s", "Kette %d von %d",
+        "%d Gegenstände" },
+    frFR = {
+        "Clic droit : repères et suite", "Repère sur le donneur de quête : %s", "Suite terminée",
         "Repère sur la remise : %s", "Repère sur l'objectif : %s", "Suite %d sur %d", "%d objets" },
-    esES = { "Clic derecho: marcadores y cadena", "Siguiendo: %s", "Marcador en el instructor: %s",
-        "Siguiente: %s - posición del instructor desconocida", "Cadena completada", "No se conoce ningún paso accesible para ti",
+    esES = {
+        "Clic derecho: marcadores y cadena", "Marcador en el instructor: %s", "Cadena completada",
         "Marcador en la entrega: %s", "Marcador en el objetivo: %s", "Cadena %d de %d", "%d objetos" },
-    ruRU = { "ПКМ: метки на карте и цепочка", "Отслеживается: %s", "Метка на карте у квестодателя: %s",
-        "Далее: %s - положение квестодателя неизвестно", "Цепочка завершена", "Доступный шаг для вас не найден",
+    ruRU = {
+        "ПКМ: метки на карте и цепочка", "Метка на карте у квестодателя: %s", "Цепочка завершена",
         "Метка на карте у сдачи: %s", "Метка на карте у цели: %s", "Цепочка %d из %d", "Предметов: %d" },
 }
--- Right click menu on a quest (UI/Window.lua) and the quest log's link (UI/LogLinks.lua).
+-- Right click menu (UI/Window.lua), quest route (UI/LogRoute.lua), chain guide (Guide.lua), boost preview.
 local menuKeys = { "menuChain", "menuGiver", "menuTarget", "menuTurnIn", "trackNoPlace", "routeTitle", "routeEmpty",
     "routeSetting", "routeSettingDesc", "menuGiverTurnIn",
     "stepPickUp", "stepObjective", "stepTurnIn", "guideSPF", "guideOwn", "guideNoPlace", "guideStop", "guideTitle",
-    "boostAhead" }
+    "boostAhead", "needsLevel" }
 local menu = {
     enUS = { "Follow the chain", "Show the quest giver", "Show the objective", "Show the turn-in",
         "%s: that place is not known", "Quest route", "Pick a quest in the quest log to see its chain.",
@@ -275,35 +275,35 @@ local menu = {
         "Show the quest giver (also the turn-in)",
         "Pick up: %s", "Objective: %s", "Turn in: %s", "Shortest Path Forever leads you: %d stops",
         "Following the chain: %d steps - the map pin shows the next", "No place known for the next steps",
-        "Stop following", "Steps", "Preview: also quests up to this many levels above you" },
+        "Stop following", "Steps", "Preview: also quests up to this many levels above you", "from level %d" },
     deDE = { "Kette verfolgen", "Questgeber zeigen", "Questziel zeigen", "Abgabe zeigen",
         "%s: dieser Ort ist nicht bekannt", "Questroute", "Wähle eine Quest im Questlog, um ihre Kette zu sehen.",
         "Questroute am Questlog", "Neben Blizzards Questlog: die Kette der Quest unter der Maus, mit Belohnungen.",
         "Questgeber zeigen (auch Abgabe)",
         "Annehmen: %s", "Ziel: %s", "Abgeben: %s", "Shortest Path Forever führt dich: %d Stopps",
         "Kette verfolgen: %d Schritte - der Kartenmarker zeigt den nächsten", "Für die nächsten Schritte ist kein Ort bekannt",
-        "Verfolgen beenden", "Schritte", "Vorschau: auch Quests bis so viele Level über dir" },
+        "Verfolgen beenden", "Schritte", "Vorschau: auch Quests bis so viele Level über dir", "ab Stufe %d" },
     frFR = { "Suivre la suite", "Montrer le donneur de quête", "Montrer l'objectif", "Montrer la remise",
         "%s : ce lieu est inconnu", "Route de quêtes", "Choisissez une quête dans le journal pour voir sa suite.",
         "Route de quêtes au journal", "À côté du journal de quêtes de Blizzard : la suite de la quête sous la souris, avec les récompenses.",
         "Montrer le donneur de quête (aussi la remise)",
         "Accepter : %s", "Objectif : %s", "Rendre : %s", "Shortest Path Forever vous guide : %d étapes",
         "Suite suivie : %d étapes - le repère montre la prochaine", "Aucun lieu connu pour les prochaines étapes",
-        "Arrêter le suivi", "Étapes", "Aperçu : aussi les quêtes jusqu'à ce nombre de niveaux au-dessus de vous" },
+        "Arrêter le suivi", "Étapes", "Aperçu : aussi les quêtes jusqu'à ce nombre de niveaux au-dessus de vous", "dès le niveau %d" },
     esES = { "Seguir la cadena", "Mostrar el instructor", "Mostrar el objetivo", "Mostrar la entrega",
         "%s: ese lugar no se conoce", "Ruta de misiones", "Elige una misión en el registro para ver su cadena.",
         "Ruta de misiones en el registro", "Junto al registro de misiones de Blizzard: la cadena de la misión bajo el ratón, con recompensas.",
         "Mostrar el instructor (también la entrega)",
         "Aceptar: %s", "Objetivo: %s", "Entregar: %s", "Shortest Path Forever te guía: %d paradas",
         "Siguiendo la cadena: %d pasos - el marcador muestra el siguiente", "No se conoce el lugar de los próximos pasos",
-        "Dejar de seguir", "Pasos", "Vista previa: también misiones hasta estos niveles por encima de ti" },
+        "Dejar de seguir", "Pasos", "Vista previa: también misiones hasta estos niveles por encima de ti", "desde el nivel %d" },
     ruRU = { "Следовать по цепочке", "Показать квестодателя", "Показать цель", "Показать сдачу",
         "%s: это место неизвестно", "Маршрут заданий", "Выберите задание в журнале, чтобы увидеть его цепочку.",
         "Маршрут заданий у журнала", "Рядом с журналом заданий Blizzard: цепочка задания под курсором, с наградами.",
         "Показать квестодателя (он же сдача)",
         "Взять: %s", "Цель: %s", "Сдать: %s", "Shortest Path Forever ведёт вас: остановок %d",
         "Цепочка отслеживается: шагов %d - метка показывает следующий", "Место следующих шагов неизвестно",
-        "Прекратить отслеживание", "Шаги", "Предпросмотр: также задания до стольких уровней выше вашего" },
+        "Прекратить отслеживание", "Шаги", "Предпросмотр: также задания до стольких уровней выше вашего", "с уровня %d" },
 }
 for code, values in pairs(rows) do
     tables[code] = {}

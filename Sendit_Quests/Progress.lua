@@ -13,12 +13,7 @@ local sessionCompleted = {}
 local states = {}
 local logSnapshot
 
-local function Read(fn, ...)
-    if type(fn) ~= "function" then return nil end
-    local ok, value = pcall(fn, ...)
-    if not ok or (issecretvalue and issecretvalue(value)) then return nil end
-    return value
-end
+local Read = ns.Read
 
 function P.Invalidate()
     completed, snapshot = nil, nil

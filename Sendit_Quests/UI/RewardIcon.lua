@@ -16,13 +16,7 @@ local Icon = {}
 ns.RewardIcon = Icon
 local requested = {}
 
-local function Read(fn, ...)
-    if type(fn) ~= "function" then return nil end
-    local ok, a, b, c = pcall(fn, ...)
-    if not ok then return nil end
-    if issecretvalue and (issecretvalue(a) or issecretvalue(b) or issecretvalue(c)) then return nil end
-    return a, b, c
-end
+local Read = ns.Read
 
 function Icon.Info(itemID)
     local api = C_Item or {}

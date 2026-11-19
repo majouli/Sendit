@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Sendit: GearScore
 ## Notes: GearScore for items, your character and every player you hover or inspect, with their talents. Part of the Sendit suite.
-## Version: 0.17.1
+## Version: 0.17.2
 ## X-License: GPL-3.0
 ## IconTexture: Interface\AddOns\Sendit_GearScore\Media\Icon
 ## Dependencies: Sendit

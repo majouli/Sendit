@@ -11,12 +11,7 @@ local _, ns = ...
 local R = {}
 ns.Rewards = R
 local requested = {}
-local function Read(fn, ...)
-    if type(fn) ~= "function" then return nil end
-    local ok, value = pcall(fn, ...)
-    if not ok or (issecretvalue and issecretvalue(value)) then return nil end
-    return value
-end
+local Read = ns.Read
 local function LiveItems(id, countFn, infoFn)
     local count = Read(countFn, id)
     if type(count) ~= "number" or type(infoFn) ~= "function" then return nil end

@@ -6,7 +6,7 @@
   (item names linked), what it requires (all / one of, by name and state),
   what follows, and the reward section (RewardView).
   The quest picked in the list keeps a gold edge in the chain either way.
-  Right click: continue the chain (Track.lua via Window:Track).
+  Right click: the quest menu (Window:Menu) - follow the chain, map pins.
 
   Step.Create(parent, onClick) -> step
   Step.Paint(step, id, width, open, root, state) -> height

@@ -9,6 +9,18 @@ ns.names = {}
 ns.objectives = {}
 ns.searchText = {}
 ns.searchIds = {}
+
+-- A client call that may fail or answer secret values (Forever): its values, or nil when the call
+-- fails or any of the first six values is secret. Shared by the module's files.
+function ns.Read(fn, ...)
+    if type(fn) ~= "function" then return nil end
+    local ok, a, b, c, d, e, f = pcall(fn, ...)
+    if not ok then return nil end
+    if issecretvalue then
+        for i = 1, 6 do if issecretvalue((select(i, a, b, c, d, e, f))) then return nil end end  -- nil holes too
+    end
+    return a, b, c, d, e, f
+end
 ns.module = Sendit:RegisterModule({
     key = "quests", title = "Quests", addon = "Sendit_Quests",
     icon = "Interface\\AddOns\\Sendit_Quests\\Media\\Icon",

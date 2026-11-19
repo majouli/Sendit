@@ -419,7 +419,7 @@ local function AtCursor()
     return cursor
 end
 
--- Right click on a quest: a menu - continue the chain, or a map pin on its giver /
+-- Right click on a quest: a menu - follow the chain, or a map pin on its giver /
 -- objective / turn-in (any quest, done or not). The result shows under the chain title.
 function Window:Menu(id)
     local spots, options = ns.Track.Places(id), { { "chain", L.menuChain } }
@@ -432,14 +432,14 @@ function Window:Menu(id)
     end
     if ns.Guide.Following() then options[#options + 1] = { "stop", L.guideStop } end
     W.ShowMenu(AtCursor(), options, nil, function(key)
-        if key == "chain" then self:Track(id)
+        if key == "chain" then self:Follow(id)
         elseif key == "stop" then ns.Guide.Stop() if ns.LogRoute then ns.LogRoute.Refresh() end
         else self:Notice(ns.Track.Pin(id, key)) end
     end)
 end
 
 -- Follow the chain: every known step (Guide.lua) - with Shortest Path Forever when it is there.
-function Window:Track(id)
+function Window:Follow(id)
     local text = self:Notice(ns.Guide.Start(id))
     if ns.LogRoute then ns.LogRoute.Refresh() end
     return text

@@ -10,7 +10,7 @@
   its tooltip spells out the comparison with the worn item.
   Selected: selection wash, a narrow gold edge, the title in gold. Hover is a
   highlight layer only - nothing moves. The quest ID is in the tooltip.
-  Right click: continue the chain (Track.lua via Window:Track).
+  Right click: the quest menu (Window:Menu) - follow the chain, map pins.
 
   QuestRow.Create(parent, onClick) -> row
   QuestRow.Paint(row, id, width, selected)
@@ -120,7 +120,10 @@ function Row.Paint(b, id, width, selected)
         b.boost:SetWidth(boostWidth)
     end
     b.meta:SetWidth(width - 48)
-    b.meta:SetText(DB.GroupName(DB.GroupKey(id)) .. "  ·  " .. ns.Style.Label(state))
+    local need = ns.Boost.NeedsLevel(q)  -- a preview quest: not takeable yet
+    local _, _, _, warn = S.Hex("danger")
+    b.meta:SetText(DB.GroupName(DB.GroupKey(id)) .. "  ·  " .. ns.Style.Label(state)
+        .. (need and ("  ·  " .. warn .. L.needsLevel:format(need) .. "|r") or ""))
     local has = ns.MiniRewards.Render(b.rewards, width - 48, ns.Rewards.Get(id))
     b.preview:SetShown(not has)
     if not has then
