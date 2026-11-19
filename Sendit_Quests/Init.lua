@@ -7,6 +7,8 @@
 local _, ns = ...
 ns.names = {}
 ns.objectives = {}
+ns.searchText = {}
+ns.searchIds = {}
 ns.module = Sendit:RegisterModule({
     key = "quests", title = "Quests", addon = "Sendit_Quests",
     icon = "Interface\\AddOns\\Sendit_Quests\\Media\\Icon",

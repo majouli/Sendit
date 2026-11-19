@@ -10,7 +10,7 @@ local keys = {
 local rows = {
     enUS = {
         "Quest chains",
-        "Quest name or ID…",
+        "Quest, item, NPC, text or ID (* wildcard)…",
         "No quests found.",
         "Open",
         "Quest browser",
@@ -30,7 +30,7 @@ local rows = {
     },
     deDE = {
         "Questketten",
-        "Questname oder ID…",
+        "Quest, Item, NPC, Text oder ID (* Platzhalter)…",
         "Keine Quests gefunden.",
         "Öffnen",
         "Questübersicht",
@@ -50,7 +50,7 @@ local rows = {
     },
     frFR = {
         "Suites de quêtes",
-        "Nom ou ID de quête…",
+        "Quête, objet, PNJ, texte ou ID (* joker)…",
         "Aucune quête trouvée.",
         "Ouvrir",
         "Navigateur de quêtes",
@@ -70,7 +70,7 @@ local rows = {
     },
     esES = {
         "Cadenas de misiones",
-        "Nombre o ID de misión…",
+        "Misión, objeto, PNJ, texto o ID (* comodín)…",
         "No se encontraron misiones.",
         "Abrir",
         "Buscador de misiones",
@@ -90,7 +90,7 @@ local rows = {
     },
     ruRU = {
         "Цепочки заданий",
-        "Название или ID задания…",
+        "Задание, предмет, NPC, текст или ID (* шаблон)…",
         "Задания не найдены.",
         "Открыть",
         "Поиск заданий",
@@ -247,24 +247,39 @@ local dialog = {
 local trackKeys = { "rightTrack", "trackLog", "trackGiver", "trackNoPin", "trackDone", "trackNone",
     "trackTurnIn", "trackTarget", "chainLine", "itemCount" }
 local track = {
-    enUS = { "Right click: continue the chain", "Tracking: %s", "Map pin on the quest giver: %s",
+    enUS = { "Right click: map pins and chain", "Tracking: %s", "Map pin on the quest giver: %s",
         "%s is next - its quest giver's position is not known", "Chain completed", "No reachable step known for you",
         "Map pin on the turn-in: %s", "Map pin on the objective: %s", "Chain %d of %d", "%d items" },
-    deDE = { "Rechtsklick: Kette weiterverfolgen", "Verfolgt: %s", "Kartenmarker beim Questgeber: %s",
+    deDE = { "Rechtsklick: Kartenmarker und Kette", "Verfolgt: %s", "Kartenmarker beim Questgeber: %s",
         "Als Nächstes: %s - Position des Questgebers unbekannt", "Kette abgeschlossen", "Kein erreichbarer Schritt für dich bekannt",
         "Kartenmarker bei der Abgabe: %s", "Kartenmarker beim Questziel: %s", "Kette %d von %d", "%d Gegenstände" },
-    frFR = { "Clic droit : poursuivre la suite", "Suivi : %s", "Repère sur le donneur de quête : %s",
+    frFR = { "Clic droit : repères et suite", "Suivi : %s", "Repère sur le donneur de quête : %s",
         "Ensuite : %s - position du donneur inconnue", "Suite terminée", "Aucune étape accessible connue pour vous",
         "Repère sur la remise : %s", "Repère sur l'objectif : %s", "Suite %d sur %d", "%d objets" },
-    esES = { "Clic derecho: continuar la cadena", "Siguiendo: %s", "Marcador en el instructor: %s",
+    esES = { "Clic derecho: marcadores y cadena", "Siguiendo: %s", "Marcador en el instructor: %s",
         "Siguiente: %s - posición del instructor desconocida", "Cadena completada", "No se conoce ningún paso accesible para ti",
         "Marcador en la entrega: %s", "Marcador en el objetivo: %s", "Cadena %d de %d", "%d objetos" },
-    ruRU = { "ПКМ: продолжить цепочку", "Отслеживается: %s", "Метка на карте у квестодателя: %s",
+    ruRU = { "ПКМ: метки на карте и цепочка", "Отслеживается: %s", "Метка на карте у квестодателя: %s",
         "Далее: %s - положение квестодателя неизвестно", "Цепочка завершена", "Доступный шаг для вас не найден",
         "Метка на карте у сдачи: %s", "Метка на карте у цели: %s", "Цепочка %d из %d", "Предметов: %d" },
 }
+-- Right click menu on a quest (UI/Window.lua) and the quest log's link (UI/LogLinks.lua).
+local menuKeys = { "menuChain", "menuGiver", "menuTarget", "menuTurnIn", "trackNoPlace", "logLink" }
+local menu = {
+    enUS = { "Continue the chain", "Show the quest giver", "Show the objective", "Show the turn-in",
+        "%s: that place is not known", "Sendit Quests: show this quest in its chain" },
+    deDE = { "Kette weiterverfolgen", "Questgeber zeigen", "Questziel zeigen", "Abgabe zeigen",
+        "%s: dieser Ort ist nicht bekannt", "Sendit Quests: diese Quest in ihrer Kette zeigen" },
+    frFR = { "Poursuivre la suite", "Montrer le donneur de quête", "Montrer l'objectif", "Montrer la remise",
+        "%s : ce lieu est inconnu", "Sendit Quests : montrer cette quête dans sa suite" },
+    esES = { "Continuar la cadena", "Mostrar el instructor", "Mostrar el objetivo", "Mostrar la entrega",
+        "%s: ese lugar no se conoce", "Sendit Quests: mostrar esta misión en su cadena" },
+    ruRU = { "Продолжить цепочку", "Показать квестодателя", "Показать цель", "Показать сдачу",
+        "%s: это место неизвестно", "Sendit Quests: показать задание в его цепочке" },
+}
 for code, values in pairs(rows) do
     tables[code] = {}
+    for i, key in ipairs(menuKeys) do tables[code][key] = menu[code][i] end
     for i, key in ipairs(trackKeys) do tables[code][key] = track[code][i] end
     for i, key in ipairs(boostKeys) do tables[code][key] = boost[code][i] end
     for i, key in ipairs(dialogKeys) do tables[code][key] = dialog[code][i] end

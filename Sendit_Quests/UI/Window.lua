@@ -404,9 +404,21 @@ function Window:Hide() if frame then frame:Hide() end end
 
 function Window:IsShown() return frame ~= nil and frame:IsShown() end
 
--- Right click on a quest: continue its chain; the result shows under the chain title.
-function Window:Track(id)
-    local text = ns.Track.Go(id)
+-- Right click on a quest: a menu - continue the chain, or a map pin on its giver /
+-- objective / turn-in (any quest, done or not). The result shows under the chain title.
+function Window:Menu(id, anchor)
+    local spots, options = ns.Track.Places(id), { { "chain", L.menuChain } }
+    for _, entry in ipairs({ { "g", L.menuGiver }, { "t", L.menuTarget }, { "f", L.menuTurnIn } }) do
+        if spots[entry[1]] then options[#options + 1] = entry end
+    end
+    W.ShowMenu(anchor, options, nil, function(key)
+        if key == "chain" then self:Track(id) else self:Notice(ns.Track.Pin(id, key)) end
+    end)
+end
+
+function Window:Track(id) return self:Notice(ns.Track.Go(id)) end
+
+function Window:Notice(text)
     if not frame then return text end
     frame.notice:SetText(text)
     frame.notice:Show()

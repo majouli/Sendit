@@ -1,5 +1,10 @@
 --[[
-  Database: literal name/ID search and deterministic directed chain graphs.
+  Database: search and deterministic directed chain graphs.
+  Search: words, all must match. A number matches the quest's ID or any item,
+  NPC or object ID the quest names (Data/Search.lua); * and ? are wildcards;
+  else plain text in the quest's name (suite language and English), its
+  texts, its place / category and the names of the items, NPCs and objects
+  it names (Data/Search_<locale>.lua).
   Edges point from prerequisite to dependent. OR and AND prerequisites stay
   separate in the source record; siblings in an exclusive/group list are
   not invented chain edges. Connected components include all branches.
@@ -18,9 +23,10 @@ local logTitles = {}
 -- the dropped ones show English until /reload.
 Sendit.OnReady(function()
     local keep = Sendit.Locale.Code()
-    for _, byCode in ipairs({ ns.names, ns.objectives }) do
+    for _, byCode in ipairs({ ns.names, ns.objectives, ns.searchText }) do
+        local fallback = not byCode[keep] and "enUS"  -- the linked names exist in English too
         for code in pairs(byCode) do
-            if code ~= keep then byCode[code] = nil end
+            if code ~= keep and code ~= fallback then byCode[code] = nil end
         end
     end
 end)
@@ -69,9 +75,60 @@ local function Fold(s)
     return (strlower or string.lower)(s)
 end
 
+-- The linked-name index (Data/Search*.lua) belongs to the bundled quest table.
+local bundled = ns.quests
+local hay, hayCode, hayQuests = {}, nil, nil
+local function Haystack(key)
+    local code = Sendit.Locale.Code()
+    if hayCode ~= code or hayQuests ~= ns.quests then hay, hayCode, hayQuests = {}, code, ns.quests end
+    local h = hay[key]
+    if h then return h end
+    local q = ns.quests[key] or {}
+    local texts = ns.objectives[code]
+    local linked = ns.quests == bundled and (ns.searchText[code] or ns.searchText.enUS) or {}
+    h = Fold(table.concat({ DB.Name(key), q.name or "", texts and texts[key] or "",
+        table.concat(q.objectivesText or {}, "\n"), DB.GroupName(DB.GroupKey(key)), linked[key] or "" }, "\n"))
+    hay[key] = h
+    return h
+end
+
+local function Terms(query)
+    local terms = {}
+    for word in query:gmatch("%S+") do
+        local id = tonumber(word)
+        if id and id > 0 and id % 1 == 0 then
+            terms[#terms + 1] = { id = id, text = tostring(id) }
+        elseif word:find("[%*%?]") then
+            local pattern = word:gsub("[%^%$%(%)%%%.%[%]%+%-]", "%%%0"):gsub("%*", ".*"):gsub("%?", ".")
+            terms[#terms + 1] = { pattern = pattern }
+        else
+            terms[#terms + 1] = { plain = word }
+        end
+    end
+    return terms
+end
+
+local function Matches(key, terms)
+    for _, t in ipairs(terms) do
+        local ok
+        if t.id then
+            ok = key == t.id or (ns.quests == bundled and (ns.searchIds[key] or ""):find(" " .. t.text .. " ", 1, true) ~= nil)
+                or Haystack(key):find(t.text, 1, true) ~= nil
+        elseif t.pattern then
+            ok = Haystack(key):find(t.pattern) ~= nil
+        else
+            ok = Haystack(key):find(t.plain, 1, true) ~= nil
+        end
+        if not ok then return false end
+    end
+    return true
+end
+DB.Matches = function(key, query) return Matches(key, Terms(Fold(query))) end
+
 function DB.Search(query, group, status)
     query = Fold(strtrim(query or ""))
     local id, out = tonumber(query), {}
+    local terms = Terms(query)
     logTitles = ns.Progress.Log()
     for key, quest in pairs(ns.quests) do
         local groupKey = DB.GroupKey(key)
@@ -79,9 +136,7 @@ function DB.Search(query, group, status)
         local state = status and status ~= "all" and ns.Progress.State(key)
         local inState = not state or state == status or
             (status == "unfinished" and (state == "pending" or state == "active"))
-        local matches = query == "" or key == id or Fold(DB.Name(key)):find(query, 1, true)
-            or Fold(quest.name):find(query, 1, true) or Fold(DB.GroupName(groupKey)):find(query, 1, true)
-        if inGroup and inState and matches then
+        if inGroup and inState and (query == "" or Matches(key, terms)) then
             out[#out + 1] = key
         end
     end

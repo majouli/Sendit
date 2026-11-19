@@ -10,6 +10,10 @@
   and size through zooming. Opening the map from addon code only out of
   combat.
 
+  Where the client has Blizzard's own map pin (C_Map.SetUserWaypoint), that
+  is used instead: the game's pin and, for a quest giver, its navigation
+  arrow (super-tracked waypoint). Our marker is the fallback.
+
   MapPin.Set(uiMapID, x, y, questID, kind)   kind "g" giver | "f" turn-in | "t" objective
   MapPin.Show()   open the world map on the pin's map (out of combat)
   MapPin.Clear() / MapPin.Get() -> target or nil
@@ -27,9 +31,30 @@ local function Canvas()
     return ok and canvas or nil, map
 end
 
+local function Native(map, x, y, kind)
+    local api, point = C_Map, _G["UiMapPoint"]
+    if not (api and api.SetUserWaypoint and point and point.CreateFromCoordinates) then return false end
+    if api.CanSetUserWaypointOnMap then
+        local ok, can = pcall(api.CanSetUserWaypointOnMap, map)
+        if not ok or can ~= true then return false end
+    end
+    -- A pin already on the map (ours or the player's) is replaced, never kept: clear it first and
+    -- re-point the navigation, so a second right click with the map open moves the pin.
+    return (pcall(function()
+        if api.ClearUserWaypoint then api.ClearUserWaypoint() end
+        api.SetUserWaypoint(point.CreateFromCoordinates(map, x, y))
+        local super = C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint
+        if super then
+            super(false)
+            if kind == "g" then super(true) end
+        end
+    end))
+end
+
 local function Place()
     local canvas, map = Canvas()
     if not (pin and canvas and target) then return end
+    if target.native then pin:Hide() return end
     local ok, mapID = pcall(map.GetMapID, map)
     if not ok or mapID ~= target.map then pin:Hide() return end
     local okScale, scale = pcall(map.GetCanvasScale, map)
@@ -70,6 +95,7 @@ local function Build()
     pin:Hide()
     watcher = CreateFrame("Frame", nil, canvas)
     watcher:SetSize(1, 1)
+    watcher:SetPoint("TOPLEFT")
     local wait = 0
     watcher:SetScript("OnUpdate", function(_, elapsed)
         wait = wait - elapsed
@@ -82,6 +108,7 @@ end
 
 function MapPin.Set(map, x, y, questID, kind)
     target = { map = map, x = x, y = y, quest = questID, kind = kind }
+    target.native = Native(map, x, y, kind)
     if Build() then Place() end
     return true
 end
@@ -89,6 +116,7 @@ end
 function MapPin.Get() return target end
 
 function MapPin.Clear()
+    if target and target.native and C_Map and C_Map.ClearUserWaypoint then pcall(C_Map.ClearUserWaypoint) end
     target = nil
     if pin then pin:Hide() end
 end

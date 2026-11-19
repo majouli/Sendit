@@ -2,7 +2,8 @@
   Rewards: fixed and pick-one items from the pinned reference (the client's
   own item lists replace them only for quests in the quest log - its calls
   answer 0 for any other quest), XP and money from the client's cached quest
-  data. Missing values stay unknown.
+  data; until the client answers, the reference's fixed XP figure (xpAmount)
+  stands in for XP. Missing values stay unknown.
   Aggregation deduplicates quests/items but preserves choice groups; branched
   components are explicitly catalogs, not an achievable payout promise.
 ]]
@@ -52,6 +53,7 @@ function R.Get(id)
         requested[id] = true
         if C_QuestLog and C_QuestLog.RequestLoadQuestByID then pcall(C_QuestLog.RequestLoadQuestByID, id) end
     end
+    if xp == nil and type(reward.xpAmount) == "number" then xp = reward.xpAmount end
     return { items = items or reward.items or {}, choices = choices or reward.choice or {}, money = money, xp = xp,
         known = q and q.rewards ~= nil }
 end

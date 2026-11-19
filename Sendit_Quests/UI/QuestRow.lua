@@ -72,7 +72,7 @@ function Row.Create(parent, onClick)
     b.chainRewards:SetPoint("LEFT", b.chain, "RIGHT", 8, 0)
     b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     b:SetScript("OnClick", function(self, button)
-        if button == "RightButton" then ns.Window:Track(self.questID) else onClick(self.questID) end
+        if button == "RightButton" then ns.Window:Menu(self.questID, self) else onClick(self.questID) end
     end)
     b:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")

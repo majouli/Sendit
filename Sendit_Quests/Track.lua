@@ -15,6 +15,9 @@
   Track.Allowed(id) -> bool        race / class masks of the source
   Track.Station(id) -> stationID, how ("log" | "giver") or nil, reason
   Track.Go(id) -> text for the window's notice
+  Track.Places(id) -> { g?, f?, t? } known places of a quest
+  Track.Pin(id, kind) -> notice text: a pin on that place of ANY quest, done or
+                         not (to show someone else the way)
 ]]
 local _, ns = ...
 local Track = {}
@@ -93,4 +96,12 @@ function Track.Go(id)
     if how == "log" then return InLog(sid, L, name) end
     if Pin(sid, "g") then return L.trackGiver:format(name(sid)) end
     return L.trackNoPin:format(name(sid))
+end
+
+function Track.Places(id) return ns.places and ns.places[id] or {} end
+
+function Track.Pin(id, kind)
+    local L, name = ns.L, ns.Database.Name(id)
+    if not Pin(id, kind) then return L.trackNoPlace:format(name) end
+    return (kind == "g" and L.trackGiver or kind == "f" and L.trackTurnIn or L.trackTarget):format(name)
 end

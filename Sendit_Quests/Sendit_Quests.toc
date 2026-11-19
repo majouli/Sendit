@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Sendit: Quests
 ## Notes: Search quests and explore their chains offline. Part of the Sendit suite.
-## Version: 0.14.0
+## Version: 0.15.0
 ## X-License: GPL-3.0
 ## IconTexture: Interface\AddOns\Sendit_Quests\Media\Icon
 ## Dependencies: Sendit
@@ -15,12 +15,19 @@ Data\Names_esES.lua
 Data\Names_ruRU.lua
 Data\Groups.lua
 Data\Places.lua
+Data\Search.lua
+Data\Search_enUS.lua
+Data\Search_deDE.lua
+Data\Search_frFR.lua
+Data\Search_esES.lua
+Data\Search_ruRU.lua
 Database.lua
 Progress.lua
 Rewards.lua
 Track.lua
 Boost.lua
 UI\MapPin.lua
+UI\LogLinks.lua
 UI\Style.lua
 UI\Icons.lua
 UI\GroupPicker.lua
