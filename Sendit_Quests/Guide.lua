@@ -9,7 +9,9 @@
   With Shortest Path Forever (optional, its public API
   ShortestPathForever.API.NavigateRoute): the steps with a known place go to
   it as one itinerary - pick-up stops carry questID, turn-ins handins - and
-  it plans the way (flight points, boats, portals) and moves on by itself.
+  it plans the way (flight points, boats, portals). Taking, finishing or
+  turning in a quest changes the steps: the new itinerary goes to it again
+  (only when it differs - the same owner's resubmission keeps its journey).
   Without it: Sendit's map pin on the first step; quest events move it on.
 
   Guide.Steps(id) -> { { place = { UiMapID, x, y } | nil, title,
@@ -24,7 +26,7 @@ ns.Guide = Guide
 
 local OWNER = "Sendit Quests"
 local MAX_STOPS = 64  -- Shortest Path Forever's limit per itinerary
-local following, viaSPF
+local following, viaSPF, sent
 
 local function Read(fn, ...)
     if type(fn) ~= "function" then return nil end
@@ -92,6 +94,15 @@ local function SPF()
     return type(api) == "table" and type(api.NavigateRoute) == "function" and api or nil
 end
 
+-- What an itinerary is, to tell a changed one from the same one.
+local function Signature(stops)
+    local parts = {}
+    for _, s in ipairs(stops) do
+        parts[#parts + 1] = table.concat({ s.map, s.x, s.y, s.questID or 0, table.concat(s.handins or {}, "+") }, ":")
+    end
+    return table.concat(parts, "|")
+end
+
 local function Stops(steps)
     local stops = {}
     for _, step in ipairs(steps) do
@@ -136,7 +147,7 @@ function Guide.Start(id)
         if #stops > 0 then
             local ok, started = pcall(api.NavigateRoute, OWNER, stops)
             if ok and started then
-                viaSPF = true
+                viaSPF, sent = true, Signature(stops)
                 return L.guideSPF:format(#stops)
             end
         end
@@ -150,7 +161,7 @@ function Guide.Stop()
         local api = SPF()
         if api and type(api.Cancel) == "function" then pcall(api.Cancel, OWNER) end
     end
-    following, viaSPF = nil, false
+    following, viaSPF, sent = nil, false, nil
     ns.MapPin.Clear()
 end
 
@@ -161,9 +172,20 @@ function Guide.UsesSPF() return viaSPF == true end
 local events = CreateFrame("Frame")
 for _, e in ipairs({ "QUEST_ACCEPTED", "QUEST_TURNED_IN", "QUEST_LOG_UPDATE" }) do events:RegisterEvent(e) end
 events:SetScript("OnEvent", function()
-    if not following or viaSPF then return end
+    if not following then return end
     ns.Progress.Invalidate()
     local steps = Guide.Steps(following)
+    if viaSPF then
+        local api, stops = SPF(), Stops(steps)
+        if #stops == 0 then
+            Guide.Stop()
+        elseif api and Signature(stops) ~= sent then
+            local ok, started = pcall(api.NavigateRoute, OWNER, stops)
+            if ok and started then sent = Signature(stops) end
+        end
+        if ns.LogRoute then ns.LogRoute.Refresh() end
+        return
+    end
     if #steps == 0 then
         following = nil
         ns.MapPin.Clear()

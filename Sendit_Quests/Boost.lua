@@ -7,7 +7,11 @@
   pick it.
 
   Only quests possible now: not done, your race / class (Track.Allowed), its
-  required level reached, the item usable at your level (no level gate).
+  required level reached, the item usable at your level (no level gate). A
+  quest without a known required level (some new Forever quests) counts only
+  up to its quest level = your level + LEVEL_AHEAD (assumption: the game shows
+  quests up to a few levels above you as takeable; a level-58 quest is not one
+  for a level-45 character - seen in game).
   Threshold, display and order use one number: the gain for the whole
   character in the spec's main metric - the same "+1,0 % Damage" as Upgrade's
   item tooltip. (A ratio against the worn item blew tiny differences up to
@@ -39,6 +43,14 @@ ns.Boost = Boost
 local Ratings = Sendit.ItemRatings.New()
 ns.ItemRatings = Ratings
 local active, candidates, subscribed, stale = false, {}, false, false
+local LEVEL_AHEAD = 3
+
+-- The level a quest asks for: its required level, else (unknown) its quest level - LEVEL_AHEAD.
+function Boost.TooHigh(q, level)
+    if not level or not q then return false end
+    if q.requiredLevel then return q.requiredLevel > level end
+    return (q.questLevel or 0) > level + LEVEL_AHEAD
+end
 
 local function Service() return Sendit.Service("upgrade") end
 function Boost.Available() return Service() ~= nil end
@@ -87,7 +99,7 @@ local function Candidates()
         for _, item in ipairs(r and r.choice or {}) do items[#items + 1] = item.itemId end
         if #items == 0 then scan.noItems = scan.noItems + 1
         elseif ns.Progress.State(id) == "done" then scan.done = scan.done + 1
-        elseif level and (q.requiredLevel or 0) > level then scan.level = scan.level + 1
+        elseif Boost.TooHigh(q, level) then scan.level = scan.level + 1
         elseif not ns.Track.Allowed(id) then scan.notForYou = scan.notForYou + 1
         elseif not Boost.Locked() and ns.Style.Show(id, ns.Database.Prerequisites(id)) == "locked" then
             scan.locked = scan.locked + 1

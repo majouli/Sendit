@@ -4,7 +4,9 @@
   quest's own reward bar (or, without known rewards, a one-line objective
   preview), and a chain line: how far the chain is and what all of it gives
   (mini icons, XP, money). Gear boost on: the row glows gold and shows its
-  best upgrade - "+25,3 % Damage" and the item - right of the place line;
+  best upgrade - "+25,3 % Damage" and the item - on the bottom line, right
+  (the place and reward lines keep their full width; the chain's own reward
+  icons give way there);
   its tooltip spells out the comparison with the worn item.
   Selected: selection wash, a narrow gold edge, the title in gold. Hover is a
   highlight layer only - nothing moves. The quest ID is in the tooltip.
@@ -48,10 +50,10 @@ function Row.Create(parent, onClick)
     -- gear boost: the row lights up gold with its best upgrade on the right
     b.glow = T.Fill(b, "accent", "BACKGROUND", 2, 0.10)
     b.glow:SetAllPoints()
-    -- on the place line, right: that line is short, the reward bar below stays free
+    -- on the bottom (chain) line, right: no other line loses room to it
     b.boost = CreateFrame("Frame", nil, b)
     b.boost:SetSize(1, 20)
-    b.boost:SetPoint("TOPRIGHT", -12, -26)
+    b.boost:SetPoint("BOTTOMRIGHT", -12, 5)
     b.boost:EnableMouse(true)
     b.boost.icon = ns.RewardIcon.Create(b.boost, 20)
     b.boost.icon:SetPoint("RIGHT")
@@ -117,7 +119,7 @@ function Row.Paint(b, id, width, selected)
         boostWidth = b.boost.text:GetStringWidth() + 32
         b.boost:SetWidth(boostWidth)
     end
-    b.meta:SetWidth(width - 48 - (boost and boostWidth + 12 or 0))
+    b.meta:SetWidth(width - 48)
     b.meta:SetText(DB.GroupName(DB.GroupKey(id)) .. "  ·  " .. ns.Style.Label(state))
     local has = ns.MiniRewards.Render(b.rewards, width - 48, ns.Rewards.Get(id))
     b.preview:SetShown(not has)
@@ -128,7 +130,8 @@ function Row.Paint(b, id, width, selected)
     local label, chainData = Row.ChainLine(id)
     b.chain:SetText(label)
     b.chain:SetWidth(b.chain:GetStringWidth() + 2)
-    b.chainRewards:SetShown(chainData ~= nil)
-    if chainData then ns.MiniRewards.Render(b.chainRewards, width - 56 - b.chain:GetWidth(), chainData) end
+    local room = width - 56 - b.chain:GetWidth() - (boost and boostWidth + 12 or 0)
+    b.chainRewards:SetShown(chainData ~= nil and room > 40)
+    if chainData and room > 40 then ns.MiniRewards.Render(b.chainRewards, room, chainData) end
     b:Show()
 end
