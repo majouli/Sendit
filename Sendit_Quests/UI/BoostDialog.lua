@@ -5,7 +5,10 @@
   you), which slots count (check boxes, all / none), for which spec
   Sendit Upgrade rates, and the buttons:
   Boost (start; while it runs: rate again) and End. Enter in the field =
-  Boost, Escape / a click outside closes it without starting anything.
+  Boost, Escape / a click outside closes it without starting anything. The
+  click outside is not swallowed: no screen-wide catcher - the panel listens
+  to GLOBAL_MOUSE_DOWN, so the click still reaches what it was meant for.
+  Labels wrap within the panel: nothing runs into the field or past the edge.
 
   BoostDialog.Toggle(anchor, onStart, onEnd) / Hide() / IsShown()
 ]]
@@ -13,23 +16,29 @@ local _, ns = ...
 local T, W, L = Sendit.Theme, Sendit.Widgets, ns.L
 local Dialog = {}
 ns.BoostDialog = Dialog
-local catcher, panel
-local WIDTH = 300
+local panel, anchorFrame
+local WIDTH = 320
+local FIELD = 56
 
-function Dialog.Hide() if catcher then catcher:Hide() end end
-function Dialog.IsShown() return catcher ~= nil and catcher:IsShown() end
+function Dialog.Hide() if panel then panel:Hide() end end
+function Dialog.IsShown() return panel ~= nil and panel:IsShown() end
 
 local function Build()
-    catcher = CreateFrame("Button", "SenditQuestsBoostDialog", UIParent)
-    catcher:SetAllPoints(UIParent)
-    catcher:SetFrameStrata("FULLSCREEN_DIALOG")
-    catcher:SetScript("OnClick", Dialog.Hide)
-    Sendit.ownFrames[catcher] = true
-    tinsert(UISpecialFrames, "SenditQuestsBoostDialog")
-    panel = CreateFrame("Frame", nil, catcher)
+    panel = CreateFrame("Frame", "SenditQuestsBoostDialog", UIParent)
+    panel:Hide()
     panel:SetWidth(WIDTH)
     panel:EnableMouse(true)
-    panel:SetFrameLevel(catcher:GetFrameLevel() + 5)
+    panel:SetFrameStrata("FULLSCREEN_DIALOG")
+    panel:SetClampedToScreen(true)
+    Sendit.ownFrames[panel] = true
+    tinsert(UISpecialFrames, "SenditQuestsBoostDialog")
+    -- a click anywhere else closes it - and still reaches whatever was clicked
+    panel:RegisterEvent("GLOBAL_MOUSE_DOWN")
+    panel:SetScript("OnEvent", function(self)
+        if not self:IsShown() or self:IsMouseOver() then return end
+        if anchorFrame and anchorFrame:IsMouseOver() then return end  -- the chip toggles it itself
+        Dialog.Hide()
+    end)
     T.Fill(panel, "panel", "BACKGROUND"):SetAllPoints()
     T.Border(panel, "border")
     local edge = T.Fill(panel, "accent", "ARTWORK")
@@ -43,8 +52,11 @@ local function Build()
     panel.spec:SetWidth(WIDTH - 32)
     panel.spec:SetWordWrap(true)
     panel.minLabel = T.Text(panel, "label", "text")
+    panel.minLabel:SetWidth(WIDTH - 32 - FIELD - 10)
+    panel.minLabel:SetJustifyH("LEFT")
+    panel.minLabel:SetWordWrap(true)
     panel.min = W.Search(panel, "", function() end)
-    panel.min:SetSize(56, 26)
+    panel.min:SetSize(FIELD, 26)
     panel.min:SetMaxLetters(4)  -- "0,5" / "1.5": decimals, comma or point
     panel.min:SetTextInsets(8, 22, 0, 0)
     local pct = T.Text(panel.min, "label", "textMuted")
@@ -58,6 +70,9 @@ local function Build()
     panel.lockedLabel:SetWidth(WIDTH - 32 - 48)
     panel.lockedLabel:SetWordWrap(true)
     panel.aheadLabel = T.Text(panel, "label", "text")
+    panel.aheadLabel:SetWidth(WIDTH - 32)
+    panel.aheadLabel:SetJustifyH("LEFT")
+    panel.aheadLabel:SetWordWrap(true)
     panel.ahead = W.Segmented(panel, { { 0, "0" }, { 1, "+1" }, { 2, "+2" }, { 3, "+3" }, { 5, "+5" } },
         function() return ns.Boost.Ahead() end,
         function(n)
@@ -98,10 +113,10 @@ end
 local function Layout()
     local y = 14 + panel.title:GetStringHeight() + 4 + panel.spec:GetStringHeight() + 16
     panel.minLabel:ClearAllPoints()
-    panel.minLabel:SetPoint("TOPLEFT", 16, -(y + 6))
+    panel.minLabel:SetPoint("TOPLEFT", 16, -(y + 4))
     panel.min:ClearAllPoints()
     panel.min:SetPoint("TOPRIGHT", -16, -y)
-    y = y + 26 + 6
+    y = y + math.max(26, panel.minLabel:GetStringHeight() + 8) + 6
     panel.minHint:ClearAllPoints()
     panel.minHint:SetPoint("TOPLEFT", 16, -y)
     y = y + panel.minHint:GetStringHeight() + 14
@@ -140,7 +155,7 @@ end
 
 function Dialog.Toggle(anchor, onStart, onEnd)
     if Dialog.IsShown() then Dialog.Hide() return end
-    if not catcher then Build() end
+    if not panel then Build() end
     local svc = Sendit.Service("upgrade")
     local active = ns.Boost.Active()
     panel.title:SetText(L.boost)
@@ -175,7 +190,8 @@ function Dialog.Toggle(anchor, onStart, onEnd)
     Layout()
     panel:ClearAllPoints()
     panel:SetPoint("TOPRIGHT", anchor, "BOTTOMRIGHT", 0, -6)
-    catcher:Show()
+    anchorFrame = anchor
+    panel:Show()
     T.FadeIn(panel, 0.12, 4)
     panel.min:SetFocus()
     panel.min:HighlightText()
