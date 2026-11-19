@@ -45,7 +45,8 @@ ns.defaults = {  -- profile section
 ns.acctDefaults = {  -- account section
     enabled = true,
     windows = {},         -- [1] = main; { point, x, y, w, h, minimized, selected, tabs (detached only) }
-    tabs = {},            -- own tabs: { { id, name, take } } (Core/Tabs.lua)
+    tabs = {},            -- own tabs: { { id, name, take, kinds } } (Core/Tabs.lua)
+    generalHide = {},     -- [kind / channel key] = true: switched off in General
     messenger = {},       -- { x, y, w, h, minimized }
     friendsOpen = true,   -- the friends panel is open beside the messenger
     friendFavorites = {}, -- [friend key] = true: pinned to the top of the friends list

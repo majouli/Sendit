@@ -14,8 +14,12 @@
                             AddMessage like any other)
   Mirror.Name(index)        tab label (Blizzard's default names in the suite language)
   Mirror.IsCombatLog(index) true for Blizzard's combat log window
-  Mirror.ChatType(infoID)   Blizzard's chat type ("SAY", "CHANNEL5", ...) for a
-                            line's info.id; nil when unknown
+  Mirror.ChatType(infoID, r, g, b)  Blizzard's chat type ("SAY", "CHANNEL5", ...)
+                            for a line's info.id (an id several types share:
+                            the one with the line's colour); nil when unknown
+  Mirror.ChatTypes(infoID)  every chat type with that id (sorted), or nil
+  Mirror.Refresh()          rebuild the id map (chat settings loaded / changed)
+  Mirror.SharedIDs()        { { id, { types } }, ... } ids several types share
   Mirror.SetCombatReset(fn) fn("clear") / fn("back", text, r, g, b): a combat
                             log filter change clears Blizzard's log and fills
                             it again oldest-first with BackFillMessage
@@ -81,31 +85,121 @@ end
 ---------------------------------------------------------------------------
 -- Whisper detection
 ---------------------------------------------------------------------------
--- info.id -> chat type. The ids are fixed per session: the map is built on
--- the first line and again on a miss (each miss id only once).
-local typeOf = {}
-function Mirror.ChatType(infoID)
+-- info.id -> chat types. Blizzard sets ChatTypeInfo[type].id =
+-- GetChatTypeIndex(type); several types can share one index (channels,
+-- related types), so an id may stand for more than one type. Then the
+-- line's colour decides (Blizzard adds it with info.r, g, b of the exact
+-- type). The map is built on the first line and again on a miss (each
+-- miss id only once).
+-- Every ChatTypeInfo key (ChatTypeInfoConstants.lua + Mainline override,
+-- branch forever). Looked up by name: in this client pairs(ChatTypeInfo)
+-- yields nothing (seen in game: /chat trace found no id while
+-- ChatTypeInfo.GUILD.id read 5), so the map never iterates the table alone.
+local KNOWN_TYPES = {
+    "SYSTEM", "SAY", "PARTY", "RAID", "GUILD", "OFFICER", "GUILD_DISCORD", "YELL", "WHISPER",
+    "SMART_WHISPER", "WHISPER_INFORM", "REPLY", "EMOTE", "TEXT_EMOTE", "MONSTER_SAY", "MONSTER_PARTY",
+    "MONSTER_YELL", "MONSTER_WHISPER", "MONSTER_EMOTE", "CHANNEL", "CHANNEL_JOIN", "CHANNEL_LEAVE",
+    "CHANNEL_LIST", "CHANNEL_NOTICE", "CHANNEL_NOTICE_USER", "TARGETICONS", "AFK", "DND", "IGNORED",
+    "SKILL", "LOOT", "CURRENCY", "MONEY", "OPENING", "TRADESKILLS", "PET_INFO", "COMBAT_MISC_INFO",
+    "COMBAT_XP_GAIN", "COMBAT_HONOR_GAIN", "COMBAT_FACTION_CHANGE", "BG_SYSTEM_NEUTRAL",
+    "BG_SYSTEM_ALLIANCE", "BG_SYSTEM_HORDE", "RAID_LEADER", "RAID_WARNING", "RAID_BOSS_WHISPER",
+    "RAID_BOSS_EMOTE", "QUEST_BOSS_EMOTE", "ENCOUNTER_EVENT", "FILTERED", "INSTANCE_CHAT",
+    "INSTANCE_CHAT_LEADER", "RESTRICTED", "ACHIEVEMENT", "GUILD_ACHIEVEMENT", "GUILD_ITEM_LOOTED",
+    "PARTY_LEADER", "BN_WHISPER", "BN_WHISPER_INFORM", "BN_ALERT", "BN_BROADCAST",
+    "BN_BROADCAST_INFORM", "BN_INLINE_TOAST_ALERT", "BN_INLINE_TOAST_BROADCAST",
+    "BN_INLINE_TOAST_BROADCAST_INFORM", "BN_WHISPER_PLAYER_OFFLINE", "PET_BATTLE_COMBAT_LOG",
+    "PET_BATTLE_INFO", "COMMUNITIES_CHANNEL", "VOICE_TEXT", "COLLECTED_APPEARANCE", "PING",
+}
+
+local typesOf = {}
+local function Rebuild()
+    wipe(typesOf)
+    local info = _G["ChatTypeInfo"]
+    if type(info) ~= "table" then return end
+    local seen = {}
+    local function Add(chatType)
+        if seen[chatType] then return end
+        seen[chatType] = true
+        local t = info[chatType]
+        local tid = type(t) == "table" and Safe.Num(t.id)
+        if tid then
+            typesOf[tid] = typesOf[tid] or {}
+            table.insert(typesOf[tid], chatType)
+        end
+    end
+    for _, chatType in ipairs(KNOWN_TYPES) do Add(chatType) end
+    for n = 1, _G["MAX_WOW_CHAT_CHANNELS"] or 20 do Add("CHANNEL" .. n) end
+    for chatType in pairs(info) do
+        if type(chatType) == "string" then Add(chatType) end
+    end
+    for _, list in pairs(typesOf) do table.sort(list) end
+end
+
+-- Blizzard sets the ids (GetChatTypeIndex) only once its chat settings
+-- loaded: lines Sendit backfills on load can come before that. So an unknown
+-- id is never remembered as unknown - a miss rebuilds the map (at most once
+-- a second), and so do the chat settings events (Mirror.Refresh).
+local builtAt
+local function Candidates(id)
+    if typesOf[id] == nil then
+        local now = GetTime()
+        if not builtAt or now - builtAt >= 1 then
+            builtAt = now
+            Rebuild()
+        end
+    end
+    return typesOf[id]
+end
+
+function Mirror.Refresh()
+    builtAt = GetTime()
+    Rebuild()
+end
+
+local function Near(a, b) return a and b and math.abs(a - b) < 0.004 end
+
+function Mirror.ChatType(infoID, r, g, b)
     local id = Safe.Num(infoID)
     if not id then return nil end
-    if typeOf[id] == nil then
-        local info = _G["ChatTypeInfo"]
-        if type(info) == "table" then
-            for chatType, t in pairs(info) do
-                local tid = type(t) == "table" and Safe.Num(t.id)
-                if tid then typeOf[tid] = chatType end
-            end
+    local list = Candidates(id)
+    if not list then return nil end
+    if #list == 1 then return list[1] end
+    r, g, b = Safe.Num(r), Safe.Num(g), Safe.Num(b)
+    if not (r and g and b) then return nil end
+    local info, hit = _G["ChatTypeInfo"], nil
+    for _, chatType in ipairs(list) do
+        local t = info[chatType]
+        if Near(Safe.Num(t.r), r) and Near(Safe.Num(t.g), g) and Near(Safe.Num(t.b), b) then
+            if hit then return nil end  -- same colour too: undecidable
+            hit = chatType
         end
-        if typeOf[id] == nil then typeOf[id] = false end
     end
-    return typeOf[id] or nil
+    return hit
+end
+
+-- Every chat type with this id (sorted), or nil.
+function Mirror.ChatTypes(infoID)
+    local id = Safe.Num(infoID)
+    return id and Candidates(id) or nil
+end
+
+-- Ids shared by several chat types: { { id, { types } }, ... } (/chat ids).
+function Mirror.SharedIDs()
+    Rebuild()
+    local out = {}
+    for id, list in pairs(typesOf) do
+        if #list > 1 then out[#out + 1] = { id, list } end
+    end
+    table.sort(out, function(x, y) return x[1] < y[1] end)
+    return out
 end
 
 -- The line's event ("CHAT_MSG_LOOT", ...): the event argument when the
 -- client passes one, else derived from the chat type id.
-local function EventOf(infoID, event)
+local function EventOf(infoID, event, r, g, b)
     local e = Safe.Str(event)
     if e then return e end
-    local chatType = Mirror.ChatType(infoID)
+    local chatType = Mirror.ChatType(infoID, r, g, b)
     return chatType and ("CHAT_MSG_" .. chatType) or nil
 end
 Mirror._EventOf = EventOf
@@ -119,7 +213,7 @@ local sink
 local buffer = {}  -- lines before the sink exists: { index, text, r, g, b, whisper, event, infoID }
 
 local function Forward(index, text, r, g, b, infoID, event)
-    event = EventOf(infoID, event)
+    event = EventOf(infoID, event, r, g, b)
     local whisper = IsWhisper(event)
     if sink then
         sink(index, text, r, g, b, whisper, event, infoID)
@@ -296,7 +390,9 @@ end
 
 ns.OnReady(function()
     Sweep()
-    local function Again() if ns.active then Mirror.HookAll(); Mirror.Hush() end end
+    Mirror.Refresh()
+    ns.Listen("UPDATE_CHAT_COLOR", Mirror.Refresh)
+    local function Again() if ns.active then Mirror.Refresh(); Mirror.HookAll(); Mirror.Hush() end end
     ns.Listen("UPDATE_CHAT_WINDOWS", Again)
     ns.Listen("UPDATE_FLOATING_CHAT_WINDOWS", Again)
     ns.Listen("PLAYER_ENTERING_WORLD", Again)

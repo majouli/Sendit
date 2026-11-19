@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Sendit: Chat
 ## Notes: A calm, reliable chat: movable windows, detachable tabs, and whispers in one messenger window. Part of the Sendit suite.
-## Version: 0.13.53
+## Version: 0.13.62
 ## X-License: GPL-3.0
 ## IconTexture: Interface\Icons\INV_Letter_15
 ## Dependencies: Sendit
@@ -25,6 +25,7 @@ Core\Whispers.lua
 Core\Friends.lua
 Core\History.lua
 Core\Mentions.lua
+Core\ChatKinds.lua
 Core\Tabs.lua
 UI\Theme.lua
 UI\Widgets.lua
@@ -32,6 +33,7 @@ UI\CopyBox.lua
 UI\TabDrag.lua
 UI\ChatWindow.lua
 UI\ChatLines.lua
+UI\ChatColors.lua
 UI\TabEditor.lua
 UI\CombatFilters.lua
 UI\LootCards.lua
@@ -44,4 +46,5 @@ UI\Messenger.lua
 UI\FriendsPanel.lua
 UI\WhisperToasts.lua
 Core\Probe.lua
+Core\Trace.lua
 Core\Commands.lua

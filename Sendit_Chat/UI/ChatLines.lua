@@ -1,7 +1,7 @@
 --[[
   ChatLines: the line flow into Sendit Chat's tabs.
 
-  Blizzard's mirrored line (Core/Mirror.lua) -> loot style, short channels,
+  Blizzard's mirrored line (Core/Mirror.lua; blank ones dropped) -> loot style, short channels,
   spell links, mentions, links -> the tab (own tabs may take it out of
   General, Core/Tabs.lua) -> remembered (Core/History.lua) -> unread dot
   (Windows.Arrived). Combat log lines are shown as they come: not kept, no
@@ -41,17 +41,39 @@ local function Show(index, text, r, g, b)
 end
 
 function ChatLines.OnLine(index, text, r, g, b, whisper, event, infoID)
+    local trace = ns.Trace.active and function(outcome) ns.Trace.Line(index, infoID, event, text, outcome) end
     if Mirror.IsCombatLog(index) then
         SMF(index):AddMessage(text, r, g, b)
         ns.Windows.Arrived(index, true)
+        -- chat lines Blizzard puts into its combat log (experience, ...) reach own tabs too
+        local targets = Tabs.Route(index, infoID, event, text, r, g, b)
+        for _, i in ipairs(targets or {}) do
+            if i ~= index then Show(i, text, r, g, b) end
+        end
+        if trace then trace("combatlog " .. table.concat(targets or {}, ",")) end
         return
     end
-    if whisper and ns.db.splitWhispers and not Safe.IsSecret(text) then return end
+    if whisper and ns.db.splitWhispers and not Safe.IsSecret(text) then
+        if trace then trace("messenger") end
+        return
+    end
+    -- Blank lines: this client adds empty yellow system lines in bursts
+    -- (seen in cities, up to ten in a row); they pushed the real lines out
+    -- of view and the tab looked empty.
+    local plain = Safe.Str(text)
+    if plain and not plain:find("%S") then
+        if trace then trace("blank") end
+        return
+    end
     local shown = ns.Loot.Style(text, event)
-    if shown == false then return end  -- summed up elsewhere (loot rolls)
+    if shown == false then
+        if trace then trace("rolls") end
+        return
+    end  -- summed up elsewhere (loot rolls)
     if ns.db.shortChannels then shown = Links.ShortChannels(shown) end
     shown = Links.Decorate((Mentions.Apply(ns.SpellLinks.Restore(shown))))
-    local targets = Tabs.Route(index, infoID)
+    local targets = Tabs.Route(index, infoID, event, text, r, g, b)
+    if trace then trace(targets and table.concat(targets, ",") or ("own " .. index)) end
     if not targets then
         Show(index, shown, r, g, b)
         return

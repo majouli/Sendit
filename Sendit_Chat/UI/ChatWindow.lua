@@ -215,7 +215,9 @@ function Win:TabMenu(button)
         items[#items + 1] = { L.DOCK, function() Windows.Move(index, 1) end }
     end
     items[#items + 1] = { L.COPY_TEXT, function() ns.ChatLines.Copy(index) end }
-    if Tabs.Get(index) then
+    if index == 1 then
+        items[#items + 1] = { L.GENERAL_SETTINGS, function() ns.TabEditor.Open(1) end }
+    elseif Tabs.Get(index) then
         items[#items + 1] = { L.EDIT_TAB, function() ns.TabEditor.Open(index) end }
         items[#items + 1] = { L.DELETE_TAB, function() Windows.DeleteTab(index) end }
     end

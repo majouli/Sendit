@@ -1,54 +1,82 @@
 --[[
   Tabs: the tab list - Blizzard's mirrored chat windows plus Sendit Chat's
-  own tabs (a name and the channels / message kinds it takes).
+  own tabs, and what General and each own tab show (as Blizzard's chat
+  settings: message kinds, Core/ChatKinds.lua, and channels).
 
   Why own tabs: a new Blizzard chat window needs FCF_OpenNewWindow, which
   run from addon code writes the chat frames' fields tainted (taint:
-  never write Blizzard's chat frames). Own tabs only sort lines Blizzard already added to its main
-  window (ChatFrame1): by the line's chat type id (Blizzard's info.id, a
-  plain number; channels have one id per channel number), never by the text
-  (secret in chat lockdown). A line an own tab takes leaves General; two own
-  tabs may take the same line.
+  never write Blizzard's chat frames). Own tabs only sort lines Blizzard already added to
+  its windows (General, the combat log, ...): by the line's kind (its event, its
+  channel link or Blizzard's info.id), never by its words (secret in chat
+  lockdown). So a tab can only show what one of Blizzard's windows receives
+  (Blizzard's defaults put experience into the combat log, not General).
+  As in Blizzard's client a line shows in every tab that takes it: General shows everything except the kinds switched off there.
 
-  Saved in ns.acct.tabs = { { id, name, take = { [key] = label } } }; key =
-  a group ("say", "guild", "group", "loot", "system") or "channel:<name>"
-  (channel name without the zone part, lower case - the number changes).
-  An own tab's index is OWN_BASE + id, above Blizzard's window indices.
+  Saved in ns.acct.tabs = { { id, name, take = { [key] = label } } } and
+  ns.acct.generalHide = { [key] = true }; key = a kind ("SAY", "LOOT", ...)
+  or "channel:<name>" (channel name without the zone part, lower case - the
+  number changes). An own tab's index is OWN_BASE + id, above Blizzard's
+  window indices. Tabs saved before the kinds (keys "say", "guild", "group",
+  "loot", "system", lines left General) are converted once: their kinds,
+  hidden in General.
 
   Tabs.All()                 Blizzard indices (Mirror.Indices) + own indices
   Tabs.Name(index)           tab label
   Tabs.Get(index)            own tab definition or nil
-  Tabs.Route(index, infoID)  own tab indices that take the line, or nil (= index)
-  Tabs.Choices()             { { key, label }, ... } groups, then joined channels
-                             (GetChannelName per number, as the routing reads them)
-  Tabs.Save(index|nil, name, take) -> index   create / change an own tab
+  Tabs.Route(index, infoID, event, text, r, g, b)  tab indices that show a line
+                             of Blizzard window index (may be empty), or nil (= index)
+  Tabs.KeyFor(infoID, event, text, r, g, b)  the line's kind / channel key (Core/Trace.lua)
+  Tabs.Channels(take)        { { key, label }, ... } joined channels (GetChannelName
+                             per number, as the routing reads them), then
+                             channels in take the player has left
+  Tabs.ChannelType(key)      "CHANNEL<n>" of a joined channel (its colour), or nil
+  Tabs.Take(index)           copy of what the tab shows: { [key] = label }
+                             (General: every kind and channel not hidden)
+  Tabs.Save(index|nil, name, take) -> index   create / change a tab (1 = General)
   Tabs.Delete(index)
 ]]
 local _, ns = ...
-local Safe, Mirror, L = ns.Safe, ns.Mirror, ns.L
+local Safe, Mirror, ChatKinds = ns.Safe, ns.Mirror, ns.ChatKinds
 
 local Tabs = {}
 ns.Tabs = Tabs
 
 local OWN_BASE = 100
 
-local GROUPS = {
-    { key = "say",    label = "TAB_SAY",    types = { "SAY", "YELL", "EMOTE", "TEXT_EMOTE" } },
-    { key = "guild",  label = "TAB_GUILD",  types = { "GUILD", "OFFICER", "GUILD_ACHIEVEMENT" } },
-    { key = "group",  label = "TAB_GROUP",  types = { "PARTY", "PARTY_LEADER", "RAID", "RAID_LEADER",
-                                                      "RAID_WARNING", "INSTANCE_CHAT", "INSTANCE_CHAT_LEADER" } },
-    { key = "loot",   label = "TAB_LOOT",   types = { "LOOT", "MONEY", "CURRENCY" } },
-    { key = "system", label = "TAB_SYSTEM", types = { "SYSTEM", "SKILL", "COMBAT_FACTION_CHANGE",
-                                                      "COMBAT_XP_GAIN", "COMBAT_HONOR_GAIN", "ACHIEVEMENT" } },
+-- Keys of tabs saved before the kinds existed -> kinds.
+local OLD = {
+    say    = { "SAY", "YELL", "EMOTE" },
+    guild  = { "GUILD", "OFFICER", "GUILD_ACHIEVEMENT" },
+    group  = { "PARTY", "PARTY_LEADER", "RAID", "RAID_LEADER", "RAID_WARNING", "INSTANCE_CHAT", "INSTANCE_CHAT_LEADER" },
+    loot   = { "LOOT", "MONEY", "CURRENCY" },
+    system = { "SYSTEM", "SKILL", "COMBAT_FACTION_CHANGE", "COMBAT_XP_GAIN", "COMBAT_HONOR_GAIN", "ACHIEVEMENT" },
 }
-local groupOf = {}
-for _, g in ipairs(GROUPS) do for _, t in ipairs(g.types) do groupOf[t] = g.key end end
+
+local function Hidden()
+    ns.acct.generalHide = ns.acct.generalHide or {}
+    return ns.acct.generalHide
+end
+
+local function Convert(t)
+    local take = {}
+    for key, label in pairs(t.take or {}) do
+        if OLD[key] then
+            for _, kind in ipairs(OLD[key]) do take[kind] = ChatKinds.Label(kind); Hidden()[kind] = true end
+        else
+            take[key] = label
+            if key:match("^channel:") then Hidden()[key] = true end
+        end
+    end
+    t.take, t.kinds = take, true
+end
 
 local function List()
     ns.acct.tabs = ns.acct.tabs or {}
+    for _, t in ipairs(ns.acct.tabs) do
+        if not t.kinds then Convert(t) end
+    end
     return ns.acct.tabs
 end
-
 function Tabs.Get(index)
     if type(index) ~= "number" or index <= OWN_BASE then return nil end
     for _, t in ipairs(List()) do
@@ -70,6 +98,7 @@ function Tabs.Name(index)
 end
 
 ---------------------------------------------------------------------------
+---------------------------------------------------------------------------
 -- Routing
 ---------------------------------------------------------------------------
 -- "Trade - City" -> "channel:trade", "Trade" (the zone part changes).
@@ -89,23 +118,77 @@ local function Channel(n)
     return ChannelKey(name)
 end
 
-local function KeyOf(infoID)
-    local chatType = Mirror.ChatType(infoID)
-    if not chatType then return nil end
-    local n = chatType:match("^CHANNEL(%d+)$")
-    if n then return (Channel(tonumber(n))) end
-    return groupOf[chatType]
+local function MaxChannels() return _G["MAX_WOW_CHAT_CHANNELS"] or 20 end
+
+-- A channel line carries its channel link: "|Hchannel:channel:2|h[2. Trade - City]|h".
+-- The number gives the key (as the editor reads it); the link's name when
+-- the client does not know the number (any more).
+local function LinkedChannel(text)
+    text = Safe.Str(text)
+    if not text then return nil end
+    local n, name = text:match("|H[Cc]hannel:[Cc][Hh][Aa][Nn][Nn][Ee][Ll]:(%d+)|h%[%d+%.%s*([^%]]+)%]|h")
+    if not n then return nil end
+    return Channel(tonumber(n)) or (ChannelKey(name))
 end
 
-function Tabs.Route(index, infoID)
-    if index ~= 1 or #List() == 0 then return nil end
-    local key = KeyOf(infoID)
+-- The line's kind or channel key:
+-- 1. its event ("CHAT_MSG_GUILD"; Blizzard passes it with player messages
+--    only, and a channel message's event has no number),
+-- 2. channels: the channel link in the text ("|Hchannel:channel:2|h"),
+-- 3. its type id (shared ids: the line's colour, Mirror.ChatType; still
+--    open: the kind every type with that id belongs to).
+local function KeyOf(infoID, event, text, r, g, b)
+    local e = Safe.Str(event)
+    local chatType = e and e ~= "CHAT_MSG_CHANNEL" and e:match("^CHAT_MSG_(.+)$")
+    if chatType then
+        -- Mirror names a line without an event by its type: "CHAT_MSG_CHANNEL2"
+        local n = chatType:match("^CHANNEL(%d+)$")
+        if n then return LinkedChannel(text) or (Channel(tonumber(n))) end
+        return ChatKinds.KeyOf(chatType)
+    end
+    local linked = LinkedChannel(text)
+    if linked then return linked end
+    chatType = Mirror.ChatType(infoID, r, g, b)
+    if chatType then
+        local n = chatType:match("^CHANNEL(%d+)$")
+        if n then return (Channel(tonumber(n))) end
+        return ChatKinds.KeyOf(chatType)
+    end
+    local key
+    for _, t in ipairs(Mirror.ChatTypes(infoID) or {}) do
+        local k = ChatKinds.KeyOf(t)
+        if not k or (key and k ~= key) then return nil end
+        key = k
+    end
+    return key
+end
+
+function Tabs.KeyFor(infoID, event, text, r, g, b) return KeyOf(infoID, event, text, r, g, b) end
+
+-- A line Blizzard adds to two of its windows (General and the combat log
+-- both take loot, say) arrives twice in the same frame: own tabs take it once.
+local recent, recentAt = {}, nil
+local function Fresh(text, index)
+    local plain = Safe.Str(text)
+    if not plain then return true end
+    local now = GetTime()
+    if recentAt ~= now then wipe(recent); recentAt = now end
+    local src = recent[plain]
+    if src and src ~= index then return false end
+    recent[plain] = index
+    return true
+end
+
+function Tabs.Route(index, infoID, event, text, r, g, b)
+    local list, hidden = List(), Hidden()
+    if #list == 0 and (index ~= 1 or next(hidden) == nil) then return nil end
+    local key = KeyOf(infoID, event, text, r, g, b)
     if not key then return nil end
-    local out
-    for _, t in ipairs(List()) do
-        if t.take and t.take[key] then
-            out = out or {}
-            out[#out + 1] = OWN_BASE + t.id
+    local out = {}
+    if index ~= 1 or not hidden[key] then out[1] = index end
+    if Fresh(text, index) then
+        for _, t in ipairs(list) do
+            if t.take and t.take[key] then out[#out + 1] = OWN_BASE + t.id end
         end
     end
     return out
@@ -114,26 +197,74 @@ end
 ---------------------------------------------------------------------------
 -- Editing
 ---------------------------------------------------------------------------
-function Tabs.Choices()
-    local out = {}
-    for _, g in ipairs(GROUPS) do out[#out + 1] = { g.key, L[g.label] } end
-    local seen = {}
-    for n = 1, _G["MAX_WOW_CHAT_CHANNELS"] or 20 do
+function Tabs.Channels(take)
+    local out, seen = {}, {}
+    for n = 1, MaxChannels() do
         local key, label = Channel(n)
         if key and not seen[key] then
             seen[key] = true
-            out[#out + 1] = { key, label, channel = true }
+            out[#out + 1] = { key, label }
+        end
+    end
+    for key, label in pairs(take or {}) do
+        if not seen[key] and key:match("^channel:") then
+            seen[key] = true
+            out[#out + 1] = { key, label }
         end
     end
     return out
 end
 
+function Tabs.ChannelType(key)
+    for n = 1, MaxChannels() do
+        if Channel(n) == key then return "CHANNEL" .. n end
+    end
+    return nil
+end
+
+function Tabs.Take(index)
+    local take = {}
+    if index == 1 then
+        local hidden = Hidden()
+        for _, kind in ipairs(ChatKinds.All()) do
+            if not hidden[kind] then take[kind] = ChatKinds.Label(kind) end
+        end
+        for _, c in ipairs(Tabs.Channels()) do
+            if not hidden[c[1]] then take[c[1]] = c[2] end
+        end
+        return take
+    end
+    local t = Tabs.Get(index)
+    for key, label in pairs(t and t.take or {}) do take[key] = label end
+    return take
+end
+
+-- General: everything not taken is hidden; a channel the player has left
+-- stays as it was.
+local function SaveGeneral(take)
+    local hidden, old = {}, Hidden()
+    for _, kind in ipairs(ChatKinds.All()) do
+        if not take[kind] then hidden[kind] = true end
+    end
+    local joined = {}
+    for _, c in ipairs(Tabs.Channels()) do
+        joined[c[1]] = true
+        if not take[c[1]] then hidden[c[1]] = true end
+    end
+    for key in pairs(old) do
+        if key:match("^channel:") and not joined[key] and not take[key] then hidden[key] = true end
+    end
+    ns.acct.generalHide = hidden
+    return 1
+end
+
 function Tabs.Save(index, name, take)
+    if index == 1 then return SaveGeneral(take) end
     local t = Tabs.Get(index)
     if not t then
         local id = 1
         for _, o in ipairs(List()) do if o.id >= id then id = o.id + 1 end end
-        t = { id = id }
+        t = { id = id, kinds = true }
         List()[#List() + 1] = t
     end
     t.name = name
