@@ -32,7 +32,7 @@ actually recalculate your character.
 | **GearScore** | GearScore on items, on your character and on every player you hover or inspect, plus the inspected player's talents. |
 | **Harvest** | Tooltip lines for what disenchanting, skinning, mining and herbalism yield, with auction house prices. The **Dribbler** turns disenchanting into a gold run: buy disenchantables at the auction house sorted by profit, disenchant them with one click each and see what the session earned. |
 | **Upgrade** | Rates items by recalculating your character: how much more damage, healing or survival an item really gives you - for every class and its talent trees. Alt-click any item to compare it with yours. |
-| **Quests** | Search quests and explore their chains offline. |
+| **Quests** | Over 6,000 WoW Forever quests offline, kept current from QuestieDB and NorgannonDB: search every text, item, NPC or ID (with wildcards), explore whole chains with their rewards, right-click any quest - done or not - for a map pin on its giver, objective or turn-in, and jump in from Blizzard's quest log. |
 | **Dungeons** | Dungeons, their bosses and what they drop - with how much each item would improve your gear. |
 | **Talents** | A leveling talent route for every class tree, right in Blizzard's talent window: the next talent glows, free points are numbered in buying order, a fold-out timeline lists all 51 points (hover a row to find its talent). The route adapts when you go your own way. |
 
