@@ -25,6 +25,8 @@
   Boost.Available() / Start() / Stop() / Active() / Stale()
   Boost.Min() / SetMin(pct)  the threshold (account layout: boostMin), default 1,
                              decimals allowed (0,5)
+  Boost.Ahead() / SetAhead(n)  preview: also quests (and their items) up to n
+                             levels above you (account layout: boostAhead), default 0
   Boost.Locked() / SetLocked(on)  also quests of a chain whose prerequisites are
                              still open (account layout: boostLocked), default on
   Boost.SLOTS, Boost.Slot(key) / SetSlot(key, on) / SlotLabel(group)
@@ -45,9 +47,20 @@ ns.ItemRatings = Ratings
 local active, candidates, subscribed, stale = false, {}, false, false
 local LEVEL_AHEAD = 3
 
--- The level a quest asks for: its required level, else (unknown) its quest level - LEVEL_AHEAD.
+function Boost.Ahead()
+    local v = ns.module.db and tonumber(ns.module.db.boostAhead)
+    return v and math.max(0, math.min(10, math.floor(v))) or 0
+end
+
+function Boost.SetAhead(n)
+    if ns.module.db then ns.module.db.boostAhead = math.max(0, math.min(10, math.floor(tonumber(n) or 0))) end
+end
+
+-- The level a quest asks for: its required level, else (unknown) its quest level - LEVEL_AHEAD;
+-- the preview (Ahead) moves the player's level up.
 function Boost.TooHigh(q, level)
     if not level or not q then return false end
+    level = level + Boost.Ahead()
     if q.requiredLevel then return q.requiredLevel > level end
     return (q.questLevel or 0) > level + LEVEL_AHEAD
 end
@@ -197,8 +210,13 @@ local function Compute(id)
     local items = active and candidates[id]
     if not items or ns.Progress.State(id) == "done" then return false end  -- turned in meanwhile
     local min, best = Boost.Min(), nil
+    local ahead, level = Boost.Ahead(), Level()
     for _, itemID in ipairs(items) do
         local r = Ratings.Get(itemID)
+        if not r and ahead > 0 and level then  -- preview: an item for a level you reach within Ahead counts
+            local g = Ratings.Gated(itemID)
+            if g and g.gate and g.gate <= level + ahead then r = g end
+        end
         if r and r.pct >= min and Wanted(r.equipLoc) and (not best or r.pct > best.pct) then
             best = { pct = r.pct, slotPct = r.slotPct, itemID = itemID, label = r.label, equipLoc = r.equipLoc,
                 secondaryPct = r.secondaryPct, secondaryLabel = r.secondaryLabel }

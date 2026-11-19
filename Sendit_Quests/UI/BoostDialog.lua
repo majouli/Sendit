@@ -1,7 +1,8 @@
 --[[
   BoostDialog: what the gear boost needs, asked once - a small panel under
   the boost chip. "At least [5] % stronger", "also quests of a chain that are
-  still locked", which slots count (check boxes, all / none), for which spec
+  still locked", the preview (quests up to 0 / +1 / +2 / +3 / +5 levels above
+  you), which slots count (check boxes, all / none), for which spec
   Sendit Upgrade rates, and the buttons:
   Boost (start; while it runs: rate again) and End. Enter in the field =
   Boost, Escape / a click outside closes it without starting anything.
@@ -56,6 +57,15 @@ local function Build()
     panel.lockedLabel = T.Text(panel, "label", "text")
     panel.lockedLabel:SetWidth(WIDTH - 32 - 48)
     panel.lockedLabel:SetWordWrap(true)
+    panel.aheadLabel = T.Text(panel, "label", "text")
+    panel.ahead = W.Segmented(panel, { { 0, "0" }, { 1, "+1" }, { 2, "+2" }, { 3, "+3" }, { 5, "+5" } },
+        function() return ns.Boost.Ahead() end,
+        function(n)
+            ns.Boost.SetAhead(n)
+            if ns.Boost.Active() then ns.Boost.Start() end  -- other quests count now: rate again
+            if ns.Window then ns.Window:BoostChanged() end
+        end)
+    panel.ahead:SetWidth(WIDTH - 32)
     -- slots: a grid of small check boxes with the client's slot names
     panel.slotTitle = T.Text(panel, "label", "text")
     panel.slotChecks = {}
@@ -100,6 +110,12 @@ local function Layout()
     panel.lockedLabel:ClearAllPoints()
     panel.lockedLabel:SetPoint("TOPLEFT", 16, -(y + 3))
     y = y + math.max(20, panel.lockedLabel:GetStringHeight()) + 16
+    panel.aheadLabel:ClearAllPoints()
+    panel.aheadLabel:SetPoint("TOPLEFT", 16, -y)
+    y = y + panel.aheadLabel:GetStringHeight() + 6
+    panel.ahead:ClearAllPoints()
+    panel.ahead:SetPoint("TOPLEFT", 16, -y)
+    y = y + 28 + 16
     panel.slotTitle:ClearAllPoints()
     panel.slotTitle:SetPoint("TOPLEFT", 16, -y)
     panel.noSlots:ClearAllPoints()
@@ -134,6 +150,8 @@ function Dialog.Toggle(anchor, onStart, onEnd)
     panel.minHint:SetText(L.boostMinHint)
     panel.lockedLabel:SetText(L.boostLocked)
     panel.locked:Refresh()
+    panel.aheadLabel:SetText(L.boostAhead)
+    if panel.ahead.Refresh then panel.ahead:Refresh() end
     panel.slotTitle:SetText(L.boostSlots)
     for _, check in ipairs(panel.slotChecks) do
         check.label:SetText(ns.Boost.SlotLabel(check.group))

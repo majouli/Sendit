@@ -12,7 +12,7 @@ ns.searchIds = {}
 ns.module = Sendit:RegisterModule({
     key = "quests", title = "Quests", addon = "Sendit_Quests",
     icon = "Interface\\AddOns\\Sendit_Quests\\Media\\Icon",
-    accountDefaults = { width = 960, height = 720, boostMin = 1, boostLocked = true, route = true },
+    accountDefaults = { width = 960, height = 720, boostMin = 1, boostLocked = true, boostAhead = 0, route = true },
 })
 SLASH_SENDITQUESTS1 = "/sq"
 -- /sq boost: why the gear boost list looks as it does (diagnostics, English)
