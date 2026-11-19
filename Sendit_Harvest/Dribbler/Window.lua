@@ -11,6 +11,7 @@ ns.DribblerWindow = Window
 local WIDTH, HEIGHT = 480, 640
 local PAD, HEADER, TILE_H, TOOL_H, MATS_H, FOOTER = 16, 60, 56, 30, 58, 64
 local MAT_SLOTS = 7
+local MATS_X, MAT_ICON, MAT_GAP = 136, 22, 14
 local ICON = "Interface\\Icons\\INV_Enchant_Disenchant"
 
 local frame
@@ -27,11 +28,30 @@ function Window.BracketIndex()
     return V.IndexOf(UnitLevel("player") or 25) or 3
 end
 
+function Window.KindIndex()
+    local d = Store()
+    return d and V.KINDS[d.kind or 1] and d.kind or 1
+end
+
+local function Search()
+    Market.Query(Window.BracketIndex(), Window.KindIndex())
+    Window.Refresh()
+end
+
 local function SetBracket(i)
     local d = Store()
     if d then d.bracket = i end
-    Market.Query(i)
-    Window.Refresh()
+    Search()
+end
+
+local function SetKind(i)
+    local d = Store()
+    if d then d.kind = i end
+    Search()
+end
+
+local function KindLabel(i)
+    return ({ L.dribKindAll, L.dribKindArmor, L.dribKindWeapon })[i]
 end
 
 local function Tile(parent)
@@ -50,7 +70,7 @@ local function MatSlot(parent)
     local b = CreateFrame("Button", nil, parent)
     b:SetSize(52, 40)
     b.icon = b:CreateTexture(nil, "ARTWORK")
-    b.icon:SetSize(22, 22)
+    b.icon:SetSize(MAT_ICON, MAT_ICON)
     b.icon:SetPoint("TOP", 0, 0)
     b.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
     b.price = T.Text(b, "caption", "textDim")
@@ -121,7 +141,7 @@ local function ActiveBody()
         W.ShowMenu(self, options, Window.BracketIndex(), SetBracket)
     end)
     f.chip:SetPoint("TOPRIGHT", -PAD, toolY)
-    f.reload = W.Button(f, L.dribReload, function() SetBracket(Window.BracketIndex()) end)
+    f.reload = W.Button(f, L.dribReload, Search)
     f.reload:SetPoint("RIGHT", f.chip, "LEFT", -8, 0)
     f.reload:SetHeight(26)
     f.deal = W.Button(f, L.dribDeal, function() Market.Buy(Market.BestDeal()) end, "primary")
@@ -138,13 +158,14 @@ local function ActiveBody()
     f.matsTitle:SetJustifyH("LEFT")
     f.matsTitle:SetWordWrap(true)
     f.mats = {}
-    for i = 1, MAT_SLOTS do
-        local m = MatSlot(f)
-        m:SetPoint("TOPLEFT", f.matsBg, "TOPLEFT", 136 + (i - 1) * 40, -7)
-        m:SetWidth(40)
-        f.mats[i] = m
-    end
-    local listY = matsY - MATS_H - 30
+    for i = 1, MAT_SLOTS do f.mats[i] = MatSlot(f) end
+    local listY = matsY - MATS_H - 36
+    f.kind = W.Chip(f, function(self)
+        local options = {}
+        for i = 1, #V.KINDS do options[i] = { i, KindLabel(i) } end
+        W.ShowMenu(self, options, Window.KindIndex(), SetKind)
+    end)
+    f.kind:SetPoint("BOTTOMRIGHT", f, "TOPRIGHT", -PAD, listY + 4)
     f.status = T.Text(f, "small", "textMuted")
     f.status:SetPoint("BOTTOMLEFT", f, "TOPLEFT", PAD + 2, listY + 6)
     f.status:SetJustifyH("LEFT")
@@ -215,15 +236,21 @@ local function StatusText()
 end
 
 local function PaintMats(f, index)
-    local mats = V.Mats(index)
+    local mats = V.Mats(index, Window.KindIndex())
     f.matsTitle:SetText(L.dribMats)
+    local x = MATS_X
     for i, slot in ipairs(f.mats) do
         local m = mats[i]
         slot.mat = m
         slot:SetShown(m ~= nil)
         if m then
             slot.icon:SetTexture(C_Item.GetItemIconByID(m.item) or 134400)
-            slot.price:SetText(m.price and Money(m.price) or "?")
+            slot.price:SetText(m.price and Money(m.price >= 100 and math.floor(m.price / 100 + 0.5) * 100 or m.price) or "?")
+            local w = math.max(MAT_ICON, math.ceil(slot.price:GetStringWidth() or 0)) + MAT_GAP
+            slot:ClearAllPoints()
+            slot:SetPoint("TOPLEFT", f.matsBg, "TOPLEFT", x, -7)
+            slot:SetWidth(w)
+            x = x + w
         end
     end
 end
@@ -240,6 +267,7 @@ local function PaintActive()
     T.Paint(f.tiles[3].value, s.profit >= 0 and "success" or "danger")
     local index = Window.BracketIndex()
     f.chip:SetLabel(L.dribBracket:format(V.Label(index)), true)
+    f.kind:SetLabel(KindLabel(Window.KindIndex()), Window.KindIndex() ~= 1)
     f.reload:SetEnabled(Market.IsOpen())
     local deal = Market.BestDeal()
     f.deal:SetEnabled(deal ~= nil)
@@ -291,7 +319,7 @@ end
 function Window.Start()
     if not Session.Start(GetMoney(), time()) then return end
     Window.Refresh()
-    if Market.IsOpen() then Market.Query(Window.BracketIndex()) end
+    if Market.IsOpen() then Market.Query(Window.BracketIndex(), Window.KindIndex()) end
     Window.Refresh()
 end
 
@@ -345,7 +373,7 @@ function Window.Open()
     if not frame:IsShown() then Anchor() end
     frame:Show()
     Window.Refresh()
-    if Session.Active() and Market.IsOpen() and not Market.Bracket() then Market.Query(Window.BracketIndex()) end
+    if Session.Active() and Market.IsOpen() and not Market.Bracket() then Market.Query(Window.BracketIndex(), Window.KindIndex()) end
 end
 
 function Window.Hide()
@@ -379,7 +407,8 @@ DE.OnChange(Soon)
 Sendit.OnSettingsChanged(function() if frame then Window.Refresh() end end)
 
 local events = CreateFrame("Frame")
-for _, e in ipairs({ "AUCTION_HOUSE_SHOW", "MAIL_SHOW", "PLAYER_MONEY", "PLAYER_REGEN_ENABLED" }) do
+local mailOpened = false
+for _, e in ipairs({ "AUCTION_HOUSE_SHOW", "MAIL_SHOW", "MAIL_INBOX_UPDATE", "PLAYER_MONEY", "PLAYER_REGEN_ENABLED" }) do
     pcall(events.RegisterEvent, events, e)
 end
 events:SetScript("OnEvent", function(_, event)
@@ -389,7 +418,12 @@ events:SetScript("OnEvent", function(_, event)
             if Session.Active() then Window.Open() end
         end)
     elseif event == "MAIL_SHOW" then
-        if Session.Active() then C_Timer.After(0, Window.Open) end
+        mailOpened = false
+    elseif event == "MAIL_INBOX_UPDATE" then
+        if not mailOpened and Session.Active() and Mail.Next() then
+            mailOpened = true
+            C_Timer.After(0, Window.Open)
+        end
     elseif event == "PLAYER_REGEN_ENABLED" then
         if hidePending then
             hidePending = false

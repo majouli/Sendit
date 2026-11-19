@@ -23,8 +23,8 @@ end
 function Summary.Lines(s)
     local lines = {
         { L.dribStartGold, Money(s.startMoney) },
-        { s.active and L.dribGoldNow or L.dribGoldEnd, Money(s.money) .. "  (" .. Signed(s.change) .. ")",
-          s.change >= 0 and "success" or "danger" },
+        { s.active and L.dribGoldNow or L.dribGoldEnd, Money(s.money) },
+        { L.dribChange, Signed(s.change), s.change >= 0 and "success" or "danger" },
         { L.dribSpent:format(s.bought), Money(s.spent) },
         { L.dribDisenchanted, tostring(s.disenchanted) },
     }

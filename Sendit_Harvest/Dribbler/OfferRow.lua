@@ -11,7 +11,7 @@ ns.DribblerRow = Row
 Row.HEIGHT = 46
 local ICON = 32
 local BUY_W = 86
-local PRICE_W = 104
+local PRICE_W = 84
 
 local function QualityHex(q)
     local ok, _, _, _, hex = pcall(C_Item.GetItemQualityColor, q)

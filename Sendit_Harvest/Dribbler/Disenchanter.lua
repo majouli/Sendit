@@ -51,6 +51,24 @@ local function MatCounts()
     return out
 end
 
+local function OwnedCounts()
+    local out, s = {}, Session.Current()
+    for id in pairs(s and s.owned or {}) do out[id] = C_Item.GetItemCount(id) or 0 end
+    return out
+end
+
+local function Begin(id)
+    cast = { id = id, before = MatCounts(), owned = OwnedCounts(), at = GetTime() }
+end
+
+local function UsedItem()
+    if cast.id then return cast.id end
+    for id, n in pairs(cast.owned) do
+        if (C_Item.GetItemCount(id) or 0) < n then return id end
+    end
+    return nil
+end
+
 function D.Prepare(button)
     if InCombatLockdown() then return false end
     if cast and not cast.done and GetTime() - cast.at < BUSY then return true end
@@ -59,7 +77,7 @@ function D.Prepare(button)
     button:SetAttribute("target-slot", slot)
     button:SetAttribute("type", bag and "spell" or nil)
     if not bag then return false end
-    cast = { id = id, before = MatCounts(), at = GetTime() }
+    Begin(id)
     return true
 end
 
@@ -77,7 +95,7 @@ function D.Settle()
         if GetTime() - cast.at > WAIT then cast = nil end
         return false
     end
-    Session.Disenchanted(cast.id, gained)
+    Session.Disenchanted(UsedItem(), gained)
     cast = nil
     Changed()
     return true
@@ -110,7 +128,7 @@ end
 function D.WheelActive() return wheelOwner ~= nil end
 
 local events = CreateFrame("Frame")
-for _, e in ipairs({ "UNIT_SPELLCAST_SUCCEEDED", "UNIT_SPELLCAST_FAILED", "UNIT_SPELLCAST_INTERRUPTED",
+for _, e in ipairs({ "UNIT_SPELLCAST_START", "UNIT_SPELLCAST_SUCCEEDED", "UNIT_SPELLCAST_FAILED", "UNIT_SPELLCAST_INTERRUPTED",
                      "BAG_UPDATE_DELAYED", "PLAYER_REGEN_ENABLED" }) do
     pcall(events.RegisterEvent, events, e)
 end
@@ -127,7 +145,12 @@ events:SetScript("OnEvent", function(_, event, unit, _, spellID)
         Changed()
         return
     end
-    if not ns.Plain(unit) or unit ~= "player" or not cast or not ns.Plain(spellID) or spellID ~= SPELL then return end
+    if not ns.Plain(unit) or unit ~= "player" or not ns.Plain(spellID) or spellID ~= SPELL then return end
+    if event == "UNIT_SPELLCAST_START" then
+        if Session.Active() and not (cast and not cast.done and GetTime() - cast.at < BUSY) then Begin(nil) end
+        return
+    end
+    if not cast then return end
     if event == "UNIT_SPELLCAST_SUCCEEDED" then
         cast.done, cast.at = true, GetTime()
     else

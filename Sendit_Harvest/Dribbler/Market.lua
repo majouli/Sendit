@@ -15,7 +15,6 @@ local MAX_PAGES = 6
 local MAX_RESOLVED = 30
 
 local QUALITY_FILTERS = { "UncommonQuality", "RareQuality", "EpicQuality" }
-local CLASS_FILTERS = { { classID = 4 }, { classID = 2 } }
 
 local state = { offers = {}, byKey = {} }
 local generation = 0
@@ -86,7 +85,7 @@ local function Resolve(o)
     o.link = o.link or link
     local value, priced = V.Expected(id, quality, itemLevel, classID, equipLoc)
     o.value, o.priced = value, priced
-    o.valid = value ~= nil and V.Contains(state.bracket, itemLevel)
+    o.valid = value ~= nil and V.Contains(state.bracket, itemLevel) and state.classes[classID] == true
 end
 
 local function Ingest(results)
@@ -113,7 +112,9 @@ function M.Offers()
         if o.valid then out[#out + 1] = o end
     end
     table.sort(out, function(a, b)
-        local x, y = Price(a), Price(b)
+        local x, y = M.Profit(a), M.Profit(b)
+        if x ~= y then return x > y end
+        x, y = Price(a), Price(b)
         if x ~= y then return x < y end
         return a.ks < b.ks
     end)
@@ -187,15 +188,20 @@ local function Tick(gen)
     C_Timer.After(STEP, function() Tick(gen) end)
 end
 
-function M.Query(index)
+function M.Query(index, kind)
     if not isOpen or not M.Available() or not V.Bracket(index) then return false end
     generation = generation + 1
-    state = { bracket = index, offers = {}, byKey = {}, browsing = true, pages = 0 }
+    state = { bracket = index, offers = {}, byKey = {}, browsing = true, pages = 0, classes = {} }
+    local classFilters = {}
+    for _, class in ipairs(V.Classes(kind)) do
+        state.classes[class] = true
+        classFilters[#classFilters + 1] = { classID = class }
+    end
     local minLevel, maxLevel = V.QueryLevels(index)
     sending = true
     AH.SendBrowseQuery({
         searchString = "", sorts = Sorts(), minLevel = minLevel, maxLevel = maxLevel,
-        filters = Filters(), itemClassFilters = CLASS_FILTERS,
+        filters = Filters(), itemClassFilters = classFilters,
     })
     sending = false
     local gen = generation
@@ -227,6 +233,7 @@ end
 function M.Buy(o)
     if not M.CanBuy(o) then return false end
     o.buying = true
+    o.moneyBefore = GetMoney()
     state.buying = o
     Session.Pending(o.auctionID, o)
     AH.PlaceBid(o.auctionID, o.buyout)
@@ -253,9 +260,19 @@ local function Purchased(auctionID)
     Changed()
 end
 
+local function Paid(o)
+    return o ~= nil and o.moneyBefore ~= nil and o.buyout ~= nil and GetMoney() <= o.moneyBefore - o.buyout
+end
+
+local function MoneyChanged()
+    local o = state.buying
+    if Paid(o) then Purchased(o.auctionID) end
+end
+
 local function BuyFailed()
     local o = state.buying
     if not o then return end
+    if Paid(o) then return Purchased(o.auctionID) end
     state.buying = nil
     o.buying = nil
     Session.Failed(o.auctionID)
@@ -297,7 +314,8 @@ local events = CreateFrame("Frame")
 for _, e in ipairs({ "AUCTION_HOUSE_SHOW", "AUCTION_HOUSE_CLOSED", "AUCTION_HOUSE_BROWSE_RESULTS_UPDATED",
                      "AUCTION_HOUSE_BROWSE_RESULTS_ADDED", "AUCTION_HOUSE_BROWSE_FAILURE",
                      "ITEM_SEARCH_RESULTS_UPDATED", "AUCTION_HOUSE_PURCHASE_COMPLETED",
-                     "AUCTION_HOUSE_SHOW_ERROR", "GET_ITEM_INFO_RECEIVED", "ITEM_KEY_ITEM_INFO_RECEIVED" }) do
+                     "AUCTION_HOUSE_SHOW_ERROR", "GET_ITEM_INFO_RECEIVED", "ITEM_KEY_ITEM_INFO_RECEIVED",
+                     "PLAYER_MONEY" }) do
     pcall(events.RegisterEvent, events, e)
 end
 events:SetScript("OnEvent", function(_, event, arg)
@@ -320,6 +338,8 @@ events:SetScript("OnEvent", function(_, event, arg)
         Purchased(arg)
     elseif event == "AUCTION_HOUSE_SHOW_ERROR" then
         BuyFailed()
+    elseif event == "PLAYER_MONEY" then
+        MoneyChanged()
     else
         ItemInfoArrived()
     end

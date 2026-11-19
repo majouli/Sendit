@@ -10,7 +10,7 @@ V.BRACKETS = {
 }
 local REQ_BELOW = 10
 local QUALITIES = { 2, 3, 4 }
-local CLASSES = { 4, 2 }
+V.KINDS = { { 4, 2 }, { 4 }, { 2 } }
 
 function V.Bracket(index)
     return V.BRACKETS[index]
@@ -72,11 +72,15 @@ function V.ForItem(item)
     return V.OfYield(yield)
 end
 
-function V.Mats(index)
+function V.Classes(kind)
+    return V.KINDS[kind] or V.KINDS[1]
+end
+
+function V.Mats(index, kind)
     local b = V.BRACKETS[index]
     if not b then return {} end
     local seen, out = {}, {}
-    for _, class in ipairs(CLASSES) do
+    for _, class in ipairs(V.Classes(kind)) do
         for _, quality in ipairs(QUALITIES) do
             for _, row in ipairs(ns.DisenchantBrackets) do
                 if row[1] == class and row[2] == quality and row[3] <= b[2] and row[4] >= b[1] then
