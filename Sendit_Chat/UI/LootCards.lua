@@ -1,19 +1,8 @@
 --[[
-  LootCards: a card glides in above the chat for loot worth seeing.
-
-  Loot rolls (Core/Rolls.lua) get a card whatever the quality: won = gold
-  frame and glow, lost = grey frame, grey icon, "Lost to <name>".
-  Own loot of at least ns.db.lootCardQuality (default rare) gets a card:
-  big icon in a glowing quality frame, the name in quality colour, count and
-  slot/type. Epic and better: the glow breathes. Up to MAX cards stack
-  upwards; each stays HOLD seconds (longer while the mouse is on it).
-  Mouse: tooltip; shift-click links it, ctrl-click tries it on (Blizzard's
-  HandleModifiedItemClick); right-click dismisses.
-
-  Fed by CHAT_MSG_LOOT itself (not by the mirrored lines: one loot line can
-  show in several chat windows). Secret lines are skipped.
-  The stack is its own top-level frame, hidden while empty, so Fade
-  sees it appear and keeps it visible.
+  LootCards: a card glides in above the chat - for every loot roll (won gold, lost grey) and own loot of
+  lootCardQuality or better (glowing quality frame, epic+ breathes). Up to MAX stack, HOLD s each;
+  tooltip, shift / ctrl click as Blizzard's, right click dismisses. Fed by CHAT_MSG_LOOT (not the
+  mirrored lines); secret lines skipped. Its own top-level frame, hidden while empty (Fade shows it).
 ]]
 local _, ns = ...
 local T, Loot = ns.Theme, ns.Loot
@@ -172,12 +161,12 @@ local function Acquire()
     return oldest
 end
 
--- opts (optional): { state = "won" | "lost", note = text } for loot rolls.
+-- opts: { state = "won" | "lost", note } for rolls
 function LootCards.Show(link, count, opts)
     if not stack then return nil end
     local item = Loot.Item(link)
     local c = Acquire()
-    -- newest at the bottom: move it to the end of the list
+    -- newest at the bottom
     for i, x in ipairs(cards) do if x == c then table.remove(cards, i) break end end
     table.insert(cards, 1, c)
     c.link = link
@@ -185,7 +174,7 @@ function LootCards.Show(link, count, opts)
     c.live = true
     local state = opts and opts.state
     local r, g, b = item.r, item.g, item.b
-    -- frame colour: quality; gold for a won roll, grey for a lost one
+    -- quality; gold for a won roll, grey for a lost one
     local fr, fg, fb = r, g, b
     if state == "won" then fr, fg, fb = 1, 0.82, 0.2 elseif state == "lost" then fr, fg, fb = 0.45, 0.47, 0.52 end
     c.icon:SetTexture(item.icon or "Interface\\Icons\\INV_Misc_QuestionMark")
@@ -215,8 +204,7 @@ function LootCards.Show(link, count, opts)
     return c
 end
 
--- The stack sits on top of the whisper toasts (they sit on the main window)
--- and moves with them.
+-- on top of the whisper toasts, moving with them
 function LootCards.Anchor()
     local main = ns.Windows.Main()
     if not stack or not main then return end

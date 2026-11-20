@@ -1,26 +1,8 @@
 --[[
-  Search: find any setting of the suite from the Sendit window.
-
-  What is searchable comes for free: every row a settings page adds through
-  the Layout (UI/Layout.lua, Lay.entries) - section, label, description -
-  plus every page itself. Modules register nothing extra; a new setting is
-  findable the moment it has a row. Pages are built on the first search.
-
-  Matching, in the active language: every typed word must appear somewhere
-  in "module, page, section, label, description" (so "chat whisper" narrows
-  down). Order: label starts with the first word, label contains it, the
-  rest; ties keep the window's own order.
-
-  Results show as a page of their own (hidden from the sidebar):
-    MODULE > PAGE > SECTION        (parts equal to the one before are left out)
-    Setting label
-    its description
-  Click (or Enter for the first) opens the page, scrolls to the row and lets
-  it light up. Escape or an empty field returns to the page before.
-
-  Search.AttachBox(sidebar, below)   the field (Options calls it on build)
-  Search.Query(text) -> results      { crumb = { ... }, label, desc, page, row }
-  Search.Open(result)
+  Search: find any setting from the Sendit window - every row a page adds through the Layout plus every
+  page. All typed words must appear in "module, page, section, label, description"; label matches first.
+  Results are a hidden page (crumb, label, description); a click opens the page and lights up the row.
+  Search.AttachBox(sidebar, below) / Query(text) -> results / Open(result)
 ]]
 local _, ns = ...
 local T, W, O = ns.Theme, ns.Widgets, ns.Options
@@ -46,7 +28,7 @@ local function Words(text)
     return out
 end
 
--- module > page (when it differs) > section (when it differs)
+-- module > page > section (each only when it differs)
 local function Crumb(page, section)
     local parts = {}
     local m = page.module
@@ -59,13 +41,12 @@ local function Crumb(page, section)
     return parts
 end
 
--- Everything searchable, in the window's order: each page, then its rows.
 local function Entries()
     local out = {}
     for _, page in ipairs(O:Pages()) do
         if not page.hidden then
             local built = O:BuildPage(page)
-            -- the page itself: its title is the label, the module (if another) the crumb
+            -- the page itself
             local crumb = Crumb(page)
             table.remove(crumb)
             if #crumb == 0 then crumb[1] = L.SEARCH_PAGE end
@@ -115,9 +96,6 @@ function Search.Query(text)
     return found
 end
 
----------------------------------------------------------------------------
--- Field
----------------------------------------------------------------------------
 local function SetText(text)
     muted = true
     box:SetText(text)
@@ -158,12 +136,10 @@ function Search.AttachBox(sidebar, below)
     return box
 end
 
--- The placeholder follows a language switch.
 ns.OnSettingsChanged(function()
     if box then box.hint:SetText(L.SEARCH) end
 end)
 
--- Another page picked in the sidebar: the search is done.
 O:OnPage(function(def)
     if def ~= resultsPage and box and query ~= "" then
         query = ""
@@ -171,9 +147,6 @@ O:OnPage(function(def)
     end
 end)
 
----------------------------------------------------------------------------
--- Results page
----------------------------------------------------------------------------
 local function NewRow(parent)
     local r = CreateFrame("Button", nil, parent)
     r:SetHeight(ROW_H)

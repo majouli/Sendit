@@ -1,26 +1,15 @@
 --[[
-  Timeline: the chain as a vertical graph - one row per quest in the order of
-  its real prerequisites (Database.Chain), nodes in lanes on the left like a
-  version graph, the steps' cards in one column right of the lanes.
-
-  Lanes (Timeline.Lanes, pure): a quest continues the lane of its first
-  prerequisite when that lane is still free, else it gets the lowest free
-  lane - so a fork opens side lanes and a join brings them back. A line runs
-  from the prerequisite's node, bends into the child's lane just below it and
-  goes straight down; a lane is reserved for that whole stretch, so lines
-  never cross a node. "One of" prerequisites are drawn fainter than
-  "requires all". Nothing is ordered by quest ID.
-
-  Timeline.Lanes(rows) -> { [id] = lane }, lanes
-  Timeline.Create(parent) -> timeline
+  Timeline: the chain as a vertical graph - one row per quest in prerequisite order, nodes in lanes
+  (a quest continues its first prerequisite's lane when free, else the lowest free one; lines never
+  cross a node; "one of" drawn fainter), the step cards right of the lanes.
+  Timeline.Lanes(rows) -> { [id] = lane }, lanes;  Timeline.Create(parent)
   Timeline.Render(tl, rows, width, open, root, onClick) -> height, positions
-    positions[id] = y of the step's top (for scrolling to it)
 ]]
 local _, ns = ...
 local T, S, DB = Sendit.Theme, ns.Style, ns.Database
 local Timeline = {}
 ns.Timeline = Timeline
-local NODE_Y = 15  -- node centre below a step's top: on the title line
+local NODE_Y = 15  -- node centre on the title line
 
 function Timeline.Lanes(rows)
     local index, laneOf, busy, claimed, lanes = {}, {}, {}, {}, 0

@@ -1,14 +1,8 @@
 --[[
-  Init: namespace, settings binding, saved data, event dispatch, secret-safe
-  helpers, slash.
-  Settings live in the Sendit core: ns.db = this module's section of the
-  active profile (auto = inspect on hover, itemTip / playerTip = tooltip
-  lines, charRow = character window row, inspectPos = "top" | "bottom"),
-  rebound on every profile switch; the Sendit window has its page (Pages.lua).
-  Sendit_GearScoreDB (account, data): players = known players by GUID (score,
-  item level, talents, time), talentPos, probe / probeJournal = last probes.
-  ns.On(event, fn) adds a listener; several per event. Files add slash
-  sub commands to ns.commands.
+  Init: namespace, settings binding (ns.db = the profile section: auto, itemTip, playerTip, charRow,
+  inspectPos), saved data, event dispatch, secret-safe helpers, slash.
+  Sendit_GearScoreDB (account): players by GUID (score, ilvl, talents, time), talentPos, probes.
+  ns.On(event, fn) adds a listener; files add slash sub commands to ns.commands.
 ]]
 local ADDON, ns = ...
 local L = ns.L
@@ -16,7 +10,7 @@ local L = ns.L
 ns.DB_VERSION = 1
 ns.defaults = { auto = true, itemTip = true, playerTip = true, charRow = true, inspectPos = "top" }
 ns.commands = {}
--- Known players older than this are dropped at login: gear moves on.
+-- known players older than this are dropped at login
 local KEEP_SECONDS = 30 * 24 * 3600
 
 local PREFIX = "|cffe6b84d" .. L.title .. "|r: "
@@ -24,15 +18,12 @@ function ns.Print(...)
     print(PREFIX .. strjoin(" ", tostringall(...)))
 end
 
--- Secret values (Forever) may be stored but not compared: everything read
--- from the client passes through Safe before it is used.
 local isSecret = issecretvalue or function() return false end
 function ns.Safe(v)
     if v == nil or isSecret(v) then return nil end
     return v
 end
 
--- pcall + Safe for one return value.
 function ns.Call(fn, ...)
     if type(fn) ~= "function" then return nil end
     local ok, v = pcall(fn, ...)
@@ -54,7 +45,6 @@ local events = CreateFrame("Frame")
 function ns.On(event, fn)
     if not listeners[event] then
         listeners[event] = {}
-        -- events this client does not know are skipped, not an error
         pcall(events.RegisterEvent, events, event)
     end
     table.insert(listeners[event], fn)
@@ -80,7 +70,6 @@ Sendit.OnReady(Bind)
 Sendit.OnProfile(Bind)
 
 local function Migrate(db)
-    -- Version 1 is the first saved format; later format changes add steps here.
     db.version = ns.DB_VERSION
 end
 
@@ -109,7 +98,6 @@ function ns.commands.reset()
     ns.Print(L.cacheCleared)
 end
 
--- Slash command (globals by necessity: the client looks them up by name).
 SLASH_SENDITGEARSCORE1 = "/gs"
 SLASH_SENDITGEARSCORE2 = "/gearscore"
 SlashCmdList.SENDITGEARSCORE = function(msg)

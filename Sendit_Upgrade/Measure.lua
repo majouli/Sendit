@@ -1,28 +1,10 @@
 --[[
-  Measure: counts what really happens to the player's target on Forever, so
-  the model's open parameters can be settled with numbers instead of guesses
-  (miss, dodge, parry, glancing and crit vs a +2 mob).
-
-  /gc measure on | off | reset   start / stop / clear the counting
-  /gc measure                    report in chat (diagnostic: English)
-  /gc measure window             the live window (UI/MeasureWindow.lua)
-  The counts live in Sendit_UpgradeDB.measure (written on /reload / logout).
-
-  Source: UNIT_COMBAT for "target" - the event behind the combat text on the
-  target. Forever forbids addons the combat log (COMBAT_LOG_EVENT_UNFILTERED
-  HasRestrictions, registering it is ADDON_ACTION_FORBIDDEN) and the damage
-  meter API has only totals. UNIT_COMBAT gives the outcome (WOUND, MISS,
-  DODGE, PARRY, BLOCK ...) and the flag (CRITICAL, GLANCING) in plain text;
-  the amount can be secret - it is summed only when it is not.
-  Limits: no source - everything that hits the target counts (solo leveling:
-  the player; a pet's hits count too); no spell id - split by school only:
-  "physical" (Ret: white swings - seal, judgement and Holy Strike are holy)
-  and "spell" (any other school).
-  Per level difference ("+2") and kind: n, the outcomes, crit, glancing,
-  the character sheet's crit summed per event, and (when plain) the damage of
-  normal, glancing and critical hits.
-  Contract: Measure.Event(unit, event, flagText, amount, schoolMask) (tests);
-            Measure.Report() -> list of report lines.
+  Measure: counts what happens to the target (miss, dodge, parry, block, glancing, crit) per level
+  difference and school kind, to settle the model's open parameters. Source: UNIT_COMBAT on "target"
+  (Forever forbids addons the combat log); amounts only when not secret; no source or spell id (a
+  pet's hits count too). Counts in Sendit_UpgradeDB.measure.
+  /gc measure on|off|reset, /gc measure (report), /gc measure window
+  Measure.Event(unit, event, flagText, amount, schoolMask);  Measure.Report() -> lines
 ]]
 local _, ns = ...
 
@@ -49,9 +31,7 @@ local function Delta()
     return level - mine
 end
 
--- The character sheet's crit is secret in combat on Forever: the last plain
--- read (out of combat, refreshed on login / combat end / gear) stands in;
--- nil until one was read - then the event adds nothing to the sheet average.
+-- the sheet's crit is secret in combat: the last plain read stands in (nil until read)
 local lastCrit = {}
 local function ReadCrit(physical)
     local fn = physical and GetCritChance or GetSpellCritChance

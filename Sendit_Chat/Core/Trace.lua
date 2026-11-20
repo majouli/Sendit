@@ -1,15 +1,7 @@
 --[[
-  Trace: /chat trace - records how the next lines are sorted into tabs, for
-  reading outside the game (SenditDB.account.chat.trace after /reload).
-  Per line: Blizzard window index, type id, the chat type the id names,
-  the event, the kind / channel key, and where the line went (tab indices
-  or why it was dropped); the start notes every own tab's switches and
-  General's hidden kinds. Diagnostic (English), read-only: never changes
-  how lines flow.
-
-  Trace.Start(n)   record the next n lines (replaces an earlier trace)
-  Trace.Line(index, infoID, event, text, outcome)   called by ChatLines
-  Trace.active     true while recording
+  Trace: /chat trace - how the next lines are sorted into tabs (window index, type id, chat type,
+  event, key, outcome), saved to SenditDB.account.chat.trace; read-only.
+  Trace.Start(n) / Line(index, infoID, event, text, outcome);  Trace.active
 ]]
 local _, ns = ...
 local Safe = ns.Safe

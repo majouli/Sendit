@@ -1,21 +1,14 @@
 --[[
-  Score: the GearScore formula, unchanged from the original GearScore /
-  GearScoreLite by Mirrikat45 (constants as in LibGearScore-1.0, BSD-2, the
-  reference implementation Classic addons share), so the numbers match what
-  other GearScore users see:
-    item  = floor((ilvl - A) / B * SlotMOD * 1.8618 * QualityScale), >= 0
-            A, B per quality from table "A" (ilvl > 120) or "B" (ilvl <= 120);
-            legendary = epic row * 1.3, poor/common = uncommon row * 0.005,
-            heirloom = rare row at an item level derived from the unit level.
-    total = sum over head..ranged (shirt and tabard excluded), floored;
-            hunters: main/off hand * 0.3164, ranged * 5.3224;
-            main hand + off hand where one is two-handed (Titan's Grip): both * 0.5.
-    item level = mean item level of the scored items.
-  Colours follow GearScore's brackets on Classic (200 points per quality step:
-  grey, white, green, blue, purple, orange), interpolated between steps.
-  Contract: Score.Item(link, level) -> score, ilvl | nil (not equippable or not
-  cached); Score.Unit(unit) -> { score, ilvl, count, complete };
-  Score.Delta(link) -> change of the player's total when equipping link | nil.
+  Score: the GearScore formula, unchanged from GearScore / GearScoreLite by Mirrikat45 (constants as
+  in LibGearScore-1.0, BSD-2), so numbers match other GearScore users:
+    item  = floor((ilvl - A) / B * SlotMOD * 1.8618 * QualityScale), >= 0; A, B per quality from
+            table "A" (ilvl > 120) or "B"; legendary = epic * 1.3, poor/common = uncommon * 0.005,
+            heirloom = rare at an item level from the unit level
+    total = sum head..ranged (no shirt / tabard), floored; hunters: hands * 0.3164, ranged * 5.3224;
+            two two-handers (Titan's Grip): both * 0.5;  item level = mean of the scored items
+  Colours: Classic brackets of 200 points per quality step, interpolated.
+  Score.Item(link, level) -> score, ilvl | nil;  Score.Unit(unit) -> { score, ilvl, count, complete }
+  Score.Delta(link) -> change of the player's total when equipping link | nil
 ]]
 local _, ns = ...
 
@@ -23,9 +16,9 @@ local Score = {}
 ns.Score = Score
 
 local SCALE = 1.8618
-local BRACKET = 200          -- Classic bracket size (Wrath: 1000, TBC: 400)
--- Item colour = item score without slot and quality factor, times the
--- original's set factor, so an item is coloured like a full set of it.
+local BRACKET = 200  -- Classic bracket size (Wrath: 1000, TBC: 400)
+-- Item colour = item score without slot and quality factor, times the set factor,
+-- so an item is coloured like a full set of it.
 local ITEM_COLOR_FACTOR = 11.25
 local HUNTER_MELEE, HUNTER_RANGED, TITAN_GRIP = 0.3164, 5.3224, 0.5
 
@@ -44,11 +37,9 @@ local SLOT_MOD = {
     INVTYPE_FINGER = 0.5625, INVTYPE_CLOAK = 0.5625, INVTYPE_BODY = 0,
 }
 
--- Inventory slots that count: 1-3, 5-18 (4 = shirt, 19 = tabard).
 local SLOTS = { 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 }
 local MAIN, OFF, RANGED = 16, 17, 18
 
--- Where an item goes when the player equips it.
 local TARGET = {
     INVTYPE_HEAD = { 1 }, INVTYPE_NECK = { 2 }, INVTYPE_SHOULDER = { 3 },
     INVTYPE_CHEST = { 5 }, INVTYPE_ROBE = { 5 }, INVTYPE_WAIST = { 6 }, INVTYPE_LEGS = { 7 },
@@ -59,7 +50,6 @@ local TARGET = {
     INVTYPE_RANGED = { 18 }, INVTYPE_THROWN = { 18 }, INVTYPE_RANGEDRIGHT = { 18 }, INVTYPE_RELIC = { 18 },
 }
 
--- Heirlooms scale with the wearer (original GearScore's rule).
 local function HeirloomLevel(level)
     if level < 60 then return level end
     if level < 70 then return 3 * (level - 60) + 85 end
@@ -67,7 +57,6 @@ local function HeirloomLevel(level)
     return 1
 end
 
--- Base value before slot and quality factor; nil = quality not rated.
 local function Base(quality, ilvl, level)
     local qualityScale = 1
     if quality == 5 then
@@ -82,7 +71,6 @@ local function Base(quality, ilvl, level)
     return (ilvl - row[1]) / row[2], qualityScale, ilvl
 end
 
--- Pure formula (tested): score of one item.
 function Score.Formula(quality, ilvl, equipLoc, level)
     local mod = SLOT_MOD[equipLoc]
     if not mod or not quality or not ilvl then return nil end
@@ -92,7 +80,6 @@ function Score.Formula(quality, ilvl, equipLoc, level)
     return math.max(0, score), effectiveIlvl
 end
 
--- Item data; nil while the client has not cached the item (asks for it).
 local function Info(link)
     local ok, _, _, quality, ilvl, _, _, _, _, equipLoc = pcall(C_Item.GetItemInfo, link)
     quality, ilvl, equipLoc = ns.Safe(quality), ns.Safe(ilvl), ns.Safe(equipLoc)
@@ -116,7 +103,6 @@ function Score.EquipLoc(link)
     return equipLoc
 end
 
--- Colour value of a single item (see ITEM_COLOR_FACTOR).
 function Score.ItemColorValue(link, level)
     local quality, ilvl = Info(link)
     if not quality then return 0 end
@@ -125,7 +111,6 @@ function Score.ItemColorValue(link, level)
     return math.floor(base * SCALE) * ITEM_COLOR_FACTOR
 end
 
--- Total of a gear table { [slot] = link }; incomplete when an item is not cached.
 function Score.Total(gear, class, level)
     local hunter = class == "HUNTER"
     local grip = 1
@@ -160,7 +145,6 @@ function Score.Total(gear, class, level)
     }
 end
 
--- Equipped items of a unit. A slot with an item ID but no link is not loaded yet.
 function Score.Gear(unit)
     local gear, complete = {}, true
     for _, slot in ipairs(SLOTS) do
@@ -182,8 +166,6 @@ function Score.Unit(unit)
     return r
 end
 
--- Change of the player's GearScore when equipping link (best fitting slot).
--- nil when it cannot be worn in a slot or would only unseat a two-hander.
 function Score.Delta(link)
     local equipLoc = Score.EquipLoc(link)
     local slots = equipLoc and TARGET[equipLoc]
@@ -197,8 +179,8 @@ function Score.Delta(link)
     for _, slot in ipairs(slots) do
         local usable = true
         if slot == OFF then
-            -- an off hand next to a two-hander is not a fair comparison;
-            -- a one-hander goes to the off hand only for those who dual wield
+            -- an off hand next to a two-hander is no fair comparison; a one-hander goes
+            -- to the off hand only for those who dual wield
             usable = mainLoc ~= "INVTYPE_2HWEAPON"
             if equipLoc == "INVTYPE_WEAPON" then
                 local offLoc = gear[OFF] and Score.EquipLoc(gear[OFF])
@@ -217,7 +199,6 @@ function Score.Delta(link)
     return best
 end
 
--- Grey, white, green, blue, purple, orange at 0, 200, ... 1000.
 local STEPS = {
     { 0.55, 0.55, 0.55 }, { 1, 1, 1 }, { 0.12, 1, 0 },
     { 0, 0.5, 1 }, { 0.69, 0.28, 0.97 }, { 0.94, 0.5, 0 },

@@ -1,17 +1,7 @@
 --[[
-  ElementTree: the data behind the Elements page (no widgets here).
-
-  Tree:Build() -> items, shown, faded
-    items is the flat list of visible rows, top to bottom:
-      { family = fam, depth = 0 }        addons sharing a name prefix
-      { group = g, depth = 0 | 1 }       one addon
-      { e = element, status, rule, faded, depth }
-    A family with a single addon is emitted as a plain addon row.
-
-  View state lives for the session: search text, status filter, "show
-  hidden", expanded rows. Rows start collapsed and open while searching or
-  filtering. Elements switched in a filtered view stay listed ("sticky")
-  until the view changes, so nothing jumps away under the mouse.
+  ElementTree: the data behind the Elements page. Tree:Build() -> items (families, addons, elements
+  with depth), shown, faded. View state for the session (search, filter, show hidden, expanded);
+  elements switched in a filtered view stay listed until the view changes.
 ]]
 local _, ns = ...
 
@@ -27,14 +17,13 @@ function Tree.Filters()
     return list
 end
 function Tree.FilterText(key) return L["F_" .. key] end
--- Rules that hold an element regardless of its own switch.
 local LOCKED = { addon = true, pattern = true, builtin = true }
 function Tree.LockedText(rule) return rule and LOCKED[rule] and L["LOCK_" .. rule] or nil end
 
 local view = { search = "", filter = "all", showHidden = false }
 Tree.view = view
-local expanded = {}  -- "f:<family>" / "a:<owner>" -> true
-local sticky = {}    -- element -> true
+local expanded = {}
+local sticky = {}  -- switched in this view: stays listed
 
 local function ViewChanged()
     wipe(sticky)
@@ -78,17 +67,12 @@ function Tree:Matches(e)
     return hay:find(view.search, 1, true) ~= nil
 end
 
----------------------------------------------------------------------------
--- Changes
----------------------------------------------------------------------------
--- Switch one element between faded and excluded (only its own rule).
 function Tree:ToggleElement(it)
     if not it or not it.e or Tree.LockedText(it.rule) then return end
     sticky[it.e] = true
     ns.Fader:SetExcluded(it.e, it.rule == nil)
 end
 
--- All addons of a family, not only the ones the current view lists.
 function Tree:FamilyOwners(fam)
     local owners = {}
     for owner in pairs(fam.members) do owners[#owners + 1] = owner end
@@ -102,7 +86,6 @@ function Tree:FamilyIncluded(fam)
     return true
 end
 
--- Make an element listable and open its path. -> true if the search was cleared.
 function Tree:Open(e)
     local cleared = false
     local _, rule = ns.Fader:Status(e)
@@ -118,9 +101,6 @@ function Tree:Open(e)
     return cleared
 end
 
----------------------------------------------------------------------------
--- Build
----------------------------------------------------------------------------
 local function FirstThen(a, b, first)
     local fa, fb = a == first, b == first
     if fa ~= fb then return fa end
@@ -132,7 +112,6 @@ local function Listed(e, rule)
     return shown and Tree:PassesFilter(rule) and Tree:Matches(e)
 end
 
--- Groups listed elements by addon and family.
 local function Collect(elements)
     local families, famList, groups = {}, {}, {}
     local familyOf, members = {}, {}  -- owner -> family key; family key -> { owner = true }

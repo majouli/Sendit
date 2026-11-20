@@ -1,20 +1,17 @@
 --[[
-  ToggleIcon: a small round on-screen button, never faded itself.
-    left-click   fading on / off (grey icon = off)
-    right-click  settings
-    drag         move (unless locked); position saved in db.icon.point
-  Rests at db.icon.alpha, fully visible under the mouse.
+  ToggleIcon: a small round on-screen button, never faded - left click fading on / off, right click
+  settings, drag moves it (unless locked, db.icon.point); rests at db.icon.alpha.
 ]]
 local _, ns = ...
 
 local ToggleIcon = {}
-ns.ToggleIcon = ToggleIcon  -- .button once created
+ns.ToggleIcon = ToggleIcon
 
 local T, W = ns.Theme, ns.Widgets
 
 local SIZE = 32
 local DEFAULT_POINT = { "TOP", "TOP", 0, -120 }
-local CLICK_AFTER_DRAG = 0.2  -- a click this soon after a drag is the drag's mouse-up
+local CLICK_AFTER_DRAG = 0.2  -- a click this soon after a drag is its mouse-up
 
 local button
 

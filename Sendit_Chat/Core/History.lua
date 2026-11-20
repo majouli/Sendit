@@ -1,16 +1,7 @@
 --[[
-  History: the lines of every chat tab, as plain data.
-
-  The copy box reads them; with the setting keepHistory they are saved per
-  character (Sendit_ChatCharDB.history) and replayed after /reload or login
-  under an "earlier session" line. Without it they live for the session.
-  Secret lines (chat lockdown) cannot be kept - not even stored in saved
-  variables - and are skipped.
-
-  History.Remember(index, text, r, g, b)
-  History.Lines(index)        { { text, r, g, b }, ... } oldest first
-  History.Saved()             pairs over the saved tabs (keepHistory on)
-  History.Sync()              drop the saved lines once keepHistory is off
+  History: every tab's lines as plain data, for the copy box; with keepHistory saved per character
+  (Sendit_ChatCharDB.history) and replayed after /reload. Secret lines (lockdown) are skipped.
+  History.Remember(index, text, r, g, b) / Lines(index) / Saved() / Sync()
 ]]
 local _, ns = ...
 local Safe = ns.Safe
@@ -19,7 +10,7 @@ local History = {}
 ns.History = History
 
 local MAX = 200
-local session = {}   -- [index] = lines, while keepHistory is off
+local session = {}  -- [index] = lines while keepHistory is off
 
 local function Store()
     return ns.db.keepHistory and ns.char.history or session

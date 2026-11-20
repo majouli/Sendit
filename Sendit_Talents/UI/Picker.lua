@@ -1,16 +1,8 @@
 --[[
-  Picker: the route choice and the next-point line at the bottom left of
-  Blizzard's talent window (our own frames on our overlay), plus the route
-  timeline (UI/Timeline.lua) docked to the window's right. The next-point
-  line is plain text that ends before Blizzard's centred "Apply changes"
-  button (about 200 px wide); a long talent name is cut with "...". With
-  several free points it lists them in buying order ("3 points free: ...").
-  Route names come from the client: the route's main tree as the talent
-  window names it ("Retribution"); the two feral druid routes add their form.
-  Contract: Picker.Create(overlay, dock, get, set) -> picker   dock = the window
-            picker:Update(state) - state = { class, configID, route, plan, rankOf, reached, ready }
-    reached = the level allows the next point, ready = and a point is free.
-    get() -> current key | "off"; set(key) stores the choice and redraws.
+  Picker: route choice and next-point line at the talent window's bottom left (ends before
+  Blizzard's "Apply changes"), plus the docked timeline. Route names come from the client.
+  Picker.Create(overlay, dock, get, set) -> picker;  picker:Update(state)
+  state = { class, configID, route, plan, rankOf, reached, ready }
 ]]
 local _, ns = ...
 local L = ns.L
@@ -21,7 +13,7 @@ local Picker = {}
 ns.Picker = Picker
 
 local APPLY_HALF = 112  -- half of Blizzard's "Apply changes" button + a gap
-local BAR_Y = 16  -- the dropdown's centre above the window bottom: level with "Apply changes"
+local BAR_Y = 16  -- level with "Apply changes"
 
 local function RouteName(route, names)
     local name = names[route.tree] or ("#" .. route.tree)

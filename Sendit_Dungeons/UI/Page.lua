@@ -1,6 +1,5 @@
 --[[
-  Page: a single entry in Sendit's settings / search opens the dungeon
-  browser. No settings of its own: filter and boost live in the window.
+  Page: the settings / search entry that opens the dungeon browser.
 ]]
 local _, ns = ...
 local O, W = Sendit.Options, Sendit.Widgets

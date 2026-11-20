@@ -1,15 +1,8 @@
 --[[
-  TimelineStep: one quest of the chain, right of the timeline's lanes.
-  Collapsed (Style.size.step): title + level, then status and place with the
-  mini rewards on the right - no description, no reward block.
-  Open (the step the player clicked): a raised card with the objective text
-  (item names linked), what it requires (all / one of, by name and state),
-  what follows, and the reward section (RewardView).
-  The quest picked in the list keeps a gold edge in the chain either way.
-  Right click: the quest menu (Window:Menu) - follow the chain, map pins.
-
-  Step.Create(parent, onClick) -> step
-  Step.Paint(step, id, width, open, root, state) -> height
+  TimelineStep: one quest of the chain - collapsed: title, level, status, place, mini rewards; open: a
+  card with the objective text (items linked), requirements, what follows, the rewards. The quest
+  picked in the list keeps a gold edge. Right click: the quest menu.
+  Step.Create(parent, onClick) -> step;  Step.Paint(step, id, width, open, root, state) -> height
 ]]
 local _, ns = ...
 local T, S, DB, L = Sendit.Theme, ns.Style, ns.Database, ns.L
@@ -71,7 +64,6 @@ function Step.Create(parent, onClick)
     return b
 end
 
--- "Requires all: A, B" / "Requires one of: ..." / "Next: ..." - known links only.
 local function LinkText(id)
     local q, lines = ns.quests[id], {}
     local prev = DB.Prerequisites(id)

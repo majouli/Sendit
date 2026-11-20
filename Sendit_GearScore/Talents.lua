@@ -1,15 +1,9 @@
 --[[
-  Talents: points per talent tree of the player or an inspected player.
-  On Forever talents are C_Traits, not the Classic API (GetTalentTabInfo is
-  missing, /gc probe): a class has ONE trait tree whose three node groups are
-  the Classic trees. Points of a group = its currency "spent" (what Blizzard's
-  talent window shows); if that reads 0 everywhere (inspected configs may not
-  carry currency), the ranks of the group's nodes are summed instead.
-  Inspected player = INSPECT_TRAIT_CONFIG_ID (-1) after INSPECT_READY; the
-  client may fill it a moment later, so Inspect.lua reads again.
-  Contract: Talents.Read(configID, class) -> { {name, points}, ... x3 } | nil;
-  Talents.Own(); Talents.Inspected(class); Talents.Summary(trees) -> spec, "a/b/c".
-  Everything is pcall'd and secret-checked: an unreadable tree is nil, never an error.
+  Talents: points per tree of the player or an inspected player. Forever: C_Traits, one trait tree per
+  class whose three node groups are the Classic trees. Points = the group's spent currency, else the
+  summed node ranks (inspected configs may lack currency). Inspected = config -1 after INSPECT_READY.
+  Talents.Read(configID, class) -> { { name, points } x3 } | nil;  Own();  Inspected(class)
+  Talents.Summary(trees) -> spec, "a/b/c". Everything pcall'd and secret-checked.
 ]]
 local _, ns = ...
 local L = ns.L
@@ -43,7 +37,7 @@ local function Groups(treeID)
     return #groups > 0 and groups or nil
 end
 
--- Currency per group, matched by ID (the answer order is not documented).
+-- currency per group, matched by ID (answer order not documented)
 local function SpentByCurrency(configID, groups)
     if not C_Traits.GetGroupCurrencyInfo then return 0 end
     local ids, byID = {}, {}
@@ -61,8 +55,7 @@ local function SpentByCurrency(configID, groups)
     return total
 end
 
--- Fallback: node ranks per group. Purchased ranks when the config has any,
--- else the active rank (an inspected config may only carry that).
+-- fallback: node ranks per group - purchased ranks, else the active rank
 local function SpentByNodes(configID, treeID, groups)
     local ids = C_Traits.GetTreeNodes and Call(C_Traits.GetTreeNodes, treeID)
     if type(ids) ~= "table" then return 0 end
@@ -115,8 +108,7 @@ local function SpellIcon(spellID)
     return legacy and Call(legacy, spellID) or nil
 end
 
--- One node of the tree as drawn: Blizzard's layout position (pixels = pos / 10,
--- as TalentButtonUtil.TranslateNodePositionsToAnchorPositions), rank, spell.
+-- one node as drawn: Blizzard's layout position (pixels = pos / 10), rank, spell
 local function Node(configID, nodeID, groupOf)
     local info = Call(C_Traits.GetNodeInfo, configID, nodeID)
     -- the nodes Blizzard's talent frame instantiates: visible, not SubTreeSelection
@@ -151,7 +143,6 @@ local function Node(configID, nodeID, groupOf)
     }
 end
 
--- Everything the talent view draws: trees (headers) and nodes; nil = unreadable.
 function Talents.Layout(configID, class)
     local trees = Talents.Read(configID, class)
     if not trees then return nil end
@@ -175,8 +166,6 @@ function Talents.Layout(configID, class)
     return { trees = trees, nodes = nodes }
 end
 
--- Own build: the active spec group's combat config, like the talent window;
--- the active config ID when that API is missing.
 function Talents.Own()
     local configID
     local si = C_SpecializationInfo
@@ -205,7 +194,6 @@ function Talents.Total(trees)
     return n
 end
 
--- "Vergeltung", "5/11/35"; nil spec when no point is spent.
 function Talents.Summary(trees)
     if not trees then return nil end
     local best, points = nil, {}

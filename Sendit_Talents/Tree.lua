@@ -1,18 +1,12 @@
 --[[
-  Tree: what the client knows about a talent config (C_Traits).
-  On Forever a class has ONE trait tree whose three node groups are the
-  Classic trees. Every read is pcall'd and secret-checked: anything
-  unreadable is 0 / nil, never an error.
-  Contract:
-    Tree.RankOf(configID) -> rankOf(nodeID): current rank, staged points
-                             included (what the talent window shows)
-    Tree.Nodes(configID) -> { nodeID, ... } of the config's tree
-    Tree.Names(configID) -> { [1..3] = tree name } in display order
-    Tree.Talent(configID, nodeID) -> name | nil, max rank | nil, icon | nil
-    Tree.Unspent(configID) -> unspent talent points (staged included) | nil
-    Tree.Open(configID) -> open(nodeID): false when Blizzard would refuse a
-                           point there (tier or prerequisite missing, rank full);
-                           unreadable = true (the route then just asks for it)
+  Tree: what the client knows about a talent config (C_Traits). Forever: one trait tree per class
+  whose three node groups are the Classic trees. Reads are pcall'd and secret-checked.
+  Tree.RankOf(configID) -> rankOf(nodeID)      current rank, staged points included
+  Tree.Nodes(configID) -> { nodeID, ... }
+  Tree.Names(configID) -> { [1..3] = tree name }
+  Tree.Talent(configID, nodeID) -> name, max rank, icon
+  Tree.Unspent(configID) -> unspent points | nil
+  Tree.Open(configID) -> open(nodeID): false when Blizzard would refuse a point
 ]]
 local _, ns = ...
 local Call, Safe = ns.Call, ns.Safe
@@ -81,7 +75,6 @@ function Tree.Open(configID)
     end
 end
 
--- Forever has one talent currency per class tree ("unspent talent points").
 function Tree.Unspent(configID)
     local treeID = TreeID(configID)
     local list = treeID and Call(C_Traits.GetTreeCurrencyInfo, configID, treeID, false)

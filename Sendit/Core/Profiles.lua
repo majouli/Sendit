@@ -1,19 +1,7 @@
 --[[
-  Profiles: named sets of every setting of the suite (design + one section
-  per module, see Init.lua).
-
-  All profiles live account-wide in SenditDB.profiles, so every character can
-  use any of them. Each character remembers its choice in
-  SenditCharDB.profile; new characters, and characters whose profile was
-  deleted, use "Default".
-
-  Kept simple on purpose (no profiles per situation, no
-  separate edit target): the picked profile is active, and it is what every
-  page edits. A new profile starts from the defaults or as a copy of the
-  active one, and becomes active.
-
-  ns.profile always points at the active profile table; modules read their
-  section through module.profile, rebound on every switch (Sendit.OnProfile).
+  Profiles: named sets of every setting (design + one section per module), account-wide in
+  SenditDB.profiles; each character remembers its choice (SenditCharDB.profile, else "Default").
+  The picked profile is active and is what every page edits. ns.profile = the active table.
 ]]
 local _, ns = ...
 
@@ -43,7 +31,6 @@ local function Activate(name)
     ns.SettingsChanged()
 end
 
--- After the saved variables are loaded (Init.lua).
 function Profiles:Load()
     local store = Store()
     store[DEFAULT] = store[DEFAULT] or {}
@@ -61,7 +48,6 @@ function Profiles:Exists(name)
     return name ~= nil and Store()[name] ~= nil
 end
 
--- Names, "Default" first, then alphabetical.
 function Profiles:List()
     local names = {}
     for name in pairs(Store()) do
@@ -78,8 +64,7 @@ function Profiles:Use(name)
     return true
 end
 
--- A new profile starts from the defaults, or with copy as a copy of the
--- active one; it becomes active.
+-- a new profile: the defaults or a copy of the active one; it becomes active
 function Profiles:Create(name, copy)
     name = strtrim(name or "")
     if name == "" then return false, L.ERR_NAME end
@@ -90,7 +75,6 @@ function Profiles:Create(name, copy)
     return true
 end
 
--- Characters using a deleted profile fall back to Default on their next login.
 function Profiles:Delete(name)
     if name == DEFAULT then return false, L.ERR_DEFAULT end
     if not self:Exists(name) then return false, L.ERR_MISSING:format(tostring(name)) end
@@ -100,8 +84,7 @@ function Profiles:Delete(name)
     return true
 end
 
--- Reset keys of one module's sections to their defaults: the profile section
--- for keys in module.defaults, the account section otherwise.
+-- reset keys of one module's sections to their defaults (profile or account section)
 function Profiles:Reset(module, keys)
     for _, k in ipairs(keys) do
         if module.defaults and module.defaults[k] ~= nil then

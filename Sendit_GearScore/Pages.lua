@@ -1,9 +1,6 @@
 --[[
-  Pages: the GearScore page of the Sendit window (replaces the old own
-  window). Own score on top, then tooltips, windows and the known players.
-  Switches write ns.db (the profile section) and call
-  Sendit.SettingsChanged(); Panels.Apply re-places the frames live.
-  Texts come from Locale.lua (five languages).
+  Pages: GearScore's page in the Sendit window - own score, tooltip and window switches, known
+  players. Switches write ns.db and call Sendit.SettingsChanged().
 ]]
 local _, ns = ...
 local L = ns.L
@@ -20,7 +17,7 @@ end
 local function KnownCount()
     local n = 0
     for _ in pairs(ns.data and ns.data.players or {}) do n = n + 1 end
-    return math.max(0, n - 1)  -- the own entry is not "known players"
+    return math.max(0, n - 1)  -- the own entry is no known player
 end
 
 local function Own()
@@ -38,7 +35,6 @@ O:Register({
     build = O.SettingsPage(function(Lay, c)
         Lay:Section(Tx("gearScore"))
         Lay:Row(UnitName("player") or "GearScore", nil, W.Value(c, 220, Own))
-        -- language-free button (the client's "pass" cross); the row says what it does
         local button = W.Button(c, "|TInterface\\Buttons\\UI-GroupLoot-Pass-Up:16|t", function()
             ns.commands.reset()
             Sendit.SettingsChanged()
@@ -65,14 +61,12 @@ O:Register({
     end),
 })
 
--- The GearScore page; toggles when it is already on screen.
 function ns.OpenSettings()
     local cur = O:Current()
     if cur and cur.module == ns.module then return O:Hide() end
     O:Show("gearscore")
 end
 
--- Options -> frames, live.
 Sendit.OnSettingsChanged(function()
     if ns.db and ns.Panels then ns.Panels.Apply() end
 end)

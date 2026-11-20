@@ -1,7 +1,5 @@
 --[[
-  Locale: UI text in Sendit's five languages. Quest titles come separately
-  from the pinned Forever dataset; untranslated titles keep their English
-  source name rather than a made-up translation.
+  Locale: UI texts in five languages; quest titles come from the data (English when untranslated).
 ]]
 local _, ns = ...
 local keys = {
@@ -145,7 +143,6 @@ local extra = {
         "Любой прогресс", "Незавершённые", "Цель задания не записана.", "%d из %d завершено",
         "Выберите задание, чтобы увидеть цепочку и цели." },
 }
--- Journal layout (UI/Style.lua, QuestRow, Timeline). thousands = digit group mark.
 local journalKeys = { "thousands", "stepNext", "locked", "questID", "levelShort", "clickExpand", "clickCollapse",
     "choiceShort", "valuesPending" }
 local journal = {
@@ -160,13 +157,11 @@ local journal = {
     ruRU = { " ", "Следующий шаг", "Закрыто", "ID задания %d", "Ур. %d", "Нажмите, чтобы открыть подробности", "Нажмите, чтобы закрыть подробности",
         "на выбор", "Опыт и деньги пока неизвестны (клиент загружает их)" },
 }
--- Reward headings of an opened step: what you get vs what you pick.
 local rewardHeads = {
     enUS = { "You receive", "Choose one reward" }, deDE = { "Du erhältst", "Wähle eine Belohnung" },
     frFR = { "Vous recevrez", "Choisissez une récompense" }, esES = { "Recibirás", "Elige una recompensa" },
     ruRU = { "Вы получите", "Выберите награду" },
 }
--- Gear boost (Boost.lua) and Sendit's map pin (UI/MapPin.lua).
 local boostKeys = { "boost", "boostHelp", "boostNeedsUpgrade", "boostCount", "boostRating", "boostEmpty", "decimal",
     "pinGiver", "pinTurnIn", "pinTarget", "pinClear", "vsSlot", "newSlot", "beatsSlot",
     "detailVs", "detailNew", "detailBeats" }
@@ -212,7 +207,6 @@ local boost = {
         "Ячейка пуста. Число: насколько сильнее становится весь персонаж.",
         "Надетый предмет ничего не даёт вашей специализации, поэтому процента нет. Число: насколько сильнее становится весь персонаж." },
 }
--- The gear boost's dialog (UI/BoostDialog.lua) and chip.
 local dialogKeys = { "boostOn", "boostStale", "boostFor", "boostMinLabel", "boostMinHint", "boostLocked",
     "boostGo", "boostAgain", "boostEnd", "boostCancel", "boostSlots", "slotsAll", "slotsNone",
     "slotWeapon", "slotOffhand", "slotRanged", "boostMissing", "boostCountOne" }
@@ -243,7 +237,6 @@ local dialog = {
         "Ячейки", "Все", "Ни одной", "Оружие", "Левая рука / щит", "Дальний бой",
         "· %d предметов сервер не прислал (/sq boost)", "%d задание с улучшением не менее %s %%" },
 }
--- Pins, chain line and the right click hint (Track.lua, Window.lua).
 local trackKeys = { "rightTrack", "trackGiver", "trackDone", "trackTurnIn", "trackTarget", "chainLine", "itemCount" }
 local track = {
     enUS = {
@@ -263,7 +256,6 @@ local track = {
         "ПКМ: метки на карте и цепочка", "Метка на карте у квестодателя: %s", "Цепочка завершена",
         "Метка на карте у сдачи: %s", "Метка на карте у цели: %s", "Цепочка %d из %d", "Предметов: %d" },
 }
--- Right click menu (UI/Window.lua), quest route (UI/LogRoute.lua), chain guide (Guide.lua), boost preview.
 local menuKeys = { "menuChain", "menuGiver", "menuTarget", "menuTurnIn", "trackNoPlace", "routeTitle", "routeEmpty",
     "routeSetting", "routeSettingDesc", "menuGiverTurnIn",
     "stepPickUp", "stepObjective", "stepTurnIn", "guideSPF", "guideOwn", "guideNoPlace", "guideStop", "guideTitle",

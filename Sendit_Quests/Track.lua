@@ -1,18 +1,12 @@
 --[[
-  Track: where a quest happens and the race / class check - the pieces the
-  right click menu (UI/Window.lua) and the chain guide (Guide.lua) share.
-  Pins: Sendit's map pin (UI/MapPin.lua) at a place from Data/Places.lua
-  (giver, turn-in, first objective on client maps); the map opens on it.
-
-  Track.Allowed(id) -> bool        race / class masks of the source
-  Track.Places(id) -> { g?, f?, t? } known places of a quest
-  Track.Pin(id, kind) -> notice text: a pin on that place of ANY quest, done or
-                         not (to show someone else the way)
+  Track: a quest's places and the race / class check, shared by the menu and the guide.
+  Track.Allowed(id) -> bool;  Track.Places(id) -> { g?, f?, t? }
+  Track.Pin(id, kind) -> notice text: our map pin on that place of any quest (done ones too)
 ]]
 local _, ns = ...
 local Track = {}
 ns.Track = Track
-local WORD = 4294967296  -- the source masks carry flags above bit 31: only the low word counts
+local WORD = 4294967296  -- the masks carry flags above bit 31: only the low word counts
 
 local Read = ns.Read
 
@@ -31,8 +25,6 @@ function Track.Allowed(id)
     return Has(q.requiredRaces, race) and Has(q.requiredClasses, class)
 end
 
--- Sendit's own pin on the world map at a place of quest sid ("g" giver,
--- "f" turn-in, "t" objective); the map opens there.
 local function Pin(sid, kind)
     local spots = ns.places and ns.places[sid]
     local s = spots and spots[kind]

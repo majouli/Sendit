@@ -1,11 +1,6 @@
 --[[
-  TabDrag: what the player sees while dragging a chat tab - the tab's name
-  follows the cursor and the window it would land in lights up. Without it
-  a dragged tab only dimmed and seemed not to move (seen in game 0.13.35).
-  Alpha and position only; the move itself stays with UI/ChatWindow.lua.
-
-  TabDrag.Start(text, targetOf)  targetOf() -> frame under the cursor or nil
-  TabDrag.Stop()
+  TabDrag: while a tab is dragged its name follows the cursor and the target window lights up
+  (alpha and position only).  TabDrag.Start(text, targetOf) / Stop()
 ]]
 local _, ns = ...
 local T = ns.Theme

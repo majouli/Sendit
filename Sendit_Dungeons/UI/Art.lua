@@ -1,13 +1,8 @@
 --[[
-  Art: the client's own pictures, nothing shipped with the addon.
-    Art.Screen(texture, d, width, height)  the dungeon's loading screen, the
-        band that fits width x height cropped from its middle (loading screens
-        are 4:3); false when the dungeon has none (world bosses)
-    Art.Portrait(texture, boss, model)  the boss's face: the portrait texture
-        call when the client has one, else the model frame zoomed to the
-        head; a skull icon when the model is unknown (Forever's own bosses)
-    Art.ShowModel(owner, boss) / HideModel()  a 3D view of the boss beside
-        owner, turning slowly - one shared frame, only while hovered
+  Art: the client's own pictures.
+  Art.Screen(texture, d, width, height)   loading screen band cropped to the size; false if none
+  Art.Portrait(texture, boss, model)      boss face from a model zoomed to the head (skull if unknown)
+  Art.ShowModel(owner, boss) / HideModel() a slowly turning 3D view beside owner (one shared frame)
 ]]
 local _, ns = ...
 local T, S = Sendit.Theme, ns.Style
@@ -23,14 +18,13 @@ function Art.Screen(tex, d, width, height)
         return false
     end
     tex:SetTexture(d.art)
-    local band = math.min(1, height / width * SCREEN_ASPECT)  -- share of the picture's height
+    local band = math.min(1, height / width * SCREEN_ASPECT)
     local top = math.max(0, 0.45 - band / 2)
     tex:SetTexCoord(0, 1, top, math.min(1, top + band))
     tex:Show()
     return true
 end
 
--- Square crop for the list thumbnail.
 function Art.Thumb(tex, d)
     if not d or not d.art or d.art == 0 then
         tex:SetTexture("Interface\\Icons\\INV_Misc_Head_Dragon_01")
@@ -42,12 +36,8 @@ function Art.Thumb(tex, d)
     tex:SetTexCoord(0.29, 0.71, 0.45 - h / 2, 0.45 + h / 2)
 end
 
--- A model from the boss's display ID, or - Forever's own bosses, NPC IDs
--- collected in tools/data/forever_npcs.csv - from its NPC ID (the client
--- loads that creature's model itself).
--- The window repaints often (every item icon that arrives, every boost step):
--- a model already showing this boss is left alone - loading it again made the
--- portraits shake until the last icon had arrived (seen in game).
+-- A model from the boss's display ID, else its NPC ID (Forever's own bosses).
+-- Repaints are frequent: a model already showing this boss is left alone (reloading made it shake).
 local function Load(model, boss)
     local key = (boss.display or 0) > 0 and ("d" .. boss.display) or (boss.npc or 0) > 0 and ("n" .. boss.npc) or nil
     if not key then model.senditKey = nil return false end
@@ -60,19 +50,15 @@ local function Load(model, boss)
 end
 Art.Load = Load
 
--- A portrait stands still: the idle animation made the zoomed faces shake
--- (seen in game) - once loaded, zoom to the head and freeze the first frame.
+-- A portrait stands still: zoom to the head and freeze the first frame (idle animation shook).
 function Art.Still(model)
-    -- guarded: a client without the OnModelLoaded handler must not break the window
     pcall(model.SetScript, model, "OnModelLoaded", function(self)
         pcall(self.SetPortraitZoom, self, 1)
         pcall(self.FreezeAnimation, self, 0, 0, 0)
     end)
 end
 
--- tex is masked round: never SetTexCoord on it (the client refuses - seen in game).
--- Forever has no SetPortraitTextureFromCreatureDisplayID that works (it failed in
--- game): the face comes from a small model frame zoomed to the head instead.
+-- tex is masked round: never SetTexCoord on it (the client refuses).
 function Art.Portrait(tex, boss, model)
     local display = boss.display or 0
     local fn = _G["SetPortraitTextureFromCreatureDisplayID"]

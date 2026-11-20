@@ -1,19 +1,8 @@
 --[[
-  QuestRow: one entry of the quest list (fixed height Style.size.row, so the
-  list can be virtual). Status node + title + level, place and status, the
-  quest's own reward bar (or, without known rewards, a one-line objective
-  preview), and a chain line: how far the chain is and what all of it gives
-  (mini icons, XP, money). Gear boost on: the row glows gold and shows its
-  best upgrade - "+25,3 % Damage" and the item - on the bottom line, right
-  (the place and reward lines keep their full width; the chain's own reward
-  icons give way there);
-  its tooltip spells out the comparison with the worn item.
-  Selected: selection wash, a narrow gold edge, the title in gold. Hover is a
-  highlight layer only - nothing moves. The quest ID is in the tooltip.
-  Right click: the quest menu (Window:Menu) - follow the chain, map pins.
-
-  QuestRow.Create(parent, onClick) -> row
-  QuestRow.Paint(row, id, width, selected)
+  QuestRow: one list entry (fixed height, virtual list) - node, title, level; place, status (and
+  "from level X" for preview quests); its rewards or an objective preview; the chain line, and while
+  the boost runs its best upgrade at the bottom right. Right click: the quest menu.
+  QuestRow.Create(parent, onClick) -> row;  QuestRow.Paint(row, id, width, selected)
 ]]
 local _, ns = ...
 local T, S, DB, L = Sendit.Theme, ns.Style, ns.Database, ns.L
@@ -47,10 +36,8 @@ function Row.Create(parent, onClick)
     b.rewards:SetPoint("TOPLEFT", b.meta, "BOTTOMLEFT", 0, -7)
     b.preview = T.Text(b, S.font.meta, "textDim")
     b.preview:SetPoint("TOPLEFT", b.meta, "BOTTOMLEFT", 0, -12)
-    -- gear boost: the row lights up gold with its best upgrade on the right
     b.glow = T.Fill(b, "accent", "BACKGROUND", 2, 0.10)
     b.glow:SetAllPoints()
-    -- on the bottom (chain) line, right: no other line loses room to it
     b.boost = CreateFrame("Frame", nil, b)
     b.boost:SetSize(1, 20)
     b.boost:SetPoint("BOTTOMRIGHT", -12, 5)
@@ -87,8 +74,7 @@ function Row.Create(parent, onClick)
     return b
 end
 
--- "Chain 2 of 5" and what all of the chain gives (a catalog over every
--- branch: mini icons, XP, money); "" and nil without chain links.
+-- "Chain 2 of 5" and what the whole chain gives; "" and nil without links
 function Row.ChainLine(id)
     local rows = DB.Chain(id)
     if #rows <= 1 then return "", nil end

@@ -1,8 +1,6 @@
 --[[
-  Init: registers the Quests tool with Sendit. Account layout stores window
-  dimensions; the bundled reference is immutable, progress belongs to the
-  client. /sq [name or ID] opens the independent browser; /sq boost prints
-  why the gear boost list looks as it does.
+  Init: registers Quests; ns.Read (safe client call). Account: window size, boost and route settings.
+  /sq [name or ID] opens the browser, /sq boost prints the boost diagnostics.
 ]]
 local _, ns = ...
 ns.names = {}
@@ -10,8 +8,7 @@ ns.objectives = {}
 ns.searchText = {}
 ns.searchIds = {}
 
--- A client call that may fail or answer secret values (Forever): its values, or nil when the call
--- fails or any of the first six values is secret. Shared by the module's files.
+-- a client call's values, or nil when it fails or any value is secret (Forever)
 function ns.Read(fn, ...)
     if type(fn) ~= "function" then return nil end
     local ok, a, b, c, d, e, f = pcall(fn, ...)
@@ -27,7 +24,6 @@ ns.module = Sendit:RegisterModule({
     accountDefaults = { width = 960, height = 720, boostMin = 1, boostLocked = true, boostAhead = 0, route = true },
 })
 SLASH_SENDITQUESTS1 = "/sq"
--- /sq boost: why the gear boost list looks as it does (diagnostics, English)
 SlashCmdList.SENDITQUESTS = function(query)
     if query and query:lower():match("^%s*boost%s*$") then
         for _, line in ipairs(ns.Boost.Report()) do print("|cff66c2ffSendit Quests|r: " .. line) end

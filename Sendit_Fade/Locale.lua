@@ -1,8 +1,5 @@
 --[[
-  Locale: every visible text of Fade (pages, Elements list, overlay, toggle
-  icon, element status) in the suite's five languages; the language is the
-  suite's (Sendit Design page), a missing key falls back to English.
-  The diagnostic chat output of /fa stays English: it is a tool for reports.
+  Locale: Fade's texts in five languages; /fa diagnostics stay English.
 ]]
 local _, ns = ...
 
@@ -60,7 +57,6 @@ local en = {
     FADING_QUICK = "Fading",
     OFF = "off",
     FADED = "%d faded",
-    -- Elements list
     SEARCH = "Search elements or addons",
     SHOW_HIDDEN = "Show hidden",
     SHOW_ON_SCREEN = "Show on screen",
@@ -78,7 +74,6 @@ local en = {
     KIND_nameplate = "Nameplate", KIND_minimap = "Minimap", KIND_chat = "Chat", KIND_tooltip = "Tooltip",
     KIND_castbar = "Cast bar", KIND_auras = "Auras", KIND_tracker = "Tracker", KIND_actionbar = "Action bar",
     KIND_bags = "Bags", KIND_unitframe = "Unit frame", KIND_bar = "Bar", KIND_menu = "Menu", KIND_other = "Element",
-    -- element status
     ST_OFF = "Fading off",
     ST_SKIPPED = "Skipped (%s)",
     ST_ENFORCED = "Faded (enforced)",
@@ -89,7 +84,6 @@ local en = {
     R_EXCLUDED = "Excluded",
     R_ADDON = "Addon excluded",
     R_PATTERN = "Excluded by '%s'",
-    -- overlay ("Show on screen")
     OV_TITLE = "Click an element to find it in the list",
     OV_DRAG = "Drag to move this bar",
     OV_DONE = "Done",
@@ -99,7 +93,6 @@ local en = {
     OV_SKIPPED = ", %d larger hidden",
     OV_UNPLACED = ", %d without position (Elements page)",
     OV_CLICK = "Click: show in the list",
-    -- toggle icon
     ICON_LEFT = "Left-click: fading on / off",
     ICON_RIGHT = "Right-click: settings",
     ICON_DRAG = "Drag: move",

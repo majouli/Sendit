@@ -1,25 +1,9 @@
 --[[
-  Rolls: group loot rolls, summed up and shown with flair.
-
-  State comes from CHAT_MSG_LOOT itself (once per event); the chat display
-  (Rolls.Style, called per mirrored line, maybe for several windows) only
-  reads that state, so a line shown in two windows never counts twice.
-
-  Lines (client templates turned into patterns, like Core/Loot.lua):
-    you won          <dice> Won!  <icon>[Item]  You 87 Need - Bob 45 Need     (gold) + card
-    you lost         <dice> Lost  <icon>[Item]  Bob 92 Need - You 45 Need     (red) + card
-    others won       -> <icon>[Item]  Bob 92 Need - Ann Greed                 (muted)
-    everyone passed  Everyone passed: [Item]                                  (muted)
-  The names list everyone who took part (first names, winner first and
-  white, highest roll first, at most 5 + "+N"); passers are left out.
-  While ns.db.rollSummary is on (default) that is the only line per item
-  (one line instead of many): roll start, every choice and roll (yours too)
-  and the receipt line right after the result are dropped. Off: your choice
-  and roll show compact, the rest as the client writes it.
-
-  Rolls.Style(text) -> new text | false (drop the line) | nil (not a roll)
-  Rolls.RecentlyWon(link) -> true for a while after you won it (the loot
-  card for receiving it is skipped then: the "won" card already showed it)
+  Rolls: group loot rolls summed up. State from CHAT_MSG_LOOT once per event; Rolls.Style only reads
+  it (a line in two windows never counts twice). Results: won (gold, card), lost (red, card), others
+  won, everyone passed - with the participants (first names, winner first, highest roll first, max 5).
+  With rollSummary that is the only line per item (start, choices, rolls, receipt dropped).
+  Rolls.Style(text) -> text | false (drop) | nil (no roll);  Rolls.RecentlyWon(link)
 ]]
 local _, ns = ...
 local Safe, Loot = ns.Safe, ns.Loot
@@ -41,9 +25,7 @@ local ICONS = {
     pass = "Interface\\Buttons\\UI-GroupLoot-Pass-Up",
 }
 
--- global, roles in argument order, what, roll kind. Order matters: the more
--- specific template first (the "you" forms before "%s ...", auto-pass
--- before pass, the short "no spam" forms first of all).
+-- global, roles, what, roll kind - the more specific template first
 local TEMPLATES = {
     { "LOOT_ROLL_YOU_WON_NO_SPAM_NEED", { "value", "link" }, "won", "need" },
     { "LOOT_ROLL_YOU_WON_NO_SPAM_GREED", { "value", "link" }, "won", "greed" },
@@ -70,11 +52,10 @@ local TEMPLATES = {
     { "LOOT_ROLL_PASSED_AUTO", { "who", "link" }, "choice", "pass" },
     { "LOOT_ROLL_PASSED_AUTO_FEMALE", { "who", "link" }, "choice", "pass" },
     { "LOOT_ROLL_PASSED", { "who", "link" }, "choice", "pass" },
-    -- another player receiving an item: dropped right after its roll result
+    -- another player receiving an item: dropped right after its result
     { "LOOT_ITEM_MULTIPLE", { "who", "link", "count" }, "theirloot" },
     { "LOOT_ITEM", { "who", "link" }, "theirloot" },
-    -- "[Loot]: <item>" alone: a roll starts. Matches any loot-history line,
-    -- so it must stay last.
+    -- "[Loot]: <item>" alone starts a roll - matches any loot-history line, so it stays last
     { "LOOT_ROLL_STARTED", { "link" }, "started" },
 }
 
@@ -84,8 +65,7 @@ local function Patterns()
     compiled = {}
     for _, t in ipairs(TEMPLATES) do
         local fmt, roles = _G[t[1]], t[2]
-        -- Modern templates start with a clickable "[Loot]" history link whose
-        -- id is the first argument: "|HlootHistory:%d|h[Loot]|h: ...".
+        -- modern templates start with a "[Loot]" history link: "|HlootHistory:%d|h[Loot]|h: ..."
         if type(fmt) == "string" and fmt:find("^|HlootHistory:%%d") then
             roles = { "history", unpack(roles) }
         end
@@ -95,7 +75,6 @@ local function Patterns()
     return compiled
 end
 
--- -> { what, kind, who, value, link }, s, e
 function Rolls.Parse(text)
     if not Safe.Str(text) then return nil end
     for _, p in ipairs(Patterns()) do
@@ -105,7 +84,7 @@ function Rolls.Parse(text)
             for i, role in ipairs(p.order) do info[role] = res[i + 2] end
             info.value = tonumber(info.value or "")
             local link = info.link
-            -- "started" matches any loot-history line: only when the rest is one link
+            -- "started" only when the rest is one link
             local ok = link and link:find("|H", 1, true)
                 and (p.what ~= "started" or link:match("^|c[^|]*|H[^|]+|h[^|]*|h|r$") or link:match("^|H[^|]+|h[^|]*|h$"))
             if ok then return info, res[1], res[2] end
@@ -114,11 +93,7 @@ function Rolls.Parse(text)
     return nil
 end
 
----------------------------------------------------------------------------
--- State
----------------------------------------------------------------------------
--- key -> { mine, myValue, choices = { [who] = kind }, rolls = { [who] = { value, kind } },
---          t, won, decided }
+-- key -> { mine, myValue, choices, rolls, t, won, decided }
 local items = {}
 
 local function Key(link) return link:match("|H(item:[^|]+)|h") or link end
@@ -141,7 +116,6 @@ local function IsMe(who)
     local you = Safe.Str(_G["YOU"])
     if who == me or (you ~= nil and who == you) then return true end
     if not me then return false end
-    -- Forever names can carry a surname ("Shac Sendit") and other realms a suffix
     return who:gsub("%-.*$", "") == me or who:sub(1, #me + 1) == me .. " "
 end
 Rolls._IsMe = IsMe
@@ -151,7 +125,6 @@ local function KindName(kind)
         or L.PASS
 end
 
--- "Gier" / "Bedarf" (client words in LOOT_ROLL_LOST_ROLL) -> roll kind
 function Rolls.KindOf(word)
     word = Safe.Str(word)
     if not word then return nil end
@@ -161,14 +134,12 @@ function Rolls.KindOf(word)
     return nil
 end
 
--- "Shearzad Sturmbringer-Realm" -> "Shearzad": keeps the result line short.
+-- "Name Surname-Realm" -> "Name"
 function Rolls.First(name)
     return ((name:match("^(%S+)") or name):gsub("%-.*$", ""))
 end
 
--- Who took part: everyone who chose need/greed/disenchant or rolled, you as
--- "You", the winner marked; highest roll first, players without a roll
--- (greed while someone needed) after them.
+-- participants: everyone who chose or rolled; highest roll first, the winner marked
 local KIND_ORDER = { need = 1, greed = 2, de = 3 }
 local function Participants(e, winner, winnerValue, winnerKind)
     local byKey, list = {}, {}
@@ -221,7 +192,6 @@ local function Names(list)
     return table.concat(parts, MUTED .. " · |r")
 end
 
--- The winner's roll: from the result line itself or the roll lines before it.
 local function WinnerRoll(info, e)
     if info.value then return info.value, info.kind end
     local r = e and info.who and e.rolls[info.who]
@@ -270,15 +240,11 @@ function Rolls.RecentlyWon(link)
     return e ~= nil and e.won ~= nil and GetTime() - e.won < WON_WINDOW
 end
 
--- The item's roll was just decided (its receipt line repeats the result).
 function Rolls.RecentlyDecided(link)
     local e = Entry(link, false)
     return e ~= nil and e.decided ~= nil and GetTime() - e.decided < WON_WINDOW
 end
 
----------------------------------------------------------------------------
--- Display
----------------------------------------------------------------------------
 local function Icon(kind)
     local tex = ICONS[kind or "need"] or ICONS.need
     return "|T" .. tex .. ":0|t "
@@ -289,9 +255,7 @@ local function ItemTag(link)
     return (item.icon and ("|T" .. item.icon .. ":0:0:0:0:64:64:5:59:5:59|t ") or "") .. link
 end
 
--- With rollSummary on, one line per item: its result. Start, choices and
--- rolls (yours included: the result names them) and the receipt right after
--- the result are dropped.
+-- rollSummary: one line per item, its result
 local SUMMED = { mine = true, myroll = true, started = true, choice = true }
 
 local function Line(info)

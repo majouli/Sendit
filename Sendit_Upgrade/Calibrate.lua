@@ -1,15 +1,8 @@
 --[[
-  Calibrate: measures how much crit one point of agility (and spell crit one
-  point of intellect) really gives this character at its current level.
-  Classic sources only know level 60 and disagree; the client knows the truth,
-  it just has no API for the ratio. So every time the character's stats are
-  read out of combat, (agility, crit without gear crit) is stored as a sample;
-  once samples differ by enough agility, the ratio is the slope between them.
-
-  Robust slope: Theil-Sen (median of all pairwise slopes), so one sample
-  skewed by a temporary crit buff does not move the result. Samples reset on
-  level-up (the ratio is level dependent). Stored in Sendit_UpgradeCharDB.calib.
-  Contract: Calibrate.Sample(snapshot); Calibrate.Ratios(level) -> { agi?, int? }
+  Calibrate: the character's real agility per 1 % crit (intellect per 1 % spell crit) at its level -
+  out-of-combat reads stored as samples (Sendit_UpgradeCharDB.calib, reset on level-up), the ratio is
+  the Theil-Sen slope between them (one buffed sample does not move it).
+  Calibrate.Sample(snapshot);  Calibrate.Ratios(level) -> { agi?, int? }
 ]]
 local _, ns = ...
 
@@ -27,7 +20,6 @@ local function Median(list)
     return (list[n / 2] + list[n / 2 + 1]) / 2
 end
 
--- Stat points per 1% (1 / slope of percent over stat), or nil.
 function Calibrate.Ratio(samples)
     local slopes = {}
     for i = 1, #samples do

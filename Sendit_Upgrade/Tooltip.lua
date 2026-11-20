@@ -1,12 +1,7 @@
 --[[
-  Tooltip: a verdict against what is equipped, details on Shift.
-    "Sendit: Upgrade (+6,0% Schaden)"         green / red / grey
-    "  aber Überleben -3,1%"                          only when the two metrics disagree
-    "  Shift: Details"
-  With Shift: the item it replaces, both metrics in their units (DPS, EHP,
-  ...), the spec, the per-stat breakdown and unrated green lines.
-  Percent = change of the whole character (Compare.lua).
-  Uses TooltipDataProcessor (present on this client, see /gc probe).
+  Tooltip: a verdict against the worn item ("Sendit: Upgrade (+6,0% Damage)", a disagreeing second
+  metric, "Shift: Details"); with Shift the replaced item, both metrics, the spec, the per-stat breakdown
+  and unrated lines. Uses TooltipDataProcessor.
 ]]
 local _, ns = ...
 local L = ns.L
@@ -14,11 +9,9 @@ local L = ns.L
 local LABEL = "|cff66c2ffSendit:|r "
 local GREEN, RED, GREY, DIM = "|cff40ff40", "|cffff5050", "|cff999999", "|cffb0b0b0"
 local MAX_BREAKDOWN = 6
--- Below this the model cannot tell the items apart (its assumptions are
--- coarser than that): call it a sidegrade instead of a tiny up/downgrade.
+-- below this the model cannot tell items apart: a sidegrade
 local SIDEGRADE_PCT = 0.5
 
--- Number in the language's format: decimal point or comma (L.decimal).
 local function Num(v, decimals)
     local s = ("%." .. (decimals or 1) .. "f"):format(v)
     return (s:gsub("%.", L.decimal))
@@ -34,12 +27,10 @@ local function Color(v)
     return GREY
 end
 
--- Percent when the character has a value to compare with, else the absolute change.
 local function Pct(c)
     return c.pct or (c.abs > 0 and math.huge or c.abs < 0 and -math.huge or 0)
 end
 
--- "Upgrade (+6,0% Schaden)"
 local function Verdict(c)
     local pct = Pct(c)
     local share = c.pct and (" (" .. Signed(c.pct) .. "% " .. c.label .. ")") or ""
@@ -48,7 +39,6 @@ local function Verdict(c)
     return GREY .. L.sidegrade .. share .. "|r"
 end
 
--- "Schaden: +2,8 DPS (+6,0%)"
 function ns.FormatChange(c)
     local text = c.label .. ": " .. Signed(c.abs, c.unit == "EHP" and 0 or 1) .. " " .. c.unit
     if c.pct then text = text .. " (" .. Signed(c.pct) .. "%)" end
@@ -112,7 +102,6 @@ function ns.AddCompareLines(tooltip, r)
     end
 end
 
--- The item link a tooltip shows, or nil (unit, spell, secret, ...).
 local function ItemLink(tooltip)
     if type(tooltip.GetItem) ~= "function" then return nil end
     local ok, _, link = pcall(tooltip.GetItem, tooltip)
@@ -132,10 +121,8 @@ if TooltipDataProcessor and Enum and Enum.TooltipDataType then
     TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, OnItem)
 end
 
--- Shift shows the breakdown: rebuild the open tooltip when it changes.
--- Only item tooltips: a refresh from addon code runs Blizzard's rebuild
--- tainted, and on a unit tooltip that hits secret unit values
--- (UnitPlayerControlled error, reported by Blizzard itself, not our pcall).
+-- Shift rebuilds the open tooltip - item tooltips only: a refresh from addon code runs
+-- Blizzard's rebuild tainted, and on a unit tooltip that hits secret unit values
 local function OnModifier(_, _, key)
     if key ~= "LSHIFT" and key ~= "RSHIFT" then return end
     if not GameTooltip:IsShown() or not ItemLink(GameTooltip) then return end

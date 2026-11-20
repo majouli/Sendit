@@ -1,10 +1,6 @@
 --[[
-  Locale: visible text. English base plus deDE, frFR, esES, ruRU; the
-  language is the suite's (Sendit Design page), a key missing there falls
-  back to English.
-  Talent tree names are only the fallback when the client gives a tree no
-  display name; listed left to right as the talent window shows them, keyed
-  by UnitClass's English class token.
+  Locale: texts in five languages; tree names are only a fallback when the client gives none
+  (left to right as the talent window, keyed by the English class token).
 ]]
 local _, ns = ...
 
@@ -32,7 +28,6 @@ local L = {
     probeSaved = "Probe saved (%d entries). /reload, then send Sendit_GearScoreDB.probe from WTF\\...\\SavedVariables\\Sendit_GearScore.lua.",
     probeNoTarget = "Probe: target a player within inspect range for the inspect part.",
     help = "/gs - options | score - your score | auto - inspect on hover on/off | reset - forget players | probe - API check",
-    -- options window
     optTooltips = "Tooltips",
     optItemTip = "GearScore on items",
     optItemTipHint = "Score, item level and how much your total would change.",

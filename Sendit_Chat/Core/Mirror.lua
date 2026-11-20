@@ -1,39 +1,11 @@
 --[[
-  Mirror: Blizzard's chat frames stay the data plane, Sendit Chat shows the lines.
-
-  Blizzard's chat frames keep all their events: their secure handler does
-  class colours, player links, channel prefixes, censoring, other addons'
-  message filters, the reply target (R) and the whisper sound. Every line
-  they add is forwarded to Sendit Chat through a hooksecurefunc post-hook on
-  AddMessage (the hook body only touches Sendit Chat's frames). Secret lines
-  (chat lockdown) are forwarded whole; AddMessage of our own
-  ScrollingMessageFrame accepts them.
-
-  Mirror.Indices()          Blizzard window indices Sendit Chat shows as tabs
-                            (the combat log too: its lines come through
-                            AddMessage like any other)
-  Mirror.Name(index)        tab label (Blizzard's default names in the suite language)
-  Mirror.IsCombatLog(index) true for Blizzard's combat log window
-  Mirror.ChatType(infoID, r, g, b)  Blizzard's chat type ("SAY", "CHANNEL5", ...)
-                            for a line's info.id (an id several types share:
-                            the one with the line's colour); nil when unknown
-  Mirror.ChatTypes(infoID)  every chat type with that id (sorted), or nil
-  Mirror.Refresh()          rebuild the id map (chat settings loaded / changed)
-  Mirror.SharedIDs()        { { id, { types } }, ... } ids several types share
-  Mirror.SetCombatReset(fn) fn("clear") / fn("back", text, r, g, b): a combat
-                            log filter change clears Blizzard's log and fills
-                            it again oldest-first with BackFillMessage
-  Mirror.SetSink(fn)        fn(index, text, r, g, b, isWhisper, event, infoID);
-                            lines that arrived earlier are replayed first
-  Mirror.Hush()             makes Blizzard's chat visuals invisible and
-                            click-through (alpha, mouse and hyperlinks only:
-                            never Hide, reparent or field writes on Blizzard
-                            frames, those taint the secure chat handler).
-                            Hyperlinks too: ChatFrame1 sits above our window
-                            and its invisible links took clicks even with
-                            the mouse off (a click on our item link hit a
-                            hidden player / channel link, seen in game).
-  Mirror.EditBoxes()        Blizzard's permanent chat edit boxes
+  Mirror: Blizzard's chat frames stay the data plane - their secure handler does colours, links,
+  censoring, other addons' filters, reply target and sound; every line is forwarded through a
+  hooksecurefunc post-hook on AddMessage (secret lines whole).
+  Mirror.Indices() / Name(index) / IsCombatLog(index) / ChatType(infoID, r, g, b) / ChatTypes(infoID)
+  Mirror.Refresh() / SharedIDs() / SetCombatReset(fn) / SetSink(fn) / EditBoxes()
+  Mirror.Hush(): Blizzard's chat visuals invisible and click-through - alpha, mouse and hyperlinks
+  only; never Hide, reparent or field writes (those taint the secure chat handler).
 ]]
 local addonName, ns = ...
 local Safe = ns.Safe
@@ -70,7 +42,7 @@ function Mirror.Indices()
     local info = _G["GetChatWindowInfo"]
     for i = 1, NumWindows() do
         if Frame(i) then
-            -- shown (boolean) or docked (dock position) = the window is in use
+            -- shown or docked = the window is in use
             local use = true
             if info then
                 local _, _, _, _, _, _, shown, _, docked = info(i)
@@ -82,19 +54,8 @@ function Mirror.Indices()
     return list
 end
 
----------------------------------------------------------------------------
--- Whisper detection
----------------------------------------------------------------------------
--- info.id -> chat types. Blizzard sets ChatTypeInfo[type].id =
--- GetChatTypeIndex(type); several types can share one index (channels,
--- related types), so an id may stand for more than one type. Then the
--- line's colour decides (Blizzard adds it with info.r, g, b of the exact
--- type). The map is built on the first line and again on a miss (each
--- miss id only once).
--- Every ChatTypeInfo key (ChatTypeInfoConstants.lua + Mainline override,
--- branch forever). Looked up by name: in this client pairs(ChatTypeInfo)
--- yields nothing (seen in game: /chat trace found no id while
--- ChatTypeInfo.GUILD.id read 5), so the map never iterates the table alone.
+-- info.id -> chat types; several types can share an id: then the line's colour decides
+-- pairs(ChatTypeInfo) yields nothing in this client: types are looked up by name
 local KNOWN_TYPES = {
     "SYSTEM", "SAY", "PARTY", "RAID", "GUILD", "OFFICER", "GUILD_DISCORD", "YELL", "WHISPER",
     "SMART_WHISPER", "WHISPER_INFORM", "REPLY", "EMOTE", "TEXT_EMOTE", "MONSTER_SAY", "MONSTER_PARTY",
@@ -135,10 +96,7 @@ local function Rebuild()
     for _, list in pairs(typesOf) do table.sort(list) end
 end
 
--- Blizzard sets the ids (GetChatTypeIndex) only once its chat settings
--- loaded: lines Sendit backfills on load can come before that. So an unknown
--- id is never remembered as unknown - a miss rebuilds the map (at most once
--- a second), and so do the chat settings events (Mirror.Refresh).
+-- ids are set once Blizzard's chat settings loaded: a miss rebuilds the map (once a second)
 local builtAt
 local function Candidates(id)
     if typesOf[id] == nil then
@@ -177,13 +135,11 @@ function Mirror.ChatType(infoID, r, g, b)
     return hit
 end
 
--- Every chat type with this id (sorted), or nil.
 function Mirror.ChatTypes(infoID)
     local id = Safe.Num(infoID)
     return id and Candidates(id) or nil
 end
 
--- Ids shared by several chat types: { { id, { types } }, ... } (/chat ids).
 function Mirror.SharedIDs()
     Rebuild()
     local out = {}
@@ -194,8 +150,7 @@ function Mirror.SharedIDs()
     return out
 end
 
--- The line's event ("CHAT_MSG_LOOT", ...): the event argument when the
--- client passes one, else derived from the chat type id.
+-- the line's event: the argument when passed, else from the type id
 local function EventOf(infoID, event, r, g, b)
     local e = Safe.Str(event)
     if e then return e end
@@ -206,11 +161,8 @@ Mirror._EventOf = EventOf
 
 local function IsWhisper(event) return event ~= nil and WHISPER_EVENTS[event] == true end
 
----------------------------------------------------------------------------
--- Line flow
----------------------------------------------------------------------------
 local sink
-local buffer = {}  -- lines before the sink exists: { index, text, r, g, b, whisper, event, infoID }
+local buffer = {}  -- lines before the sink exists
 
 local function Forward(index, text, r, g, b, infoID, event)
     event = EventOf(infoID, event, r, g, b)
@@ -244,7 +196,6 @@ local function HookCombatReset(cf)
     end
 end
 
--- Lines Blizzard added before Sendit Chat loaded (oldest first).
 local function Backfill(i, cf)
     if not cf.GetNumMessages or not cf.GetMessageInfo then return end
     local n = Safe.Num(Safe.Call(cf.GetNumMessages, cf)) or 0
@@ -269,9 +220,6 @@ function Mirror.HookAll()
     end
 end
 
----------------------------------------------------------------------------
--- Hushing Blizzard's visuals
----------------------------------------------------------------------------
 local SOCIAL_BUTTONS = {
     "QuickJoinToastButton", "ChatFrameMenuButton", "ChatFrameChannelButton",
     "ChatFrameToggleVoiceDeafenButton", "ChatFrameToggleVoiceMuteButton",
@@ -303,7 +251,6 @@ local function Children(obj)
     return ok and list or {}
 end
 
--- Mouse off for a frame and its descendants, except the edit boxes.
 local editBoxSet = {}
 local function MouseOffTree(obj, depth)
     if not obj or editBoxSet[obj] or depth > 6 then return end
@@ -372,9 +319,6 @@ function Mirror.Hush()
     end
 end
 
----------------------------------------------------------------------------
--- Start
----------------------------------------------------------------------------
 ns.Listen("ADDON_LOADED", function(_, name)
     if name ~= addonName or not ns.acct or not ns.acct.enabled then return end
     if C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("EllesmereUIChat") then return end

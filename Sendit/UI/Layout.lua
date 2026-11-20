@@ -1,19 +1,8 @@
 --[[
-  Layout: a settings page as sections of rows - label and description on
-  the left, the control on the right - plus notes and free blocks. Built on
-  the Widgets kit and painted through the Theme.
-
-  W.Layout(content) -> Lay
-    Lay:Section(title) -> panel (.heading)   Lay:EndSection()
-    Lay:Row(label, desc, control, descGap) -> row (.label, .desc)
-    Lay:Note(text)        Lay:Place(frame, height)  (a frame with :Refresh() is
-                          refreshed with the page)
-    Lay:Refresh()         texts given as functions are resolved again and
-                          every control re-reads its getter
-    Lay.entries           { { section, label, desc, row }, ... } every row in
-                          order, texts as given (strings or functions): what
-                          the window's search lists (UI/Search.lua)
-    Lay:Reveal(row)       scroll the row into view and let it light up
+  Layout: a settings page as sections of rows (label and description left, control right), notes and
+  free blocks. Texts may be functions (resolved again on Refresh).
+  W.Layout(content) -> Lay;  Lay:Section(title) / EndSection() / Row(label, desc, control, descGap)
+  Lay:Note(text) / Place(frame, height) / Refresh() / Reveal(row);  Lay.entries (for the search)
 ]]
 local _, ns = ...
 
@@ -24,10 +13,6 @@ local SIZE = T.SIZE
 local Layout = {}
 Layout.__index = Layout
 
--- Texts (section titles, row labels and descriptions, notes) may be
--- functions: Refresh resolves them again, so a language switch shows at once.
--- Contract: Section returns its panel, Row its row (.label, .desc), Place
--- puts any frame of the given height below the sections.
 local Resolve = ns.Locale.Resolve
 
 function W.Layout(content)
@@ -56,8 +41,6 @@ function Layout:Section(title)
     return panel
 end
 
--- control: a widget with :Refresh(); placed right, vertically centred.
--- descGap: room between description and control (sliders show their value there).
 function Layout:Row(label, desc, control, descGap)
     local panel = self.panel
     local row = CreateFrame("Frame", nil, panel)
@@ -98,7 +81,6 @@ function Layout:EndSection()
     self.content:SetHeight(self.y)
 end
 
--- A line of text below the sections (feedback messages).
 function Layout:Note(text)
     local fs = T.Text(self.content, "note", "textMuted")
     fs:SetPoint("TOPLEFT", 0, -self.y)
@@ -108,7 +90,6 @@ function Layout:Note(text)
     return fs
 end
 
--- A frame of the given height below what is placed so far (custom blocks).
 function Layout:Place(frame, height)
     frame:SetParent(self.content)
     frame:ClearAllPoints()
@@ -121,9 +102,7 @@ function Layout:Place(frame, height)
     return frame
 end
 
--- The search's jump target: scroll so the row sits near the top, then a
--- soft accent wash over it fades out (its own child frame: frame alpha, so
--- the painted texture keeps its role).
+-- the search's jump target: scroll near the top, then a fading wash
 local FLASH_HOLD, FLASH_FADE = 0.5, 1.2
 
 function Layout:Reveal(row)

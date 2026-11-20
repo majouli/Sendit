@@ -1,19 +1,7 @@
 --[[
-  Services: whether the player is dealing with a service NPC (vendor, bank,
-  flight master, trainer, ...), from events only.
-
-  Two signs, because NPCs differ:
-    - a service window is open (WINDOWS: open event -> close event); NPCs
-      with one service (banker, vendor) open it without a gossip menu
-    - the open gossip has menu options but no quests (flight master, guard
-      directions, innkeeper); story gossip has quests or plain text only, and
-      a quest greeting opens no gossip at all
-
-  A close event can be lost (loading screen), so the open set is cleared on
-  every PLAYER_ENTERING_WORLD.
-
-  Services:IsServiceNPC()   -> true while either sign holds
-  Services:OnWindowOpen(fn) -> fn() when a service window opens
+  Services: is the player dealing with a service NPC (vendor, bank, flight master ...)? From events: a
+  service window is open, or the gossip has options but no quests. Cleared on PLAYER_ENTERING_WORLD.
+  Services:IsServiceNPC();  Services:OnWindowOpen(fn)
 ]]
 local _, ns = ...
 
@@ -30,10 +18,10 @@ local WINDOWS = {
     PET_STABLE_SHOW       = "PET_STABLE_CLOSED",
     GUILDBANKFRAME_OPENED = "GUILDBANKFRAME_CLOSED",
 }
-local closes = {}  -- close event -> open event
+local closes = {}
 for open, close in pairs(WINDOWS) do closes[close] = open end
 
-local open = {}       -- open event -> true while that window is open
+local open = {}
 local listeners = {}
 
 local function GossipCount(fn)
@@ -75,7 +63,7 @@ ev:SetScript("OnEvent", function(_, event)
         wipe(open)
     end
 end)
--- pcall: not every event exists in every client
+-- not every event exists in every client
 for o, c in pairs(WINDOWS) do
     pcall(ev.RegisterEvent, ev, o)
     pcall(ev.RegisterEvent, ev, c)

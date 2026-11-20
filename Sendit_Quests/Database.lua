@@ -1,16 +1,10 @@
 --[[
-  Database: search and deterministic directed chain graphs.
-  Search: words, all must match. A number matches the quest's ID or any item,
-  NPC or object ID the quest names (Data/Search.lua); * and ? are wildcards;
-  else plain text in the quest's name (suite language and English), its
-  texts, its place / category and the names of the items, NPCs and objects
-  it names (Data/Search_<locale>.lua).
-  Edges point from prerequisite to dependent. OR and AND prerequisites stay
-  separate in the source record; siblings in an exclusive/group list are
-  not invented chain edges. Connected components include all branches.
-  Kahn ordering handles converging branches; cycles are surfaced, never
-  recursed forever or hidden. Missing referenced quests remain visible.
-  Only the suite language's names / objectives stay loaded (see OnReady below).
+  Database: search and chain graphs.
+  Search: all words must match - a number = the quest's ID or any linked item / NPC / object ID
+  (Data/Search.lua); * and ? are wildcards; else text in names (suite language and English),
+  objectives, place and linked names (Data/Search_<locale>.lua).
+  Chains: edges from prerequisite to dependent (Kahn order, cycles flagged, missing quests kept);
+  exclusive / group siblings are no edges. Only the suite language's texts stay loaded.
 ]]
 local _, ns = ...
 local DB = {}
@@ -18,13 +12,11 @@ ns.Database = DB
 local before, after
 local logTitles = {}
 
--- Names and objectives ship in four languages (~2.7 MB, Data/Names_*.lua); once the
--- suite language is known only that one stays in memory. After a language switch
--- the dropped ones show English until /reload.
+-- only the suite language's texts stay in memory (English until /reload after a switch)
 Sendit.OnReady(function()
     local keep = Sendit.Locale.Code()
     for _, byCode in ipairs({ ns.names, ns.objectives, ns.searchText }) do
-        local fallback = not byCode[keep] and "enUS"  -- the linked names exist in English too
+        local fallback = not byCode[keep] and "enUS"
         for code in pairs(byCode) do
             if code ~= keep and code ~= fallback then byCode[code] = nil end
         end
@@ -71,11 +63,9 @@ function DB.Groups()
 end
 
 local function Fold(s)
-    -- WoW's strlower handles UTF-8; Lua's lower is the test/client fallback.
     return (strlower or string.lower)(s)
 end
 
--- The linked-name index (Data/Search*.lua) belongs to the bundled quest table.
 local bundled = ns.quests
 local hay, hayCode, hayQuests = {}, nil, nil
 local function Haystack(key)
@@ -184,9 +174,8 @@ function DB.Links(id, direction)
     return out
 end
 
--- Known prerequisites: { all = {...}, any = {...} }. The source's explicit
--- AND / OR lists when it has them, else every recorded link before it (a
--- previous quest's "next", a parent quest) counts as required.
+-- known prerequisites { all, any }: the explicit lists, else every recorded link before it
+-- (a previous quest's "next", a parent quest)
 function DB.Prerequisites(id)
     local q = ns.quests[id]
     if q and (q.preQuestGroup or q.preQuestSingle) then
@@ -237,5 +226,4 @@ function DB.Chain(id)
     return rows, cycle
 end
 
--- Tests replace the fixture database; production data never changes.
 function DB.Invalidate() before, after = nil, nil end

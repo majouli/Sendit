@@ -1,10 +1,7 @@
 --[[
-  QuestLog: an owned button just below the modern quest-log pane opens the
-  latest explicitly viewed/tracked quest. Blizzard's GetSelectedQuest retains
-  an old detail quest when tracking changes, so secure post-hooks remember
-  the IDs passed to those actions in our own namespace. No foreign
-  frame fields/scripts are modified. Late-loaded Blizzard UI is supported;
-  combat defers attachment. No dependence on another quest addon.
+  QuestLog: remembers the quest last viewed / tracked in Blizzard's quest log (post-hooks; Blizzard's
+  GetSelectedQuest keeps an old one) and adds our "Sendit - chain" button below the log.
+  No fields or scripts of Blizzard's frames are written; combat defers attaching.
 ]]
 local _, ns = ...
 local lastSelection
@@ -28,7 +25,6 @@ local function Hooks()
         hooksecurefunc(api, "SetSuperTrackedQuestID", Remember)
         hooked.super = true
     end
-    -- Mixins are copied onto existing frames; hook both load orders.
     for _, name in ipairs({ "QuestLogPopupDetailMixin", "QuestLogPopupDetailFrame" }) do
         local popup = _G[name]
         if not hooked[name] and popup then
@@ -42,7 +38,6 @@ local function Attach()
     if ns.questButton or ns.disabled or InCombatLockdown() then return end
     local parent = _G["QuestMapFrame"]
     if not parent then return end
-    -- Named boundary: other UI addons must not mistake this for Blizzard UI.
     local holder = CreateFrame("Frame", "SenditQuestsQuestLogEntry", parent)
     holder:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 4, -4)
     Sendit.ownFrames[holder] = true

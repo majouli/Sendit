@@ -1,21 +1,8 @@
 --[[
-  Overlay ("Show on screen"): outlines every visible element in the game
-  world, softly, coloured by state:
-    green   faded (included)        faint edge, barely any fill
-    red     excluded by the user    80% edge, light fill
-    grey    always visible (tooltips, dialogs, windows)
-  Hover shows the name, a click opens the Elements page on that element.
-
-  Boxes wrap what an element actually draws (the union of its visible
-  textures and texts, descendants included), not its frame: big invisible
-  containers shrink to their content, empty or transparent ones vanish.
-  Unit frames often answer with secrets (visibility, position, text): when
-  anything was unknown and no content was found, the box falls back to the
-  element's own frame; without a readable frame the banner counts it.
-  The banner's tolerance slider hides boxes above a share of the screen.
-  Small boxes sit above large ones, so everything stays clickable.
-  Fading is paused while the overlay is shown (Triggers:Hold). Escape closes it.
-  The banner can be dragged away; its position is kept in db.overlay.point.
+  Overlay ("Show on screen"): outlines every visible element by state (green faded, red excluded, grey
+  always visible); hover names it, a click opens the Elements page on it. Boxes wrap what an element
+  draws (union of visible regions); secrets fall back to the frame. A tolerance hides boxes above a
+  share of the screen; small boxes above large ones. Fading pauses while shown; Escape closes it.
 ]]
 local _, ns = ...
 
@@ -48,11 +35,7 @@ local function StyleOf(e)
     return STYLE.excluded
 end
 
----------------------------------------------------------------------------
--- Content bounds
----------------------------------------------------------------------------
--- Does a region draw something? `alpha` = effective alpha of its frame.
--- -> true, false, or nil when a secret hides the answer.
+-- does a region draw something? nil when a secret hides the answer
 local function Draws(region, alpha)
     local visible = Safe.Visibility(region)
     if visible ~= true then return visible end
@@ -69,7 +52,6 @@ local function Draws(region, alpha)
     return true
 end
 
--- The rect clamped to the screen -> l, b, w, h, or nil when nothing is left.
 local function Clamp(minL, minB, maxR, maxT)
     minL, minB = math.max(0, minL), math.max(0, minB)
     maxR, maxT = math.min(UIParent:GetWidth(), maxR), math.min(UIParent:GetHeight(), maxT)
@@ -77,10 +59,7 @@ local function Clamp(minL, minB, maxR, maxT)
     return minL, minB, maxR - minL, maxT - minB
 end
 
--- Union of drawn regions in UIParent coordinates, clamped to the screen
--- -> l, b, w, h (or nil), unknown. Alpha is multiplied down the frame chain,
--- so content of transparent sub-frames (flashes, vignettes) doesn't count.
--- unknown: a secret hid whether some part draws (or where).
+-- union of drawn regions (alpha multiplied down the chain); unknown = a secret hid some part
 local function ContentRect(root, rootAlpha)
     local minL, minB, maxR, maxT
     local unknown = false
@@ -118,7 +97,6 @@ local function ContentRect(root, rootAlpha)
     return l, b, w, h, unknown
 end
 
--- The element's own frame, for content hidden behind secrets.
 local function FrameRect(f)
     local l, b, w, h = Safe.Rect(f)
     if not l then return nil end
@@ -127,7 +105,6 @@ end
 
 local unplaced = 0  -- elements with content but no readable position
 
--- Expensive part (walks descendants): every REFRESH seconds.
 local function Collect()
     wipe(candidates)
     unplaced = 0
@@ -147,13 +124,10 @@ local function Collect()
             end
         end
     end
-    -- large first, so smaller boxes get higher levels and stay clickable
+    -- large first: smaller boxes get higher levels
     table.sort(candidates, function(a, b) return a.area > b.area end)
 end
 
----------------------------------------------------------------------------
--- Boxes
----------------------------------------------------------------------------
 local function BoxEnter(self)
     T.Alpha(self.fill, self.style[3] + HOVER_FILL)
     self.tag:Show()
@@ -211,7 +185,7 @@ local function Paint(b, c)
     b.e = c.e
 end
 
--- Collect, but never let an error repeat every refresh: close and report once.
+-- an error must not repeat every refresh: close and report once
 local function SafeCollect()
     local ok, err = pcall(Collect)
     if not ok then
@@ -221,7 +195,6 @@ local function SafeCollect()
     return ok
 end
 
--- Cheap part: filter by tolerance and place boxes.
 local function Place()
     local screen = UIParent:GetWidth() * UIParent:GetHeight()
     local maxArea = ns.db.overlay.maxSize * screen
@@ -247,9 +220,6 @@ local function Place()
     banner.count:SetText(text)
 end
 
----------------------------------------------------------------------------
--- Frame
----------------------------------------------------------------------------
 local function Legend(parent, anchor, color, text)
     local dot = T.Fill(parent, color, "ARTWORK")
     dot:SetSize(10, 10)

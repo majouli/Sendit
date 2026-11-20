@@ -1,8 +1,6 @@
 --[[
-  Init: registers the Dungeons tool with Sendit. Account layout stores the
-  window size, the list filter and the gear boost threshold and range; the bundled
-  dungeon data is immutable. /sd [name] opens the browser, /sd boost prints
-  why the boost list looks as it does (diagnostics, English).
+  Init: registers Dungeons. Account: window size, filter, boost threshold and range.
+  /sd [name] opens the browser, /sd boost prints the boost diagnostics.
 ]]
 local _, ns = ...
 ns.module = Sendit:RegisterModule({

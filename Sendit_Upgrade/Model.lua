@@ -209,7 +209,6 @@ function Model.Survival(s)
     return s.hp / Model.Mitigation(s)
 end
 
-
 -- The leveling cycle of a caster or healer, one pull after the other: fight
 -- (casting all the time), rest until the next pull - spirit regenerates once
 -- 5 s have passed since the last cast - and drink back to full once the mana

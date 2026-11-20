@@ -1,16 +1,7 @@
 --[[
-  MeasureWindow: the live counts of /gc measure (Measure.lua) as a small,
-  movable, resizable window - measured outcome next to what the model assumes.
-
-  Shows the physical attacks (Ret: the white swings) against the level
-  difference of the current target; without a target the difference with the
-  most attacks. One row per outcome: name, a bar of the measured share with a
-  marker at the model's value (Model.Target: miss / dodge / parry / glancing;
-  crit: the character sheet's crit at each attack), "measured / model".
-  The bar is green while both agree (within 1 point or 15%), amber when they
-  do not, muted below MIN_N attacks (too few to tell).
-  /gc measure window toggles it; position, size and shown state are saved in
-  Sendit_UpgradeDB.measureWindow. Redraws at most 4 times a second.
+  MeasureWindow: /gc measure's live counts - one row per outcome with the measured share and a marker
+  at the model's value (green when they agree, amber when not, muted below MIN_N attacks), for the
+  target's level difference. Movable, resizable, saved in Sendit_UpgradeDB.measureWindow.
 ]]
 local _, ns = ...
 local L = ns.L
@@ -34,7 +25,7 @@ end
 
 local function Num(v) return (("%.1f"):format(v):gsub("%.", L.decimal or ".")) end
 
--- The bucket to show: the current target's level difference, else the fullest.
+-- the current target's level difference, else the fullest bucket
 local function PickBucket()
     local m = ns.db and ns.db.measure
     if not m or not m.buckets then return nil end
@@ -99,7 +90,7 @@ local function Draw()
 end
 
 local function Layout()
-    if not frame or not frame.rows then return end  -- size events fire while it is built (backdrop)
+    if not frame or not frame.rows then return end  -- size events fire while it is built
     local track = frame:GetWidth() - 2 * PAD - LABEL_W - VALUE_W - 8
     for i, r in ipairs(frame.rows) do
         r:ClearAllPoints()
@@ -225,7 +216,6 @@ end
 
 function MeasureWindow.Toggle() MeasureWindow.SetShown(not (frame and frame:IsShown())) end
 
--- Measure.lua calls this after each counted event.
 function MeasureWindow.Changed() dirty = true end
 
 local login = CreateFrame("Frame")

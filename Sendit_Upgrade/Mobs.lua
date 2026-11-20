@@ -1,16 +1,8 @@
 --[[
-  Mobs: armor of the average normal (non-elite) mob of a level - the target
-  the damage model hits while leveling.
-  Contract: Mobs.Armor(level) -> armor (level clamped to 1..63)
-            Mobs.Hit(level)   -> average raw melee hit (level clamped to 1..63)
-            Mobs.Health(level) -> median health of a normal mob (Data/Leveling.lua)
-            Mobs.Drink(level) -> mana per second, seconds of the best vendor
-                                 drink a character of that level can drink
-            Mobs.Ammo(level)  -> damage per second of the best vendor arrows
-
-  Source: AzerothCore creature_classlevelstats, class 1 (warrior), basearmor.
-  Emulator data built from Classic sniffs: an approximation, Forever may differ;
-  the window lists it as "geschätzt".
+  Mobs: the average normal mob of a level - the leveling target.
+  Mobs.Armor(level) / Hit(level) / Health(level) / Drink(level) / Ammo(level)
+  Source: AzerothCore creature_classlevelstats (class 1, basearmor) - emulator data from Classic
+  sniffs, an approximation (shown as estimated).
 ]]
 local _, ns = ...
 

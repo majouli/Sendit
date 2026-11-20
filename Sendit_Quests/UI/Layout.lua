@@ -1,13 +1,7 @@
 --[[
-  Layout: the journal's geometry in UI units, from the window size alone.
-  One header line: emblem and name left; search, the two filter chips and
-  the gear boost chip (its values: UI/BoostDialog.lua) right, next to the
-  close button. Too narrow for that (< WIDE) and they move to a toolbar line below. Below: the list (35 %) and
-  the chain (65 %), each scrolling on its own, the resize grip bottom right.
-
-  Layout.Measure(width, height) -> m { left, right, x, top, height, toolbar }
-  Layout.Apply(frame)       place every part (on resize, language switch)
-  Layout.Enable(frame)      resizable, saved size (account section), grip
+  Layout: the journal's geometry from the window size - header (controls move to a toolbar line when
+  narrower than WIDE), list (35 %) and chain (65 %), resize grip.
+  Layout.Measure(width, height) -> m;  Layout.Apply(frame);  Layout.Enable(frame)
 ]]
 local _, ns = ...
 local S = ns.Style
@@ -25,7 +19,6 @@ function Layout.Measure(width, height)
         height = math.max(160, height - top - pad), toolbar = toolbar }
 end
 
--- Search and chips from the right edge (header) or the left (toolbar).
 local function Controls(f, m, w)
     local pad, gap = S.space.pad, 8
     local chips = f.group:GetWidth() + gap + f.status:GetWidth() + gap + f.boost:GetWidth()

@@ -1,23 +1,9 @@
 --[[
-  Service: Upgrade's rating offered to the other Sendit modules (Sendit.Provide
-  "upgrade"; the Quests journal's gear boost uses it). Same calculation as the
-  tooltip: the item virtually equipped, the character recalculated for the
-  chosen specialization (Compare.Evaluate).
-
-  Sendit.Service("upgrade"):
-    Rate(itemID) -> r
-      r.status  "ok" | "loading" (item not cached yet: ask again later) |
-                "unusable" | "equipped" | "noCompare" | "nodata" | "unsupported"
-      r.pct     change of the spec's main metric in percent (status "ok")
-      r.slotPct the gain against the worn item in that slot (nil: slot empty
-                - r.empty - or its item adds nothing), r.equipLoc the slot type
-      r.label   the metric's name ("Damage", "Healing", ...), r.unit
-      r.secondaryPct / r.secondaryLabel  the spec's second metric (the
-                tooltip's "but Survival -2.6 %" trade-off)
-      r.gate    the item's required level when above the character's
-    Spec() -> localized name of the specialization rated for
-    OnChange(fn)  fn() when gear, level, the chosen specialization, or enemy
-                  level change: ratings are stale (other settings do not count)
+  Service: Upgrade's rating for the other modules (Sendit.Provide "upgrade"), the tooltip's calculation.
+  Rate(itemID) -> r = { status, pct, slotPct, empty, equipLoc, label, unit, secondaryPct,
+                        secondaryLabel, gate }   status "ok" | "loading" | "unusable" | ...
+  Spec() -> the rated specialization's name
+  OnChange(fn)   gear, level, spec or enemy level changed: ratings are stale
 ]]
 local _, ns = ...
 
@@ -51,8 +37,7 @@ local events = CreateFrame("Frame")
 events:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
 events:RegisterEvent("PLAYER_LEVEL_UP")
 events:SetScript("OnEvent", Changed)
--- The specialization and enemy level are picked on Upgrade's page; settings change all the time elsewhere in the suite (Fade,
--- ...): only these count.
+-- only the spec and enemy level count (settings change all the time elsewhere)
 local lastKey ---@type string?
 Sendit.OnSettingsChanged(function()
     local key = table.concat({ ns.charDB and ns.charDB.spec or "auto", ns.Settings.TargetDelta() }, "/")

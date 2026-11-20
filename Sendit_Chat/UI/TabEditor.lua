@@ -1,16 +1,8 @@
 --[[
-  TabEditor: what a chat tab shows, laid out like Blizzard's chat settings:
-  three pages (Chat: player and creature messages; Channels: the joined
-  ones; Other: combat, PvP, system), each kind a switch with its colour
-  (UI/ChatColors.lua, Blizzard's own chat colours). Own tabs also get a
-  name. Opened by "+" on the main window and the right-click menu of
-  General and of own tabs (Core/Tabs.lua). Named SenditTabEditor (no "chat"
-  in the name, so Fade's group-chat peek leaves it alone); Escape closes it.
-
-  TabEditor.Open()        a new tab
-  TabEditor.Open(index)   change that tab (1 = General, else an own tab)
-  An existing tab's changes apply however the editor closes (button, X,
-  Escape); a new tab is made only by the save button.
+  TabEditor: what a tab shows, like Blizzard's chat settings - pages Chat / Channels / Other, a switch
+  and colour per kind; own tabs get a name. Opened by "+" and the tab menu; Escape closes. Changes to
+  an existing tab apply however it closes; a new tab only by the save button.
+  TabEditor.Open() (new) / Open(index)
 ]]
 local _, ns = ...
 local T, Widgets, Tabs, ChatKinds, ChatColors = ns.Theme, ns.Widgets, ns.Tabs, ns.ChatKinds, ns.ChatColors
@@ -25,7 +17,7 @@ local PAGES = { "chat", "channels", "other" }
 local WHISPERS = { WHISPER = true, BN_WHISPER = true }
 
 local box, editing, take, page
-local pending, Apply  -- Apply: below (the editor's OnHide calls it)
+local pending, Apply  -- Apply: below (OnHide calls it)
 local rows, heads = {}, {}
 
 local function Build()
@@ -59,7 +51,6 @@ local function Build()
     box:SetScript("OnHide", function() Apply() end)
 end
 
--- A page as a list of heads ({ head = text }) and switches ({ key, label, color }).
 local function Items(p)
     local items = {}
     if p == "channels" then
@@ -111,8 +102,7 @@ local function Head(k)
     return heads[k]
 end
 
--- Two columns, the second starts once the first holds half the page (a
--- head never ends a column).
+-- two columns: the second starts once the first holds half (a head never ends a column)
 function TabEditor.Fill()
     local items = Items(page)
     local half, y, x = Height(items) / 2, 0, 0
@@ -143,7 +133,6 @@ function TabEditor.Fill()
     box.pages.Refresh()
 end
 
--- The tallest page decides the height, so switching pages keeps the size.
 local function Layout(general)
     local y = -42
     box.name:SetShown(not general)
@@ -178,7 +167,7 @@ function TabEditor.Open(index)
     editing = (general or Tabs.Get(index)) and index or nil
     take = Tabs.Take(editing)
     page = "chat"
-    -- texts on every open: the suite language can change in between
+    -- texts on every open: the language may change
     box.title:SetText(general and L.GENERAL_SETTINGS or editing and L.EDIT_TAB or L.NEW_TAB)
     box.hint:SetText(general and L.GENERAL_HINT or L.TAB_HINT)
     box.save.text:SetText(L.SAVE_TAB)
@@ -193,9 +182,6 @@ function TabEditor.Open(index)
     if not editing then box.name:SetFocus() end
 end
 
--- Applied however the editor closes (save button, X, Escape), as Blizzard's
--- chat settings apply at once; a new tab only by the save button (closing
--- a new one cancels it).
 function Apply(saved)
     if not pending then return end
     pending = false

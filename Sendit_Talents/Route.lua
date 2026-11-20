@@ -1,36 +1,14 @@
 --[[
-  Route: the pure logic over Data/Routes.lua (no client calls, tested).
-  A route is a list of trait node IDs, one per talent point in buying order:
-  [1] is the point at level 10, [51] the one at level 60. The n-th time a
-  node appears is its rank n.
-  The route guides, the player decides. Plan reads the character's tree:
-    done     route points the character has
-    queue    the open route points in route order; points left out before
-             the last done one (skipped) move to its end, so none is lost
-    dropped  every point spent off the route (or above a route node's rank)
-             takes one point off the end of the queue: 51 points in all
-    picks    the next queue points Blizzard lets the player buy now, as many
-             as points are free (at least one); a node that is locked (tier,
-             prerequisite) is passed over. Later picks cannot see tiers the
-             earlier ones would open; the next redraw does.
-  Queue points are re-timed to the character: the first comes at level
-  10 + points spent.
-  Contract:
-    Route.ForClass(class) -> { route, ... } (may be empty)
-    Route.Find(class, key) -> route | nil
-    Route.Plan(route, rankOf, opts) -> {
-        target = { [nodeID] = rank at 60 (dropped points left out) },
-        levels = { [nodeID] = { first, last } },
-        steps  = { { node, rank, level, done, dropped }, ... } done points,
-                 then the queue, then the dropped ones,
-        picks  = { step, ... }, next = picks[1] | nil (route complete) }
-      rankOf(nodeID) -> the node's current rank (staged points included)
-      opts (optional): nodes = every node of the tree (to count points off the
-        route), open(nodeID) -> false when Blizzard would refuse a point,
-        free = free points.
-    Route.Suggest(class, rankOf) -> route | nil: the route that already holds
-      most of the spent points; the class's solo pick wins a tie (routes share
-      their first talents) and stands when nothing is spent.
+  Route: pure logic over Data/Routes.lua. A route lists trait node IDs, one per talent point in
+  buying order ([1] = level 10); the n-th appearance of a node is its rank n.
+  Plan: done = route points taken; queue = open points in route order, skipped ones moved to the
+  end; every point spent off the route takes one off the queue's end; picks = the next queue points
+  Blizzard lets the player buy now. Queue points are re-timed: the first at level 10 + points spent.
+  Route.ForClass(class) -> { route, ... }
+  Route.Find(class, key) -> route | nil
+  Route.Plan(route, rankOf, opts) -> { target, levels, steps, picks, next }
+    rankOf(nodeID) -> current rank; opts: nodes, open(nodeID), free
+  Route.Suggest(class, rankOf) -> the route holding most spent points (solo pick wins a tie)
 ]]
 local _, ns = ...
 
@@ -56,7 +34,6 @@ local function Counts(route)
     return counts
 end
 
--- Points spent outside the route: on other nodes or above a route node's rank.
 local function OffRoute(counts, rankOf, nodes)
     local off = 0
     for _, node in ipairs(nodes or NONE) do
@@ -78,7 +55,6 @@ function Route.Plan(route, rankOf, opts)
             open[#open + 1] = { node = node, index = i }
         end
     end
-    -- queue: open points after the last done one, then the skipped ones
     local queue = {}
     for _, s in ipairs(open) do if s.index > last then queue[#queue + 1] = s end end
     for _, s in ipairs(open) do if s.index < last then queue[#queue + 1] = s end end
@@ -109,7 +85,6 @@ function Route.Plan(route, rankOf, opts)
         end
         steps[#steps + 1] = step
     end
-    -- dropped points: shown with the rank they would have had
     for _, step in ipairs(steps) do
         if step.dropped then
             sim[step.node] = (sim[step.node] or rankOf(step.node) or 0) + 1

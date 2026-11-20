@@ -1,15 +1,10 @@
 --[[
-  Inspect: known players (GearScore, item level, talents) by GUID.
-  Sources: the player's own gear (live), and every INSPECT_READY - ours
-  (hover, throttled) and Blizzard's (the inspect window) alike.
-  Rules: never in combat, never while the inspect window is open (that
-  would swap its target), one request per THROTTLE seconds, the last hovered
-  player waits for the next free moment. Items of others may arrive uncached
-  and talents a moment after INSPECT_READY: both are read again (READS).
-  Our own inspect is cleared afterwards (ClearInspectPlayer), Blizzard's not.
-  Contract: Inspect.Get(guid) -> entry | nil; Inspect.Request(unit);
-  Inspect.Pending(guid); Inspect.OnChange(fn(guid, entry));
-  entry = { name, class, level, score, ilvl, trees, t = time() }.
+  Inspect: known players (GearScore, item level, talents) by GUID - the own gear live, others from
+  every INSPECT_READY (ours on hover, throttled, and Blizzard's window). Never in combat or while the
+  inspect window is open; uncached items and late talents are read again (READS); our own inspect is
+  cleared afterwards.
+  Inspect.Get(guid) -> { name, class, level, score, ilvl, trees, t } | nil
+  Inspect.Request(unit) / Pending(guid) / OnChange(fn(guid, entry))
 ]]
 local _, ns = ...
 local Score, Talents = ns.Score, ns.Talents
@@ -19,14 +14,14 @@ ns.Inspect = Inspect
 
 local THROTTLE = 1.5
 local TIMEOUT = 4
-local REFRESH = 300               -- re-inspect a known player after this (gear changes)
-local READS = { 0, 0.4, 1.2 }     -- talents / uncached items can lag INSPECT_READY
+local REFRESH = 300  -- re-inspect a known player after this
+local READS = { 0, 0.4, 1.2 }  -- talents / uncached items lag INSPECT_READY
 local CLEAR_AFTER = 1.5
 
-local pending                     -- { guid, unit, at, ours }
+local pending
 local lastRequest = -math.huge
-local queued                      -- unit token waiting for the throttle
-local fresh = {}                  -- guid -> GetTime() of the last read this session
+local queued
+local fresh = {}
 local listeners = {}
 
 function Inspect.OnChange(fn) listeners[#listeners + 1] = fn end
@@ -47,7 +42,6 @@ function Inspect.Forget()
     Inspect.Own()
 end
 
--- Blizzard's inspect window (load on demand, so looked up by name).
 local function InspectWindow() return _G["InspectFrame"] end
 
 local function InspectWindowOpen()
@@ -68,7 +62,6 @@ local function Describe(unit)
     return { name = name, class = ns.ClassOf(unit), level = ns.Call(UnitLevel, unit) }
 end
 
--- Own entry: always current, no inspect needed.
 function Inspect.Own()
     local guid = ns.GUID("player")
     if not guid then return end
@@ -80,7 +73,6 @@ function Inspect.Own()
     if not r.complete then C_Timer.After(1, Inspect.Own) end
 end
 
--- A unit token that still points at guid.
 local function FindUnit(guid, hint)
     local candidates = { hint, "mouseover", "target", "focus", InspectWindow() and InspectWindow().unit }
     for i = 1, 4 do candidates[#candidates + 1] = "party" .. i end
@@ -131,7 +123,7 @@ local function CanAsk(unit)
     if fresh[guid] and GetTime() - fresh[guid] < REFRESH then return false end
     if Inspect.Pending(guid) then return false end
     if ns.Call(CanInspect, unit) ~= true then return false end
-    -- the inspect range; a refused range check (combat rules) is no veto
+    -- a refused range check (combat rules) is no veto
     if ns.Call(CheckInteractDistance, unit, 1) == false then return false end
     return true, guid
 end
@@ -158,7 +150,6 @@ function Inspect.Request(unit)
     return true
 end
 
--- talent and gear data are complete only after entering the world
 for _, event in ipairs({ "PLAYER_ENTERING_WORLD", "PLAYER_EQUIPMENT_CHANGED", "PLAYER_LEVEL_UP",
                          "TRAIT_CONFIG_UPDATED", "PLAYER_TALENT_UPDATE" }) do
     ns.On(event, function() Inspect.Own() end)

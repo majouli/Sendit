@@ -1,16 +1,8 @@
 --[[
-  AppBar: a free-floating launcher for the suite's windows. A round handle
-  (the Sendit icon) slides a tray of app buttons out and back in; the tray
-  opens towards the wider side of the screen. Drag the handle to move it,
-  right-click it for the Sendit window.
-
-  Modules add an app with
-    Sendit:AddLauncher{ key = "upgrade", title = "Upgrade" | fn, icon = path,
-                        toggle = fn(), shown = fn() -> bool (optional),
-                        order = n (optional, small first) }
-  Only windows belong here; switches stay the minimap's quick toggles.
-  Account section ns.db.appbar: hide, open, point.
-  Motion is alpha + translation only, skipped when animations are off.
+  AppBar: a movable launcher - a round handle slides a tray of module windows out and in (towards the
+  wider side of the screen); drag moves it, right click opens the Sendit window. Only windows here.
+  Sendit:AddLauncher{ key, title (string | fn), icon, toggle(), shown() -> bool, order }
+  Account: ns.db.appbar = { hide, open, point }. Motion: alpha + translation, off with animations.
 ]]
 local _, ns = ...
 
@@ -43,7 +35,6 @@ end
 
 function AppBar.Launchers() return launchers end
 
--- The tray opens to the right of the handle on the left half of the screen.
 function AppBar.OpensRight()
     local x = handle and handle:GetCenter()
     local width = UIParent:GetWidth()
@@ -82,7 +73,6 @@ local function Cell(i)
     return c
 end
 
--- Dots under the apps whose window is open.
 function AppBar.Paint()
     if not tray or not tray:IsShown() then return end
     for _, c in ipairs(cells) do

@@ -1,16 +1,8 @@
 --[[
-  Window: compare two items side by side and show the basis of the rating.
-    - Alt-click on any item (ItemClick.lua) opens it left, the equipped one right
-  - drop an item on the left or right slot (drag, or click while holding it);
-      right-click clears a slot; dropping only the left one fills the right with
-      the equipped item of that slot
-    - spec buttons (auto + the class's specs) override the guessed spec
-    - verdict first: which item is better for the spec's main metric, by how much
-    - stat table (left, right, difference), the character's metrics with each
-      item, and the assumptions behind them
-  Layout is measured, not fixed: column widths follow the widest text, long
-  notes wrap, and the window grows to fit. Escape closes it; drag to move.
-  Look: Sendit's theme (palette, frame style) - painted roles repaint live.
+  Window: two items side by side and the basis of the rating - Alt-click or drop items into the slots
+  (right click clears; one item fills the other side with the worn one), spec buttons, the verdict
+  (winner's gain), stat table, the metrics with each item and the assumptions. Measured layout;
+  Escape closes, drag moves.
 ]]
 local _, ns = ...
 local L = ns.L
@@ -20,15 +12,14 @@ local Window = {}
 ns.Window = Window
 
 local MIN_W, MAX_W, PAD, ROW, GAP, MIN_COL = 470, 780, 14, 16, 20, 44
-local CONTENT_TOP = 118   -- below title, spec buttons and item slots
+local CONTENT_TOP = 118  -- below title, spec buttons and item slots
 local GREEN, RED, GREY, HEAD = "|cff40ff40", "|cffff5050", "|cff999999", "|cff66c2ff"
 
 local frame
-local links = {}       -- [1] = left link, [2] = right link
-local pool = {}        -- pooled lines: label + three columns
-local rows = {}        -- what Refresh wants shown; Layout() places it
+local links = {}
+local pool = {}
+local rows = {}
 local specButtons = {}
-
 
 local function Num(v, decimals)
     return ((("%." .. (decimals or 1) .. "f"):format(v)):gsub("%.", L.decimal))
@@ -43,9 +34,6 @@ local function Colored(v, text)
     return color .. text .. "|r"
 end
 
----------------------------------------------------------------------------
--- Rows: a table row (label + three columns), a wrapped text line, or a gap
----------------------------------------------------------------------------
 local function Row(label, a, b, c) rows[#rows + 1] = { label, a, b, c } end
 local function Text(text) rows[#rows + 1] = { text, wrap = true } end
 local function Gap() rows[#rows + 1] = { gap = true } end
@@ -68,12 +56,11 @@ local function Width(fs)
     return fs:GetStringWidth() or 0
 end
 
--- Measure every table row, size the columns to their widest text, then stack.
 local function Layout()
     local labelW, colW = 0, { MIN_COL, MIN_COL, MIN_COL }
     for i, r in ipairs(rows) do
         local l = Pooled(i)
-        l.label:SetWidth(0)  -- unconstrained, so the measured width is the text's
+        l.label:SetWidth(0)  -- unconstrained: the measured width is the text's
         l.label:SetWordWrap(false)
         l.label:SetText(r.gap and "" or r[1] or "")
         for c = 1, 3 do l[c]:SetText((not r.wrap and r[c + 1]) or "") end
@@ -87,7 +74,7 @@ local function Layout()
     for c = 1, 3 do width = width + GAP + colW[c] end
     width = math.min(MAX_W, math.max(MIN_W, math.ceil(width)))
     local inner = width - 2 * PAD
-    -- columns packed to the right edge; the label gets the rest (truncates at MAX_W)
+    -- columns packed to the right edge; the label gets the rest
     local right = { [3] = inner }
     right[2] = right[3] - colW[3] - GAP
     right[1] = right[2] - colW[2] - GAP
@@ -124,9 +111,6 @@ local function Layout()
     for _, b in ipairs(frame.slots) do b.name:SetWidth(nameW) end
 end
 
----------------------------------------------------------------------------
--- Item slots: icon + name, left half and right half of the window
----------------------------------------------------------------------------
 local function SlotButton(index)
     local b = CreateFrame("Button", nil, frame)
     b:SetSize(40, 40)
@@ -176,14 +160,11 @@ local function SlotButton(index)
     return b
 end
 
----------------------------------------------------------------------------
--- Content
----------------------------------------------------------------------------
 local function Pct(a, b)
     return b > 0 and (a / b - 1) * 100 or 0
 end
 
--- "Links ist besser: +12,3% Schaden" -- always the winner's gain, never negative
+-- "Left is better: +12,3% Damage" - the winner's gain, never negative
 local function Verdict(ctx, r)
     local m = ctx.spec.primary
     local pct = Pct(r.ma.primary, r.mb.primary)
@@ -197,7 +178,7 @@ local function Verdict(ctx, r)
     Text(GREY .. L.verdictBasis:format(L.specs[ctx.specKey], m.label, m.unit, ctx.spec.secondary.label) .. "|r")
 end
 
--- Stat differences stay uncoloured: more of a stat is not better for every spec.
+-- stat differences stay uncoloured: more of a stat is not better for every spec
 local function StatRows(a, b)
     local keys, seen = {}, {}
     for _, item in ipairs({ a, b }) do
@@ -366,7 +347,6 @@ local function Create()
     frame:SetScript("OnShow", function() Window:Refresh() end)
 end
 
--- Alt-click (ItemClick.lua): this item left, the equipped one of its slot right.
 function Window:Compare(link)
     if not frame then Create() end
     links[1], links[2] = nil, nil

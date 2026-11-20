@@ -1,21 +1,10 @@
 --[[
-  Window: the quest journal. Left: the quest list (search, place/category and
-  progress filters; virtual rows, UI/QuestRow.lua). Right: the chain of the
-  quest picked in the list - its name, "3 of 7 completed" with a slim bar,
-  the timeline (UI/Timeline.lua) and what the whole chain is worth.
-
-  Two selections, kept apart: `root` = the quest picked in the list (gold in
-  the list, gold ring + edge in the chain); `open` = the step opened in the
-  timeline (a click opens it, a second click closes it). Picking a quest in
-  the list opens its own step and scrolls to it.
-  Filters narrow the list, never the chain. Empty states are designed:
-  nothing found, nothing picked, a quest without recorded links, a cycle.
-
-  Right click on a quest (list or chain) continues its chain (Track.lua);
-  what happened shows for a few seconds right of the chain title.
-
-  Window:Open(text) / OpenQuest(id) / Search(text, keep) / Filter(group, status) / Track(id)
-  Window:Refresh() / UpdateProgress() / Hide()
+  Window: the quest journal - list left (search, place and progress filters, virtual rows), the picked
+  quest's chain right (progress bar, timeline, chain rewards). root = quest picked in the list, open =
+  step opened in the timeline. Filters narrow the list, never the chain. Right click: the quest menu
+  (follow the chain, map pins); feedback shows a few seconds by the chain title.
+  Window:Open(text) / OpenQuest(id) / Search(text, keep) / Filter(group, status) / Menu(id) / Follow(id)
+  Window:Notice(text) / Refresh() / UpdateProgress() / BoostChanged() / Hide()
 ]]
 local _, ns = ...
 local L, DB, S = ns.L, ns.Database, ns.Style
@@ -23,7 +12,7 @@ local T, W = Sendit.Theme, Sendit.Widgets
 local Window = {}
 ns.Window = Window
 local frame, root, open, query
-local autoRoot = false  -- the chain shown was picked for the player (first result), not by a click
+local autoRoot = false  -- the shown chain was picked for the player (first result), not by a click
 local group, status = "all", "all"
 local results, chain = {}, {}
 local rowPool = {}
@@ -73,7 +62,6 @@ local function ChainHead()
     frame.progressFill:SetShown(counts.done > 0)
 end
 
--- What the whole chain gives, below the timeline (catalog of all branches).
 local function ChainTotal(y)
     local f = frame.total
     f:SetShown(#chain > 1)
@@ -132,8 +120,6 @@ function Window:Refresh()
     frame.chainScroll:SetVerticalScroll(math.min(target, maxScroll))
 end
 
--- Gear boost on: only quests whose best reward is an upgrade of at least
--- the threshold, the biggest upgrade first.
 local function Boosted(list)
     local out, value = {}, {}
     for _, id in ipairs(list) do
@@ -155,8 +141,6 @@ function Window:ResultTitle()
     return (#results == 1 and L.boostCountOne or L.boostCount):format(#results, S.Threshold()) .. tail
 end
 
--- The chip says what runs: "Gear boost" / "Gear boost >= 5 %" (gold) /
--- "... · stale" after a gear, level or spec change.
 function Window:BoostHeader()
     local on, available = ns.Boost.Active(), ns.Boost.Available()
     local label = on and L.boostOn:format(S.Threshold()) or L.boost
@@ -165,7 +149,6 @@ function Window:BoostHeader()
     T.Paint(frame.boost.text, available and (on and (ns.Boost.Stale() and "warning" or "accent") or "text") or "textMuted")
 end
 
--- The boost's rating moves on: re-sort at most twice a second, at once when done.
 function Window:BoostChanged()
     if not frame or not frame:IsShown() then return end
     local _, _, running = ns.Boost.Progress()
@@ -175,9 +158,7 @@ function Window:BoostChanged()
     self:Search(query, true)
 end
 
--- Started from the dialog. The boost looks at every quest possible now: the
--- search text left from before (often the quest-log button's quest) is
--- cleared; what the player types afterwards filters the boost list as usual.
+-- started from the dialog: an old search text is cleared
 local function StartBoost()
     if not ns.Boost.Start() then return end
     query = ""
@@ -194,16 +175,13 @@ function Window:Search(text, keep)
     query = text or ""
     results = DB.Search(query, group, status)
     if ns.Boost.Active() then results = Boosted(results) end
-    -- A progress update or setting change keeps the chain the player is reading;
-    -- a chain picked for them follows the list's top (the boost re-sorts as it rates).
     if not (keep and root and #chain > 0) or (autoRoot and results[1] ~= root) then
         local id = (query ~= "" or group ~= "all" or ns.Boost.Active()) and results[1] or nil
         root, open, autoRoot = id, id, id ~= nil
         if id then chain, self.cycle = DB.Chain(id) else chain, self.cycle = {}, false end
         self.scrollToRoot = true
     end
-    -- Quest-log events and the boost re-run the search all the time (keep):
-    -- the list must stay where the player scrolled it (it jumped back in game).
+    -- events re-run the search: the list keeps its scroll
     if keep then
         local max = math.max(0, #results * ROW - frame.resultScroll:GetHeight())
         frame.resultScroll:SetVerticalScroll(math.min(frame.resultScroll:GetVerticalScroll() or 0, max))
@@ -219,7 +197,7 @@ function Window:Filter(newGroup, newStatus)
 end
 
 function Window:UpdateProgress()
-    ns.Boost.Invalidate()  -- a quest may be done now: its boost no longer counts
+    ns.Boost.Invalidate()  -- a quest may be done now
     if not frame or not frame:IsShown() then return end
     self:Search(query, true)
 end
@@ -243,8 +221,7 @@ local function Header()
     frame.close = Sendit.Widgets.Close(frame, function() frame:Hide() end)
     frame.close:SetPoint("TOPRIGHT", -10, -13)
     frame.search = W.Search(frame, L.search, function(text)
-        -- Layout changes can repeat OnTextChanged without an edit: an
-        -- unchanged search must not drop the quest the player picked.
+        -- layout can repeat OnTextChanged: an unchanged search keeps the pick
         if text ~= query then Window:Search(text) end
     end)
     frame.search:SetHeight(26)
@@ -279,8 +256,7 @@ local function Header()
     line:SetPoint("TOPLEFT", 0, -S.size.header)
     line:SetPoint("TOPRIGHT", 0, -S.size.header)
     line:SetHeight(1)
-    -- The drag area spans the header: the controls must sit above it or it
-    -- swallows their clicks (the search box could not be focused).
+    -- the drag area must not cover the header controls
     for _, control in ipairs({ frame.search, frame.group, frame.status, frame.boost, frame.close }) do
         control:SetFrameLevel(frame.drag:GetFrameLevel() + 2)
     end
@@ -308,7 +284,6 @@ local function ChainPane()
     frame.chainTitle:SetPoint("RIGHT", -i, 0)
     frame.summary = T.Text(frame.chain, S.font.meta, "textDim")
     frame.summary:SetPoint("TOPLEFT", frame.chainTitle, "BOTTOMLEFT", 0, -6)
-    -- Feedback of a right click: a gold-edged bar over the chain head, a few seconds.
     local notice = CreateFrame("Frame", nil, frame.chain)
     notice:SetPoint("TOPLEFT", i, -4)
     notice:SetPoint("TOPRIGHT", -i, -4)
@@ -386,7 +361,7 @@ function Window:OpenQuest(id)
     if not id then self:Open("") return end
     self:Open(tostring(id))
     if not frame or ns.disabled then return end
-    Pick(id)  -- also for IDs the reference does not know (live quest log)
+    Pick(id)
 end
 
 function Window:Open(text)
@@ -395,7 +370,7 @@ function Window:Open(text)
     ns.Progress.Invalidate()
     frame:Show()
     if text ~= nil and ns.Boost.Active() then
-        self:Search("", true)  -- the boost list stays; OpenQuest then shows the quest's chain
+        self:Search("", true)
     elseif text ~= nil then
         group, status = "all", "all"
         frame.search:SetText(tostring(text))
@@ -407,7 +382,6 @@ function Window:Hide() if frame then frame:Hide() end end
 
 function Window:IsShown() return frame ~= nil and frame:IsShown() end
 
--- The menu opens at the mouse, not below the clicked row (an open step card is tall).
 local cursor
 local function AtCursor()
     cursor = cursor or CreateFrame("Frame", nil, UIParent)
@@ -419,12 +393,9 @@ local function AtCursor()
     return cursor
 end
 
--- Right click on a quest: a menu - follow the chain, or a map pin on its giver /
--- objective / turn-in (any quest, done or not). The result shows under the chain title.
 function Window:Menu(id)
     local spots, options = ns.Track.Places(id), { { "chain", L.menuChain } }
     local g, f = spots.g, spots.f
-    -- the same NPC gives and takes the quest: one entry, said so
     local same = g and f and g[1] == f[1] and g[2] == f[2] and g[3] == f[3]
     for _, entry in ipairs({ { "g", same and L.menuGiverTurnIn or L.menuGiver }, { "t", L.menuTarget },
                              { "f", L.menuTurnIn } }) do
@@ -438,7 +409,6 @@ function Window:Menu(id)
     end)
 end
 
--- Follow the chain: every known step (Guide.lua) - with Shortest Path Forever when it is there.
 function Window:Follow(id)
     local text = self:Notice(ns.Guide.Start(id))
     if ns.LogRoute then ns.LogRoute.Refresh() end
@@ -457,8 +427,7 @@ function Window:Notice(text)
     return text
 end
 
--- Settings change all the time in the suite (Fade rescans): repaint texts,
--- never search again (that re-sorted the boost list - "script ran too long").
+-- settings change often: repaint texts, never search again (re-sorting ran too long)
 Sendit.OnSettingsChanged(function()
     ns.GroupPicker.Hide()
     if frame then Window:Refresh() end

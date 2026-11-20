@@ -1,13 +1,7 @@
 --[[
-  Locale: every text the player sees, in the suite's five languages; the
-  language is the suite's (Sendit Design page), a missing key falls back to
-  English. ns.L holds UI strings, ns.StatNames the display names of the
-  canonical stat keys (Stats.lua).
-  Reading tooltips is a different matter: item text comes in the CLIENT's
-  language, whatever the suite shows. ns.Parse (line prefixes, damage words)
-  and ns.ParseStatNames follow GetLocale() and are only the fallback when the
-  client has no global string (Effects.lua). German was seen in game; the
-  other languages are unverified and kept narrow on purpose.
+  Locale: texts in five languages (ns.L, ns.StatNames). Tooltip parsing (ns.Parse, ns.ParseStatNames)
+  follows the CLIENT's language and is only the fallback for missing global strings; German is
+  verified, the rest kept narrow.
 ]]
 local _, ns = ...
 
@@ -492,10 +486,7 @@ local stats = {
 }
 ns.StatNames = Sendit.Locale.New(stats)
 
--- Tooltip parsing in the client's language (see header). Only used when the
--- client has no global string for a prefix. "Verzaubert: " seen in game;
--- "Trefferchance: " and every non-German entry unverified. damage /
--- weaponDamage: lower-case words inside such lines.
+-- tooltip parsing in the client's language; "Verzaubert: " verified, the rest unverified
 local PARSE = {
     deDE = { enchant = "Verzaubert: ", proc = "Trefferchance: ", damage = "schaden", weaponDamage = "waffenschaden" },
     enUS = { enchant = "Enchanted: ", proc = "Chance on hit: ", damage = "damage", weaponDamage = "weapon damage" },

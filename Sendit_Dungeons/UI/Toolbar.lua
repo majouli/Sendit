@@ -1,16 +1,7 @@
 --[[
-  Toolbar: the browser's header - emblem and name, the search, three chips
-  and the close button (their places: UI/Layout.lua).
-    Filter   all / for my level / dungeons / raids (account layout: filter)
-    Range    standard (what you can do now) or a preview of dungeons and
-             items up to 3 / 5 / 10 / all levels above you (Boost.Ahead)
-    Boost    a menu of thresholds (the same number as Upgrade's item
-             tooltip): picking one starts the gear boost, "Off" ends it,
-             "Rate again" when gear, level or spec changed meanwhile
-
+  Toolbar: the browser's header - emblem, name, search, the Filter / Range / Boost chips, close.
   Toolbar.Create(frame, on)   on = { search(text), refilter(), restart() }
-  Toolbar.Update(frame)       chip labels from the current state
-  Toolbar.Filter() -> the list filter key
+  Toolbar.Update(frame);  Toolbar.Filter() -> the list filter key
 ]]
 local _, ns = ...
 local L, S = ns.L, ns.Style
@@ -110,7 +101,7 @@ function Toolbar.Create(frame, on)
     line:SetPoint("TOPLEFT", 0, -S.size.header)
     line:SetPoint("TOPRIGHT", 0, -S.size.header)
     line:SetHeight(1)
-    -- the drag area spans the header: the controls sit above it or it swallows their clicks
+    -- the drag area must not cover the controls
     for _, control in ipairs({ frame.search, frame.filter, frame.ahead, frame.boost, frame.close }) do
         control:SetFrameLevel(frame.drag:GetFrameLevel() + 2)
     end

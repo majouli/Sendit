@@ -1,9 +1,6 @@
 --[[
-  Chip: the compact header button of the module windows (Quests, Dungeons) -
-  label plus chevron, as wide as its text (capped at maxWidth). A chip whose
-  filter narrows the list shows in gold, so an active filter is visible at a
-  glance. Close: a small drawn X (no client glyph).
-
+  Chip: compact header button of the module windows - label and chevron, as wide as its text, gold while
+  its filter is active. Close: a drawn X.
   Sendit.Widgets.Chip(parent, onClick, maxWidth) -> chip;  chip:SetLabel(text, active)
   Sendit.Widgets.Close(parent, onClick) -> button
 ]]

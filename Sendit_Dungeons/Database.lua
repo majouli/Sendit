@@ -1,21 +1,11 @@
 --[[
-  Database: the bundled dungeons (Data/Dungeons.lua, generated) as the window
-  needs them - names in the chosen language, the fit to the player's level,
-  search and filter.
-
-  Database.All() -> dungeons in level order (Forever's own, levels unknown, last)
-  Database.Get(map) -> dungeon or nil
-  Database.Name(d) / BossName(boss)   client names, English if a language lacks one;
-      map 0 = Forever's world bosses (Locale name, boss names English)
-  Database.Kind(d) -> "Dungeon" / "Raid" / "Open world"
+  Database: the bundled dungeons (Data/Dungeons.lua) - names, level fit, search and filter.
+  Database.All() -> dungeons in level order;  Database.Get(map)
+  Database.Name(d) / BossName(boss)   client names, English fallback; map 0 = world bosses
+  Database.Kind(d) -> "Dungeon" | "Raid" | "Open world"
   Database.Loot(boss) -> { { itemID, chance }, ... } biggest chance first
-  Database.Fit(d, level) -> "fits" | "above" | "below" | "unknown"
-      fits: level min .. max + 2 (a dungeon still drops useful items a little
-      past its range); above: not enterable yet (level < min)
-  Database.Enterable(d, level) -> level reached (or unknown)
-  Database.Search(text, filter, level) -> dungeons
-      text matches the dungeon or one of its bosses (any case, plain text);
-      filter "all" | "fits" | "dungeons" | "raids"
+  Database.Fit(d, level) -> "fits" (min .. max + 2) | "above" | "below" | "unknown"
+  Database.Enterable(d, level);  Database.Search(text, filter, level)
 ]]
 local _, ns = ...
 local DB = {}
@@ -32,12 +22,12 @@ function DB.All() return ns.dungeons end
 function DB.Get(map) return byMap[map] end
 
 function DB.Name(d)
-    if d.map == 0 then return ns.L.worldBosses end  -- Forever's world bosses: no client map
+    if d.map == 0 then return ns.L.worldBosses end
     return Names().maps[d.map] or ns.dungeonNames.enUS.maps[d.map] or ("#" .. d.map)
 end
 
 function DB.BossName(boss)
-    if boss.name then return boss.name end  -- world bosses: English names (no client table)
+    if boss.name then return boss.name end
     return Names().bosses[boss.enc] or ns.dungeonNames.enUS.bosses[boss.enc] or ("#" .. boss.enc)
 end
 
@@ -89,7 +79,6 @@ function DB.Search(text, filter, level)
     return out
 end
 
--- nil when the client keeps the level secret.
 function DB.Level()
     local ok, level = pcall(UnitLevel, "player")
     if not ok or (issecretvalue and issecretvalue(level)) or type(level) ~= "number" then return nil end

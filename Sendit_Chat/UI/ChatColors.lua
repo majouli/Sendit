@@ -1,16 +1,7 @@
 --[[
-  ChatColors: a chat type's colour - read from Blizzard's ChatTypeInfo,
-  changed the way Blizzard's chat settings do it (ChangeChatColor: the
-  client stores it and Blizzard's own UPDATE_CHAT_COLOR handler updates
-  ChatTypeInfo; Sendit never writes that table). New lines take the colour
-  (they arrive with Blizzard's r, g, b).
-
-  ChatColors.Get(chatType)          r, g, b or nil
-  ChatColors.Pick(chatType, onDone, also)  the client's colour picker for
-                                    chatType and the types in also (a kind's
-                                    group, as Blizzard's swatch); onDone()
-                                    after every change (and on cancel)
-  ChatColors.Swatch(parent)         small colour button: :Set(chatType, onDone, also)
+  ChatColors: a chat type's colour - read from ChatTypeInfo, changed like Blizzard's settings
+  (ChangeChatColor; Blizzard updates ChatTypeInfo, Sendit never writes it).
+  ChatColors.Get(chatType) / Pick(chatType, onDone, also) / Swatch(parent)
 ]]
 local _, ns = ...
 local T = ns.Theme

@@ -1,11 +1,7 @@
 --[[
-  Ornaments: the azeroth frame style. Theme.Decorate(frame, kind, opts)
-  adds the game's gold tooltip border ("window", "panel") or dialog border
-  ("dialog", + banner opts.title, seal opts.icon) around a frame; it shows
-  only while profile.design.style is "azeroth" and follows a style switch
-  live. frame.senditDeco holds it; Theme.DecoEdge(frame, px) sets the
-  edge width (0 = none) for a module's border setting. Only textures the client already showed on
-  Forever (new media would need a game restart).
+  Ornaments: the azeroth frame style - Theme.Decorate(frame, kind, opts) adds the game's gold border
+  ("window", "panel") or dialog border ("dialog": banner, seal) while profile.design.style is "azeroth";
+  Theme.DecoEdge(frame, px) sets the edge width. Only textures the client already ships.
 ]]
 local _, ns = ...
 local Theme = ns.Theme
@@ -16,7 +12,7 @@ local DIALOG_BANNER = "Interface\\DialogFrame\\UI-DialogBox-Header"
 local SEAL_RING = "Interface\\Minimap\\MiniMap-TrackingBorder"
 local decorated = setmetatable({}, { __mode = "k" })
 
--- The gold edge at d.edgeSize; the frame line sits a fifth of it outside.
+-- the gold edge at d.edgeSize; the frame line sits a fifth of it outside
 local function SetEdge(d)
     local out = math.floor(d.edgeSize * 0.22 + 0.5)
     d:ClearAllPoints()
@@ -45,8 +41,7 @@ local function ApplyDeco(frame)
     if d.onApply then d.onApply(frame, on) end
 end
 
--- A module's border setting in the azeroth style: size 0 hides the gold
--- edge, else its width in pixels (default: 14 window / 26 dialog).
+-- a module's border setting: 0 hides the gold edge, else its width (default 14 / 26)
 function Theme.DecoEdge(frame, size)
     local d = frame.senditDeco
     if not d or d.edgeSize == size then return end
@@ -59,8 +54,7 @@ local function ApplyAllDeco()
     for frame in pairs(decorated) do ApplyDeco(frame) end
 end
 
--- opts: level (above the frame), title (dialog banner), icon (dialog seal),
--- edge (colour role of the gold edge), banner (FontString maker), onApply(frame, on).
+-- opts: level, title, icon, edge (colour role), banner (FontString maker), onApply(frame, on)
 function Theme.Decorate(frame, kind, opts)
     opts = opts or {}
     local d = CreateFrame("Frame", nil, frame, "BackdropTemplate")
@@ -112,5 +106,5 @@ function Theme.Decorate(frame, kind, opts)
     return d
 end
 
--- After the Theme's own handler (load order): the palette is set first.
+-- after the Theme's own handler: the palette is set first
 ns.OnSettingsChanged(ApplyAllDeco)

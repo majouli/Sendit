@@ -1,13 +1,7 @@
 --[[
-  MiniRewards: one line of reward value - item icons (guaranteed first, then
-  pick-one items with their corner mark), "+N" when they do not fit, an XP
-  badge and money. Unknown or zero XP / money are left out, never shown as 0.
-  The full list is one hover away (+N tooltip) and in the timeline's details.
-
-  MiniRewards.Create(parent, iconSize) -> bar
-  MiniRewards.Render(bar, width, data) -> true when it shows anything
-    data = Rewards.Get / Rewards.Chain result
-  MiniRewards.Items(data) -> { { itemId, amount, choice }, ... } flattened
+  MiniRewards: one line of reward value - item icons (fixed first, then pick-one with a corner
+  mark), "+N" when they do not fit, XP badge, money (unknown or 0 left out).
+  MiniRewards.Create(parent, iconSize) / Render(bar, width, data) -> shown / Items(data)
 ]]
 local _, ns = ...
 local T, S = Sendit.Theme, ns.Style

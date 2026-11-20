@@ -1,22 +1,10 @@
 --[[
   Init: namespace, settings binding, event dispatch.
-
-  Settings live in the Sendit core (one window, one design, shared profiles):
-  ns.db       this module's section of the active profile (font, background,
-              border, lock, chat / whisper / loot features), rebound on
-              every profile switch
-  ns.acct     this module's account section: on/off, window layout
-  ns.Design() the core's design section (palette, frame style, animations)
-  ns.char     per character (Sendit_ChatCharDB): whisper conversations and
-              chat history (data, no settings)
-  ns.Listen(event, fn)   several listeners per event, fn(event, ...)
-  ns.OnChanged(fn) / ns.Changed()   the core's settings listeners: the UI
-                   re-applies its look on any change, the design included
-  ns.OnReady(fn)   runs once on PLAYER_LOGIN after the db is ready and only
-                   when the chat is active (enabled and not yielding)
-
-  Sendit Chat yields to EllesmereUI Chat: both would take over the same
-  Blizzard chat frames and every line would show twice.
+  ns.db = profile section (font, background, border, lock, chat / whisper / loot features),
+  ns.acct = account section (on / off, window layout), ns.Design() = the core's design,
+  ns.char = per character (Sendit_ChatCharDB: conversations, history).
+  ns.Listen(event, fn);  ns.OnChanged(fn) / ns.Changed();  ns.OnReady(fn) (once, chat active only)
+  Yields to EllesmereUI Chat: both would take over Blizzard's chat frames.
 ]]
 local addonName, ns = ...
 local Sendit = Sendit
@@ -81,7 +69,7 @@ ns.module = Sendit:RegisterModule({
     icon = "Interface\\AddOns\\Sendit_Chat\\Media\\Icon",
     defaults = ns.defaults,
     accountDefaults = ns.acctDefaults,
-    -- 2: popupWhispers (boolean) became whisperAlert; on -> the bubble
+    -- 2: popupWhispers (boolean) became whisperAlert
     version = 2,
     migrate = function(section, from)
         if from < 2 and section.popupWhispers ~= nil then
@@ -104,9 +92,6 @@ end
 Sendit.OnReady(Bind)
 Sendit.OnProfile(Bind)
 
----------------------------------------------------------------------------
--- Events
----------------------------------------------------------------------------
 local listeners = {}
 local frame = CreateFrame("Frame")
 frame:SetScript("OnEvent", function(_, event, ...)

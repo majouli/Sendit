@@ -1,23 +1,8 @@
 --[[
-  Loot: recognises loot lines and restyles them.
-
-  Recognition uses the client's own message templates (LOOT_ITEM_SELF,
-  LOOT_ITEM_SELF_MULTIPLE, YOU_LOOT_MONEY, ...), turned into patterns, so it works
-  in every client language. Only the matched part is replaced: a timestamp
-  before it stays.
-
-  Only the player's own loot is restyled: other players'
-  loot lines stay as the client writes them.
-
-  Loot.Parse(text)        -> info, s, e   (info = { link, count, copper };
-                                           s..e = matched span)
-  Loot.Item(link)         -> { quality, icon, r, g, b, detail } (detail:
-                             "Head - Plate", weapon type, ...; may be nil)
-  Loot.Style(text, event) restyled line (unchanged when not loot / secret;
-                          false = drop it, see Core/Rolls.lua):
-      item:   +2 <icon> [Item]  Head - Plate      (+N always; detail = slot/type
-                                                   or the sub category, "Cloth")
-      money:  + <coins>
+  Loot: recognises the player's own loot lines (the client's templates as patterns, every language)
+  and restyles them: "+2 <icon> [Item]  Head - Plate", "+ <coins>". Only the matched span changes.
+  Loot.Parse(text) -> info, s, e;  Loot.Item(link) -> { quality, icon, r, g, b, detail }
+  Loot.Style(text, event) -> text | false (drop, Rolls)
 ]]
 local _, ns = ...
 local Safe = ns.Safe
@@ -29,11 +14,10 @@ local EVENTS = { CHAT_MSG_LOOT = true, CHAT_MSG_MONEY = true, CHAT_MSG_CURRENCY 
 local MUTED = "|cff8a8f9c"
 local GAIN = "|cff5fd35f"
 
--- Older clients only have the globals; looked up by name (deprecated there).
+-- older clients only have the globals
 local function Legacy(name) return _G[name] end
 
--- Template global and the roles of its %s/%d in argument order.
--- Multiple-count variants first: their pattern is the more specific one.
+-- template global and the roles of its %s / %d; multiple-count variants first
 local TEMPLATES = {
     { "LOOT_ITEM_SELF_MULTIPLE", { "link", "count" } },
     { "LOOT_ITEM_SELF", { "link" } },
@@ -51,8 +35,7 @@ local TEMPLATES = {
 
 local function Escape(s) return (s:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%0")) end
 
--- "%s bekommt Beute: %sx%d." -> pattern with captures + capture roles
--- (in text order; positional "%2$s" is honoured).
+-- "%s bekommt Beute: %sx%d." -> pattern + capture roles (positional %2$s honoured)
 function Loot.Compile(fmt, roles)
     if type(fmt) ~= "string" or fmt == "" then return nil end
     local parts, order, pos, arg = {}, {}, 1, 0
@@ -113,9 +96,6 @@ function Loot.Parse(text)
     return nil
 end
 
----------------------------------------------------------------------------
--- Item facts
----------------------------------------------------------------------------
 local QUALITY_RGB = {
     [0] = { 0.62, 0.62, 0.62 }, { 1, 1, 1 }, { 0.12, 1, 0 }, { 0, 0.44, 0.87 },
     { 0.64, 0.21, 0.93 }, { 1, 0.5, 0 }, { 0.9, 0.8, 0.5 }, { 0, 0.8, 1 },
@@ -181,9 +161,6 @@ function Loot.Item(link)
     return info
 end
 
----------------------------------------------------------------------------
--- Restyling
----------------------------------------------------------------------------
 local function IconTag(icon)
     if not icon then return "" end
     return "|T" .. icon .. ":0:0:0:0:64:64:5:59:5:59|t "
@@ -196,24 +173,20 @@ function Loot.Line(info)
         return "|cffe6ba66+|r " .. money
     end
     local item = Loot.Item(info.link)
-    -- "+N" always (a missing count looked plain), green like a gain.
-    -- No colour stripe: a tinted |T stripe rendered as a wide white block in
-    -- this client, and the link already carries the quality colour.
+    -- "+N" always; no colour stripe (a tinted stripe renders as a white block here)
     local gain = GAIN .. "+" .. (info.count or 1) .. "|r "
     local detail = item.detail and ("  " .. MUTED .. item.detail .. "|r") or ""
     return gain .. IconTag(item.icon) .. info.link .. detail
 end
 
--- Only system text may stand before a match (e.g. a timestamp): a player
--- who types "You receive loot: [x]" has a player or channel link in front.
+-- only system text may stand before a match (a player's line has a link in front)
 function Loot.SystemPrefix(text, s)
     local prefix = text:sub(1, s - 1)
     return not (prefix:find("|Hplayer", 1, true) or prefix:find("|HBNplayer", 1, true)
         or prefix:find("|Hchannel", 1, true))
 end
 
--- event: the line's event when known. This client does not always tell it
--- (then nil): the templates alone decide, guarded by SystemPrefix.
+-- event when known (the client does not always tell): else the templates decide
 function Loot.Style(text, event)
     if not ns.db.lootStyle then return text end
     local ev = Safe.Str(event)
@@ -222,7 +195,7 @@ function Loot.Style(text, event)
     if roll ~= nil then return roll end  -- false = drop the line
     local info, s, e = Loot.Parse(text)
     if not info or not Loot.SystemPrefix(text, s) then return text end
-    -- receiving an item you just won: the gold "won" line already said it
+    -- an item you just won: the "won" line already said it
     if info.link and ns.db.rollSummary and ns.Rolls and ns.Rolls.RecentlyWon(info.link) then return false end
     return text:sub(1, s - 1) .. Loot.Line(info) .. text:sub(e + 1)
 end

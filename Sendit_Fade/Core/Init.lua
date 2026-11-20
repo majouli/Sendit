@@ -1,25 +1,16 @@
 --[[
-  Init: Sendit Fade's namespace, its module registration, event dispatch.
-
-  Every file receives the shared namespace `ns` and hangs one module off it
-  (ns.Safe, ns.Scanner, ns.Fader, ...). Events go through one frame: an event
-  named X calls ns:X(...) if a file defined it.
-
-  Settings live in the Sendit core (one window, one design, shared profiles):
-    ns.profile  this module's section of the active profile (everything about
-                fading), rebound on every profile switch
-    ns.db       this module's account section (toggle icon, overlay, ...)
-  ns.Theme / ns.Widgets / ns.Options / ns.Profiles are the core's. Settings
-  changes from anywhere call ns.SettingsChanged() (the core's listeners).
+  Init: Fade's namespace, module registration, event dispatch (an event X calls ns:X(...)).
+  ns.profile = the module's profile section (everything about fading), ns.db = its account section
+  (toggle icon, overlay); ns.Theme / Widgets / Options / Profiles are the core's.
 ]]
 local ADDON, ns = ...
 local Sendit = Sendit
 
 ns.name = ADDON
 ns.version = C_AddOns.GetAddOnMetadata(ADDON, "Version") or "dev"
-ns.ownFrames = Sendit.ownFrames  -- frames of the suite; never scanned or faded
+ns.ownFrames = Sendit.ownFrames  -- frames of the suite: never scanned or faded
 ns.ICON = "Interface\\AddOns\\Sendit_Fade\\Media\\Icon"
-ns.commands = {}   -- slash commands (Commands.lua)
+ns.commands = {}
 ns.Theme, ns.Widgets, ns.Options, ns.Profiles = Sendit.Theme, Sendit.Widgets, Sendit.Options, Sendit.Profiles
 ns.Copy, ns.Merge = Sendit.Copy, Sendit.Merge
 ns.OnSettingsChanged, ns.SettingsChanged = Sendit.OnSettingsChanged, Sendit.SettingsChanged
@@ -29,9 +20,6 @@ function ns.Print(...)
     print(PREFIX .. strjoin(" ", tostringall(...)))
 end
 
----------------------------------------------------------------------------
--- Settings
----------------------------------------------------------------------------
 ns.defaults = {  -- account section
     icon     = { show = true, locked = false, alpha = 0.4 },  -- on-screen toggle; point set on drag
     overlay  = { maxSize = 0.5 },  -- Show on screen: hide boxes above this share of the screen; point set on drag
@@ -63,8 +51,7 @@ ns.profileDefaults = {
     },
 }
 
--- Switched off in the Sendit sidebar: everything visible goes at once (no more
--- fading, the toggle icon hides); the UI reload then stops the code for good.
+-- switched off in the sidebar: everything visible at once, the reload stops the code
 ns.switchedOff = false
 Sendit.OnModuleSwitch(function(addon, on)
     if addon ~= ADDON then return end
@@ -73,7 +60,6 @@ Sendit.OnModuleSwitch(function(addon, on)
     Sendit.SettingsChanged()
 end)
 
--- Fading wanted: the player's switch, and the module not switched off.
 function ns.Active()
     return ns.profile ~= nil and ns.profile.enabled == true and not ns.switchedOff
 end
@@ -95,18 +81,13 @@ ns.module = Sendit:RegisterModule({
 local function Bind()
     ns.profile, ns.db = ns.module.profile, ns.module.db
 end
--- Bound as soon as the core has its saved variables: the core's first
--- SettingsChanged may reach our listeners before our own ADDON_LOADED.
+-- bound as soon as the core has its saved variables (its first SettingsChanged may come first)
 Sendit.OnReady(Bind)
 
----------------------------------------------------------------------------
--- Events
----------------------------------------------------------------------------
 local events = CreateFrame("Frame")
 ns.ownFrames[events] = true
 ns.eventFrame = events
 
--- A profile switch rebinds the section; the Fader fades to the new targets.
 Sendit.OnProfile(function()
     Bind()
     ns.Fader:Sync()
@@ -123,7 +104,6 @@ function ns:ADDON_LOADED(name)
         if ns.ready then ns:RequestScan() end  -- load-on-demand UI
         return
     end
-    -- the core (a dependency) has loaded its saved variables by now
     Sendit.OnReady(function()
         Bind()
         ns.SettingsChanged()
@@ -137,7 +117,7 @@ function ns:Rescan()
     return r
 end
 
--- Debounced: frames tend to appear in bursts.
+-- debounced: frames appear in bursts
 local scanPending = false
 function ns:RequestScan()
     if scanPending then return end

@@ -1,12 +1,6 @@
 --[[
-  Icons: drawn status nodes and the resize grip. Geometry from client
-  primitives (masked circles, lines) - no font glyphs (boxes in some fonts),
-  no textures the client might not ship.
-
-  Icons.Node(parent, ground) -> node (Style.size.node square)
-    node:Set(state, root)   state = Style display state; root = gold outer
-                            ring (the quest picked in the list)
-    ground = colour role behind the node (hollow rings are cut out with it)
+  Icons: drawn status nodes and the resize grip (masked circles and lines, no glyphs or textures).
+  Icons.Node(parent, ground) -> node;  node:Set(state, root)   root = gold outer ring
   Icons.Resize(grip) -> paint(hover)
 ]]
 local _, ns = ...
@@ -26,7 +20,7 @@ local function Place(line, parent, x1, y1, x2, y2)
     line:SetEndPoint("TOPLEFT", parent, x2, -y2)
 end
 
--- Glyph strokes on a 16 x 16 node: { x1, y1, x2, y2 }.
+-- glyph strokes on a 16 x 16 node: { x1, y1, x2, y2 }
 local GLYPHS = {
     done = { { 4.5, 8.5, 7, 11 }, { 7, 11, 11.5, 5.5 } },
     active = { { 8, 4, 8, 9 }, { 8, 11, 8, 12.5 } },

@@ -1,15 +1,8 @@
 --[[
-  Tooltip lines.
-  Item:   "GearScore 87 (+12)                     iLvl 63"
-          score coloured like a full set of that item; the change of YOUR
-          total if you equipped it (best slot), hidden when the tooltip shows
-          a red line (you cannot use it) or nothing changes.
-  Player: "GearScore 1043                         iLvl 71"
-          "Vergeltung                            5/11/35"
-          known players at once (saved), unknown or stale ones are inspected
-          on hover; "inspecting..." until INSPECT_READY, then the lines are
-          rewritten in place. Never a tooltip refresh from our code: that runs
-          Blizzard's unit tooltip build tainted and it hits secret unit values.
+  Tooltip lines. Item: "GearScore 87 (+12)   iLvl 63" - coloured like a full set of it, the change of
+  your total when equipped (hidden for unusable items). Player: score, item level, spec and points;
+  unknown or stale players are inspected on hover and the lines rewritten in place. Never a tooltip
+  refresh from our code: that runs Blizzard's unit tooltip tainted (secret unit values).
 ]]
 local _, ns = ...
 local L = ns.L
@@ -17,9 +10,8 @@ local Score, Talents, Inspect = ns.Score, ns.Talents, ns.Inspect
 
 local GREY, GREEN, RED = "|cff999999", "|cff40ff40", "|cffff5050"
 local LABEL = L.gearScore .. " "
-local OLD = 3600                  -- show the age of data older than this
+local OLD = 3600  -- show the age of data older than this
 
--- tooltip -> { guid, first, count } of the lines we added to a unit tooltip
 local shown = setmetatable({}, { __mode = "k" })
 
 local function IsRed(c)
@@ -27,7 +19,6 @@ local function IsRed(c)
     return type(r) == "number" and type(g) == "number" and type(b) == "number" and r > 0.95 and g < 0.2 and b < 0.2
 end
 
--- The client paints what the player cannot use red (class, proficiency, level).
 local function Unusable(data)
     if type(data) ~= "table" or type(data.lines) ~= "table" then return false end
     for i, line in ipairs(data.lines) do
@@ -36,9 +27,8 @@ local function Unusable(data)
     return false
 end
 
--- The item a tooltip shows. GetItem first (keeps enchants and the exact link);
--- Blizzard's comparison tooltips ("Equipped") answer it with nothing on this
--- client (verified in game), so the tooltip data's hyperlink or item ID next.
+-- the item a tooltip shows: GetItem first; comparison tooltips answer nothing on this client,
+-- so the tooltip data's hyperlink or item ID next
 local function ItemLink(tooltip, data)
     if type(tooltip.GetItem) == "function" then
         local ok, _, link = pcall(tooltip.GetItem, tooltip)
@@ -83,7 +73,6 @@ local function ClassHex(class)
     return c and c.colorStr and ("|c" .. c.colorStr) or "|cffffffff"
 end
 
--- { {left, right}, ... } for a player.
 local function PlayerLines(guid)
     local entry = Inspect.Get(guid)
     if not entry then
@@ -114,7 +103,6 @@ local function LineText(tooltip, side, i)
     return name and _G[name .. "Text" .. side .. i]
 end
 
--- New data for the player a tooltip shows: rewrite our lines, add missing ones.
 local function Rewrite(tooltip, state)
     local lines = PlayerLines(state.guid)
     for i, l in ipairs(lines) do

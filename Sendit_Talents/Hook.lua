@@ -1,13 +1,7 @@
 --[[
-  Hook: puts the route into Blizzard's talent window.
-  The window is PlayerSpellsFrame.TalentsFrame (Blizzard_PlayerSpells, load on
-  demand; Camelot ClassTalentsFrameTemplate on TalentFrameBaseMixin, Forever
-  UI source). We add one overlay frame of our own on it and redraw after
-  TalentFrameBaseMixin:UpdateTreeCurrencyInfo (every load, point bought or
-  refunded, config switch) and on TRAIT_CONFIG_UPDATED - one redraw per frame.
-  Taint: hooksecurefunc only; from Blizzard's frame we only call getters
-  (GetConfigID, GetTalentButtonByNodeID, IsInspecting) and anchor to its
-  buttons; the overlay itself always stays shown (its OnShow = the window's).
+  Hook: puts the route into Blizzard's talent window (PlayerSpellsFrame.TalentsFrame).
+  One overlay frame of our own, redrawn after UpdateTreeCurrencyInfo and on TRAIT_CONFIG_UPDATED.
+  Taint: hooksecurefunc only; Blizzard's frame is only read (getters) and anchored to.
   Inspecting someone else hides the route.
 ]]
 local _, ns = ...
@@ -72,7 +66,7 @@ local function Attach()
         ns.Refresh()
     end)
     hooksecurefunc(talents, "UpdateTreeCurrencyInfo", ns.Refresh)
-    overlay:SetScript("OnShow", ns.Refresh)  -- a child: shows with the window
+    overlay:SetScript("OnShow", ns.Refresh)
     ns.Refresh()
 end
 

@@ -1,22 +1,9 @@
 --[[
-  MapPin: Sendit's own marker on the world map for a tracked quest station -
-  the journal's book in a gold ring, tooltip with the quest and what to do
-  there (pick up / objective / turn in), right click removes it.
-
-  Taint-free by construction: the pin and its watcher are our own frames,
-  children of the map canvas (WorldMapFrame:GetCanvas()); nothing of Blizzard's
-  is hooked or written. The watcher's OnUpdate (runs only while the map is
-  open) shows the pin when the map shows its UiMap and keeps it at its spot
-  and size through zooming. Opening the map from addon code only out of
-  combat.
-
-  Where the client has Blizzard's own map pin (C_Map.SetUserWaypoint), that
-  is used instead: the game's pin and, for a quest giver, its navigation
-  arrow (super-tracked waypoint). Our marker is the fallback.
-
-  MapPin.Set(uiMapID, x, y, questID, kind)   kind "g" giver | "f" turn-in | "t" objective
-  MapPin.Show()   open the world map on the pin's map (out of combat)
-  MapPin.Clear() / MapPin.Get() -> target or nil
+  MapPin: a quest place on the world map - Blizzard's own pin (C_Map.SetUserWaypoint; navigation to
+  a giver) where the client has it, else our own marker on the map canvas (book in a gold ring,
+  tooltip, right click removes it). Opens the map only out of combat.
+  MapPin.Set(uiMapID, x, y, questID, kind)   kind "g" | "f" | "t"
+  MapPin.Show() / Clear() / Get()
 ]]
 local _, ns = ...
 local T = Sendit.Theme
@@ -38,8 +25,7 @@ local function Native(map, x, y, kind)
         local ok, can = pcall(api.CanSetUserWaypointOnMap, map)
         if not ok or can ~= true then return false end
     end
-    -- A pin already on the map (ours or the player's) is replaced, never kept: clear it first and
-    -- re-point the navigation, so a second right click with the map open moves the pin.
+    -- a pin already on the map is replaced: clear it and re-point the navigation
     return (pcall(function()
         if api.ClearUserWaypoint then api.ClearUserWaypoint() end
         api.SetUserWaypoint(point.CreateFromCoordinates(map, x, y))

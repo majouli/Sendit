@@ -1,38 +1,15 @@
 --[[
-  Fader: fades the elements Rules allows, with SetAlpha only (allowed on
-  protected frames, also in combat; never Show/Hide/reparent).
-
-  Timing: while Triggers reports a wake reason the UI is fully visible;
-  `delay` seconds after the last one it fades to `alpha`. Hovering an element
-  wakes just that element; so does typing in it (or in an input anchored to
-  it, e.g. a chat input under its chat window). An element that just appeared
-  stays visible for `delay` seconds.
-
-  Alpha ownership: a fully visible element is never touched. When fading
-  starts its current alpha becomes `base` and we set base * cur. Other code
-  may keep setting alpha on its own frames; fighting that would flicker:
-    - addon frames (not Blizzard, not protected): post-hook SetAlpha and
-      rescale the new value in the same frame
-    - Blizzard / protected frames (a hook could spread taint): adopt the new
-      value; after FIGHT_LIMIT changes in FIGHT_WINDOW the element is
-      "contested" and our alpha is re-applied every frame while faded
-
-  Cinema (Cinema.lua): while set, every element fades to 0 except the one
-  holding the focus frame and those of the focus addon family (Spoken's
-  subtitles live in their own window), also user-excluded elements and with
-  fading off.
-  Such extra elements carry s.extra.
-
-  Leaving: an element that drops out of the set while faded (cinema ended,
-  profile switched, element excluded) is not released at once; it carries
-  s.leaving, fades back in and is dropped when fully visible.
-
-  Specials (Specials.lua): handlers for elements that need more than alpha
-  once fully faded; they ask IsFullyFaded and may give a hover rect for a
-  frame they hid.
-
-  Per-element state s: { frame, e, cur, target, base, visible, hoverUntil,
-  canHook, hooked, contested, fights, fightStart, skip, extra, leaving }.
+  Fader: fades the elements Rules allows, SetAlpha only (allowed on protected frames and in combat;
+  never Show / Hide / reparent). Awake while Triggers reports a reason; `delay` s later it fades to
+  `alpha`. Hover or typing wakes that element; a new element stays visible for `delay`.
+  Alpha ownership: a fully visible element is never touched; when fading starts its alpha becomes base
+  and we set base * cur. Owners that keep setting alpha: addon frames get a SetAlpha post-hook that
+  rescales; Blizzard / protected frames are adopted, and after FIGHT_LIMIT changes in FIGHT_WINDOW are
+  "contested" (re-applied every frame while faded).
+  Cinema: everything but the focus fades to 0 (extra elements, s.extra). An element leaving the set
+  while faded fades back in first (s.leaving). Specials handle what alpha cannot.
+  State s: { frame, e, cur, target, base, visible, hoverUntil, canHook, hooked, contested, fights,
+  fightStart, skip, extra, leaving }
 ]]
 local _, ns = ...
 
@@ -49,20 +26,17 @@ local ALPHA_EPSILON = 0.02
 local FIGHT_WINDOW = 3
 local FIGHT_LIMIT = 3
 
-local managed = {}  -- frame -> state
-local list = {}     -- states, for iteration
-local hooked = {}   -- frames with our SetAlpha hook (hooks cannot be removed)
+local managed = {}
+local list = {}
+local hooked = {}  -- frames with our SetAlpha hook (hooks cannot be removed)
 local tickAcc, childAcc, lastChildCount = 0, 0, nil
 local wasAwake = true
-local cinema = nil  -- { focus = frame or nil } while the cinema mode runs
+local cinema = nil  -- { focus = frame } while the cinema runs
 
 local function Debug(msg)
     if ns.db.debug then ns.Print("|cffaaaaaa[debug]|r " .. msg) end
 end
 
----------------------------------------------------------------------------
--- Alpha writes
----------------------------------------------------------------------------
 local applying = false  -- our own SetAlpha calls must not trigger the hook logic
 
 local function SetOwn(f, a)
@@ -103,9 +77,6 @@ local function Skip(s, why)
     Debug(("skipping %s (%s): %s"):format(s.e.label, s.e.owner, why))
 end
 
----------------------------------------------------------------------------
--- Element set
----------------------------------------------------------------------------
 function Fader:Sync(r)
     r = r or ns.Scanner.last
     if not r then return end
@@ -142,9 +113,7 @@ function Fader:Sync(r)
     lastChildCount = UIParent:GetNumChildren()
 end
 
--- Start (focus frame or false) or end (nil) the cinema look. On the end the
--- extra elements leave: they fade back in, then drop out.
--- keepOwner: elements whose owner starts with it stay visible too.
+-- start (focus frame or false) or end (nil) the cinema; extra elements fade back in, then leave
 function Fader:SetCinema(on, focus, keepOwner)
     if on then
         cinema = { focus = focus or nil, keepOwner = keepOwner }
@@ -155,8 +124,7 @@ function Fader:SetCinema(on, focus, keepOwner)
     end
 end
 
--- Whether the element holding frame is faded all the way to 0 and stays
--- there (target 0; a wake raises the target at once).
+-- faded all the way to 0 and staying there (target 0)
 function Fader:IsFullyFaded(frame)
     local s = managed[self:RootOf(frame) or false]
     return s ~= nil and not s.skip and s.base ~= nil
@@ -168,7 +136,6 @@ local function KeptInCinema(s, focus, keep)
     return keep ~= nil and s.e.owner:sub(1, #keep) == keep
 end
 
--- Forget all per-element state (skipped elements get another chance).
 function Fader:Reset()
     for _, s in ipairs(list) do pcall(Release, s) end
     wipe(managed)
@@ -177,10 +144,6 @@ function Fader:Reset()
     self:Sync()
 end
 
----------------------------------------------------------------------------
--- Queries and changes (options window, commands, overlay)
----------------------------------------------------------------------------
--- -> status text, exclusion rule (nil if included), faded right now
 function Fader:Status(e)
     local reason, rule = Rules:Reason(e)
     if reason then return reason, rule, false end
@@ -201,7 +164,7 @@ function Fader:SetExcluded(e, excluded)
     ns.SettingsChanged()
 end
 
--- owners: one addon name or a list (an addon family).
+-- owners: one addon name or a list (a family)
 function Fader:SetAddonExcluded(owners, excluded)
     if type(owners) ~= "table" then owners = { owners } end
     for _, owner in ipairs(owners) do ns.profile.exclude.addons[owner] = excluded or nil end
@@ -209,21 +172,18 @@ function Fader:SetAddonExcluded(owners, excluded)
     ns.SettingsChanged()
 end
 
--- An element's own alpha, ignoring our fading (0 = hidden by its owner).
 function Fader:IntrinsicAlpha(frame)
     local s = managed[frame]
     if s and s.base then return s.base end
     return Safe.Alpha(frame)
 end
 
--- Keep one element visible for a moment (list hover, highlight).
 function Fader:Peek(frame, seconds)
     local s = managed[frame]
     if s then s.hoverUntil = math.max(s.hoverUntil, GetTime() + (seconds or 1)) end
 end
 
--- Keep every element of a kind visible for a moment (chat activity).
--- Inputs are left out: an idle chat input would show as an empty box.
+-- every element of a kind visible a moment (chat activity); inputs left out
 function Fader:PeekKind(kind, seconds)
     local untilT = GetTime() + (seconds or 1)
     for _, s in ipairs(list) do
@@ -233,7 +193,6 @@ function Fader:PeekKind(kind, seconds)
     end
 end
 
--- -> managed, skipped, contested
 function Fader:Count()
     local skipped, contested = 0, 0
     for _, s in ipairs(list) do
@@ -243,11 +202,8 @@ function Fader:Count()
     return #list, skipped, contested
 end
 
----------------------------------------------------------------------------
 -- Mouse
----------------------------------------------------------------------------
--- Rectangle test for elements that are small enough for it to mean something.
--- A frame a special handler hid is tested against the rect it had (Specials).
+-- rect test only for elements small enough; a frame a Special hid uses its old rect
 function Fader:IsMouseOver(f)
     local saved = ns.Specials:HoverRect(f)
     local l, b, w, h
@@ -264,7 +220,6 @@ function Fader:IsMouseOver(f)
     return Safe.Call(f, "IsMouseOver") == true
 end
 
--- The top-level element (UIParent child or parentless) a frame belongs to.
 function Fader:RootOf(f)
     while f and not Safe.IsForbidden(f) do
         if managed[f] then return f end
@@ -274,10 +229,7 @@ function Fader:RootOf(f)
     end
 end
 
--- Typing: the element holding the keyboard focus stays visible, and so does
--- the element the focused box is anchored to: a chat input placed under a
--- chat window often belongs to another frame tree than the window it serves
--- (Blizzard's edit box under a chat addon's window). Generic, no addon names.
+-- typing: the focused element stays visible, and the one the focused box is anchored to
 local function MarkTyping(now, linger)
     local get = _G["GetCurrentKeyBoardFocus"]
     if not get then return end
@@ -285,10 +237,7 @@ local function MarkTyping(now, linger)
     box = ok and Safe.Value(box) or nil
     if type(box) ~= "table" or Safe.IsForbidden(box) then return end
     local untilT = now + linger
-    -- A focused input that is an element itself is handed back fully visible
-    -- at once. Its owner sets its alpha on activation (Blizzard's "im" chat
-    -- style: 0.35 idle, 1 active); a running fade overwrote that, and
-    -- restoring the remembered idle value left the input pale while typing.
+    -- a focused input is handed back fully visible at once (its owner sets its active alpha)
     local own = managed[box]
     if own and own.base then
         own.base, own.cur, own.target = nil, 1, 1
@@ -306,11 +255,11 @@ end
 
 local function MarkHover(now)
     local untilT = now + HOVER_LINGER
-    for _, focus in ipairs(GetMouseFoci()) do  -- mouse-enabled frames under the cursor
+    for _, focus in ipairs(GetMouseFoci()) do
         local s = managed[Fader:RootOf(focus) or false]
         if s then s.hoverUntil = untilT end
     end
-    for _, s in ipairs(list) do  -- elements without mouse handling (e.g. tracker text)
+    for _, s in ipairs(list) do
         local hoverable = s.visible or ns.Specials:HoverRect(s.frame) ~= nil
         if hoverable and s.hoverUntil < untilT and Fader:IsMouseOver(s.frame) then
             s.hoverUntil = untilT
@@ -318,9 +267,6 @@ local function MarkHover(now)
     end
 end
 
----------------------------------------------------------------------------
--- Driver
----------------------------------------------------------------------------
 local function CheckForeign(s, now)
     local a = Safe.Alpha(s.frame)
     if not a or math.abs(a - s.base * s.cur) <= ALPHA_EPSILON then return end
@@ -371,7 +317,6 @@ local function Evaluate(now)
     end
 end
 
--- A leaving element is done once fully visible (or hidden: nothing to show).
 local function Drop(s)
     Release(s)
     managed[s.frame] = nil
@@ -441,7 +386,7 @@ local function Step(elapsed)
     Animate(elapsed)
 end
 
--- An error must not repeat every frame: restore everything, report once.
+-- an error must not repeat every frame: restore everything, report once
 local function Pause(err)
     for _, s in ipairs(list) do pcall(Release, s) end
     wipe(managed)

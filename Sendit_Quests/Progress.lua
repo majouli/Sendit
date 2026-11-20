@@ -1,9 +1,7 @@
 --[[
-  Progress: current-character completion/log membership, guarded against
-  missing APIs and secret return values. "Not completed" is never called
-  "available": the reference does not evaluate race/reputation/item gates.
-  The completion snapshot and per-ID state cache expire on quest events;
-  confirmed turn-ins fill the gap before the client snapshot catches up.
+  Progress: the character's completion and quest log, guarded against missing APIs and secret values.
+  Not completed is never called available. Caches expire on quest events; confirmed turn-ins count
+  before the client's snapshot catches up.
 ]]
 local _, ns = ...
 local P = {}

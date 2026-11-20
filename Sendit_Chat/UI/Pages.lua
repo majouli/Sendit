@@ -1,10 +1,6 @@
 --[[
-  Pages: the Chat page of the Sendit window (replaces the old popover under
-  the gear). Look settings that every module shares (palette, frame style,
-  animations) live on Sendit's Design page; here is what only the chat has.
-  Every control writes ns.db (profile) or ns.acct (account) and calls
-  ns.Changed(); the windows re-apply live.
-  The gear in the main chat window opens this page (ns.OpenSettings).
+  Pages: the Chat page (what only the chat has; the look is on Sendit's Design page); controls write
+  ns.db / ns.acct and call ns.Changed(). The main window's gear opens it (ns.OpenSettings).
 ]]
 local _, ns = ...
 
@@ -89,7 +85,6 @@ O:Register({
     end),
 })
 
--- The Chat page; toggles when it is already on screen.
 function ns.OpenSettings()
     local cur = O:Current()
     if cur and cur.module == ns.module then return O:Hide() end

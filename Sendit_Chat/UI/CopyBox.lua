@@ -1,11 +1,6 @@
 --[[
-  CopyBox: a tab's text as plain lines (link markup removed), selected and
-  ready for Ctrl+A / Ctrl+C. Opened from a tab's right-click menu and the
-  messenger's copy button (Conversation.Copy).
-  Named SenditCopyBox - no "chat" in the name, so Fade's group-chat peek
-  does not flash it. Escape closes it.
-
-  CopyBox.Show(lines)   lines = { { text, ... }, ... } (History.Lines(index))
+  CopyBox: a tab's or conversation's text as plain lines, selected for Ctrl+A / Ctrl+C; Escape closes it.
+  Named without "chat" (Fade's chat peek leaves it alone).  CopyBox.Show(lines)
 ]]
 local _, ns = ...
 local T, Widgets, Links = ns.Theme, ns.Widgets, ns.Links

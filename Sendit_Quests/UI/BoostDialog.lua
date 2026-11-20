@@ -1,15 +1,7 @@
 --[[
-  BoostDialog: what the gear boost needs, asked once - a small panel under
-  the boost chip. "At least [5] % stronger", "also quests of a chain that are
-  still locked", the preview (quests up to 0 / +1 / +2 / +3 / +5 levels above
-  you), which slots count (check boxes, all / none), for which spec
-  Sendit Upgrade rates, and the buttons:
-  Boost (start; while it runs: rate again) and End. Enter in the field =
-  Boost, Escape / a click outside closes it without starting anything. The
-  click outside is not swallowed: no screen-wide catcher - the panel listens
-  to GLOBAL_MOUSE_DOWN, so the click still reaches what it was meant for.
-  Labels wrap within the panel: nothing runs into the field or past the edge.
-
+  BoostDialog: the gear boost's settings under its chip - threshold, locked chain steps, preview
+  levels, slots, spec, Boost / End. Enter = Boost; Escape or a click elsewhere closes it (the click is
+  not swallowed: GLOBAL_MOUSE_DOWN, no screen-wide catcher).
   BoostDialog.Toggle(anchor, onStart, onEnd) / Hide() / IsShown()
 ]]
 local _, ns = ...
@@ -32,7 +24,6 @@ local function Build()
     panel:SetClampedToScreen(true)
     Sendit.ownFrames[panel] = true
     tinsert(UISpecialFrames, "SenditQuestsBoostDialog")
-    -- a click anywhere else closes it - and still reaches whatever was clicked
     panel:RegisterEvent("GLOBAL_MOUSE_DOWN")
     panel:SetScript("OnEvent", function(self)
         if not self:IsShown() or self:IsMouseOver() then return end
@@ -57,7 +48,7 @@ local function Build()
     panel.minLabel:SetWordWrap(true)
     panel.min = W.Search(panel, "", function() end)
     panel.min:SetSize(FIELD, 26)
-    panel.min:SetMaxLetters(4)  -- "0,5" / "1.5": decimals, comma or point
+    panel.min:SetMaxLetters(4)  -- "0,5" / "1.5"
     panel.min:SetTextInsets(8, 22, 0, 0)
     local pct = T.Text(panel.min, "label", "textMuted")
     pct:SetPoint("RIGHT", -8, 0)
@@ -81,14 +72,13 @@ local function Build()
             if ns.Window then ns.Window:BoostChanged() end
         end)
     panel.ahead:SetWidth(WIDTH - 32)
-    -- slots: a grid of small check boxes with the client's slot names
     panel.slotTitle = T.Text(panel, "label", "text")
     panel.slotChecks = {}
     for i, g in ipairs(ns.Boost.SLOTS) do
         local check = W.Check(panel, function(self, on)
             ns.Boost.SetSlot(g.key, on)
             self:Set(on)
-            if ns.Window then ns.Window:BoostChanged() end  -- a filter: the list follows at once
+            if ns.Window then ns.Window:BoostChanged() end
         end)
         check.label = T.Text(panel, "small", "textDim")
         check.label:SetPoint("LEFT", check, "RIGHT", 6, 0)
@@ -196,4 +186,4 @@ function Dialog.Toggle(anchor, onStart, onEnd)
     panel.min:SetFocus()
     panel.min:HighlightText()
 end
-function Dialog.Panel() return panel end  -- tests
+function Dialog.Panel() return panel end

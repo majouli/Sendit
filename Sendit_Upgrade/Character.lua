@@ -1,41 +1,15 @@
 --[[
-  Character: a snapshot of the player's live stats, and what it becomes when
-  item stats change.
-  Contract:
-    Character.Snapshot(gear) -> s or nil (values secret / unavailable)
-      gear = { [slot] = item } from Stats.Read (the equipped items)
-    Character.Apply(s, delta, weapons) -> copy of s with item stat deltas
-      converted into character stats; weapons = { main = w, off = w,
-      ranged = w } replaces those weapons (false = empty); a plain weapon
-      stands for the main hand
-  Spell schools: s.schoolDmg / s.schoolCrit hold the live bonus per school
-  (GetSpellBonusDamage / GetSpellCritChance); item deltas go into s.spellDmg /
-  s.spellCrit, so Character.SpellPower(s, school) = live school bonus + delta.
-  Live values (UnitStat, attack power, crit, spell power, ...) already contain
-  talents and buffs; only the *changes* go through the conversions below.
-  /gc probe on Forever: every one of these reads is plain, none secret.
-
-  Conversions:
-    Strength/Agility -> attack power: GetAttackPowerForStat (exact, per class)
-    Agility -> crit, Intellect -> spell crit: the client's own conversion,
-      GetCritChanceFromStat / GetSpellCritChanceFromStat (Forever's character
-      frame uses them for the agility / intellect tooltips - Blizzard UI
-      source, branch forever, Camelot/PaperDollFrameStats.lua; fraction, so
-      1 / f(stat, 100) * 100 = points per 1%). Without them: measured from the player's own
-      stat changes at the current level (Calibrate); until measured, the Classic
-      level-60 ratio scaled by level (estimate, marked in the breakdown).
-    Item procs (procDps) are summed from the equipped items' parsed tooltips.
-    Spell damage of one school ("+7 Fire spell damage", stat keys fireDmg ...)
-      lands in s.schoolAdd and counts only for spells of that school.
-    Melee-only / ranged-only hit and crit (hitMelee, critRanged ...) count
-      only for that kind of attack; plain hit / crit count for both.
-  Druid forms: s.form = "cat" | "bear" | nil (GetShapeshiftFormID: 1 Cat,
-  8 Dire Bear, 3 Travel = nil - verified in game 2026-11-17; 5 Bear is the
-  (doc) Classic constant, below level 40 only). In a form the live attack power and
-  armor already hold the form's bonuses; Specs/Druid.lua takes them out
-  (s.live* = the values at the snapshot). Druid agility gives no
-  attack power outside Cat Form (warcraft.wiki.gg "Attack power", Classic):
-  apPerAgi is 0 for druids, the Cat model adds its 1 per agility itself.
+  Character: a snapshot of the player's live stats (talents and buffs included) and what it becomes when
+  item stats change - only the changes go through the conversions.
+  Character.Snapshot(gear) -> s | nil;  Character.Apply(s, delta, weapons) -> copy of s
+  Character.SpellPower(s, school) = live school bonus + delta
+  Conversions: strength / agility -> attack power (GetAttackPowerForStat); agility -> crit, intellect
+  -> spell crit (GetCritChanceFromStat / GetSpellCritChanceFromStat, else Calibrate, else the Classic
+  level-60 ratio scaled by level, marked estimated); item procs from parsed tooltips; school spell
+  damage only for that school; melee- / ranged-only hit and crit only for that attack.
+  Druid forms: s.form "cat" | "bear" (GetShapeshiftFormID 1 Cat, 8 Dire Bear, 5 Bear); the live values
+  hold the form's bonuses, Specs/Druid.lua takes them out. Druid agility gives no attack power outside
+  Cat Form (warcraft.wiki.gg "Attack power", Classic).
 ]]
 local _, ns = ...
 
@@ -81,7 +55,7 @@ end
 -- level 38, 19.8 / 19.7 at 60; Paladin 12.93 at 42 = live calibration of a
 -- level 42 Ret (two samples, 60 / 69 agility). Between points linear; below
 -- the first point scaled with the level; classes without points: Estimate.
--- In game the live calibration (Calibrate.lua) wins over all of this.
+-- the live calibration (Calibrate.lua) wins over all of this
 local AGI_PER_CRIT_POINTS = {
     PALADIN = { { 38, 12.8 }, { 42, 12.93 }, { 60, 19.8 } },
     SHAMAN = { { 38, 13.3 }, { 60, 19.7 } },
@@ -97,9 +71,8 @@ local function AgiPerCrit(class, level)
     end
     return pts[#pts][2]
 end
-Character.AgiPerCrit = AgiPerCrit  -- tests
+Character.AgiPerCrit = AgiPerCrit
 
--- Calls fn; nil when it errors or returns a secret. Up to three results.
 local function Read(fn, ...)
     if type(fn) ~= "function" then return nil end
     local ok, a, b, c = pcall(fn, ...)

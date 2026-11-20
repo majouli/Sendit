@@ -1,25 +1,10 @@
 --[[
-  ErrorLog: Sendit's own bug log, like BugSack but only for the suite.
-
-  While the debug mode is on (account setting design.debug, Errors page) every
-  Lua error that comes from a Sendit addon is kept with its stack, locals,
-  count, first / last time, session, the versions of the Sendit addons and
-  the client build - in SenditLogDB, so it survives /reload and logout.
-  Blocked protected calls (ADDON_ACTION_BLOCKED / _FORBIDDEN) by a Sendit
-  addon are kept too.
-
-  Sources: with BugGrabber (BugSack's grabber) its "BugGrabber.BugGrabbed"
-  event - BugGrabber owns the error handler and refuses replacements; without
-  it our handler runs first and passes every error on to the one before.
-  Both ways BugSack and the game keep working as before.
-  A Sendit error = message or stack names a Sendit addon folder.
-
-  ErrorLog.Enabled() / SetEnabled(on)
-  ErrorLog.List()           entries, newest first
-  ErrorLog.Report(entry)    the full text to copy
-  ErrorLog.Clear()
-  ErrorLog.OnChange(fn)     after every new or counted error and on Clear
-  ErrorLog.Record(message, stack, locals)   (tests, and the sources above)
+  ErrorLog: the suite's own bug log. While debug mode is on (account design.debug, Errors page) every
+  Lua error and blocked protected call of a Sendit addon is kept with stack, locals, count, times,
+  session and versions in SenditLogDB. Source: BugGrabber's "BugGrabber.BugGrabbed" when present, else
+  our handler first, passing every error on.
+  ErrorLog.Enabled() / SetEnabled(on) / List() / Report(entry) / Clear() / OnChange(fn)
+  ErrorLog.Record(message, stack, locals)
 ]]
 local _, ns = ...
 
@@ -31,7 +16,7 @@ local STACK_MAX, LOCALS_MAX = 4000, 2000
 local NOTICE_GAP = 10
 
 local listeners = {}
-local pending = {}   -- errors before the saved variables are loaded
+local pending = {}  -- errors before the saved variables load
 local lastNotice = -math.huge
 
 local function DB()
@@ -69,7 +54,6 @@ local function Clip(text, max)
     return text
 end
 
--- The Sendit addons loaded right now and their versions.
 local function Versions()
     local out = {}
     local api = _G["C_AddOns"]
@@ -108,7 +92,7 @@ local function Store(db, message, stack, locals)
                 e.stack, e.locals = stack or e.stack, locals or e.locals
             end
             table.remove(list, i)
-            table.insert(list, 1, e)  -- newest first
+            table.insert(list, 1, e)
             return e, false
         end
     end
@@ -166,9 +150,6 @@ function ErrorLog.Report(e)
     return table.concat(lines, "\n")
 end
 
----------------------------------------------------------------------------
--- Sources
----------------------------------------------------------------------------
 local function FromBugGrabber(_, id)
     local grabber = _G["BugGrabber"]
     local err = grabber and grabber.GetErrorByID and grabber:GetErrorByID(id)

@@ -1,9 +1,6 @@
 --[[
-  Probe: /gs probe checks the client APIs this addon relies on and
-  stores raw answers in Sendit_GearScoreDB.probe (read it from SavedVariables after
-  /reload). With a player targeted it also inspects them and records the raw
-  inspect talent config (-1) a moment after INSPECT_READY, the part that can
-  only be verified in game: do groups, currency and node ranks exist for it?
+  Probe: /gs probe - raw answers of the client APIs this addon relies on, stored in
+  Sendit_GearScoreDB.probe; with a target also its inspect talent config (-1).
 ]]
 local _, ns = ...
 local L = ns.L
@@ -11,7 +8,6 @@ local L = ns.L
 local isSecret = issecretvalue or function() return false end
 local SECRET, MISSING = "<secret>", "<missing>"
 
--- Plain copy for SavedVariables: secrets marked, depth and size bounded.
 local function Plain(v, depth)
     if isSecret(v) then return SECRET end
     if type(v) ~= "table" then
@@ -56,7 +52,6 @@ local API = {
     "PaperDollFrame", "CharacterModelScene", "CharacterModelFrame", "InspectModelScene", "InspectModelFrame",
 }
 
--- Raw view of a trait config: tree, groups, currency, node rank sums per group.
 local function Config(configID)
     local out = { configID = configID }
     local info = Try(C_Traits and C_Traits.GetConfigInfo, configID)

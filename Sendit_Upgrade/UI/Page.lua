@@ -1,9 +1,6 @@
 --[[
-  Page: Upgrade in the Sendit window. Picks the spec the ratings are made for
-  (per character, "auto" = guessed from the gear), the enemy level and whether
-  damage over time crits (Settings.lua, "Standard" first), and opens the
-  compare window. No profile settings: these belong to the character, not to
-  a profile, and the window is a tool, not a setting.
+  Page: Upgrade's page - the rated spec (per character, auto = guessed from gear), the enemy level, and
+  the compare window. No profile settings (these belong to the character).
 ]]
 local _, ns = ...
 local L = ns.L
@@ -12,7 +9,6 @@ local Sendit = Sendit
 local O, W = Sendit.Options, Sendit.Widgets
 local function Tx(key) return Sendit.Locale.Text(L, key) end
 
--- Spec choices of the player's class: auto + the class's specs.
 local function SpecChoices()
     local list = { { "AUTO", ns.AutoLabel() } }
     local _, class = UnitClass("player")
@@ -21,7 +17,6 @@ local function SpecChoices()
     return list
 end
 
--- Enemy level: "Standard" (own level) first, then 1..3 levels above.
 local function TargetChoices()
     local list = { { 0, L.targetStandard } }
     for d = 1, ns.Settings.MAX_DELTA do list[#list + 1] = { d, L.targetAbove:format(d) } end

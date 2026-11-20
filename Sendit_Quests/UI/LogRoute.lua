@@ -1,27 +1,10 @@
 --[[
-  LogRoute: the quest route docked to the right of the quest log (in Forever
-  the quest log is the right part of the world map window) while it shows (like Sendit Talents' route beside the talent window): the
-  chain of the quest under the mouse in the log list (Blizzard's
-  "QuestMapLogTitleButton.OnEnter" callback) or picked there (QuestLog.lua) -
-  every step before and after it, that one ringed in gold. The list stays
-  where it is: hovering a quest is enough.
-  A row: status node, name, level, status and place, then its rewards (item
-  icons, XP, money - MiniRewards). It sits right of the quest log's side tabs
-  (Quests / services nearby), never on them. Left click opens Sendit
-  Quests on that step; right click the quest menu (chain, map pins); hover
-  shows the quest's text. The close button hides it until the next pick.
-
-  Taint-free: our own named frame (EllesmereUI sweeps unnamed ones), parented
-  to QuestMapFrame only so it shows and hides with the quest log; anchored
-  beside WorldMapFrame. Nothing of Blizzard's is written or hooked here.
-
-  LogRoute.Show(questID, hovered)   show that quest's chain (QuestLog.lua: a pick;
-                                    the list's hover callback: hovered = true)
-  LogRoute.Refresh()       repaint (quest log events)
-  Off in Sendit's Quests page (account: route = false): never shown.
-  While a chain is followed (Guide.lua) it lists the guide's steps instead,
-  the next one first; a left click puts the map pin on a step.
-  LogRoute.Panel() -> frame or nil;  LogRoute.Rows() -> the visible rows
+  LogRoute: the quest route docked right of the quest log (right of its side tabs) - the chain of the
+  quest hovered ("QuestMapLogTitleButton.OnEnter" callback) or picked in the log, that quest ringed
+  in gold, each row with its rewards; while a chain is followed, the guide's steps instead. Left click
+  opens Sendit Quests (a guide step: the pin), right click the quest menu. Closed until the next pick;
+  off in Sendit's Quests page (account: route). Our own named frame, parented to QuestMapFrame.
+  LogRoute.Show(questID, hovered) / Refresh() / Hovered(...) / Panel() / Rows()
 ]]
 local _, ns = ...
 local T, W, S, DB, L = Sendit.Theme, Sendit.Widgets, ns.Style, ns.Database, ns.L
@@ -29,7 +12,7 @@ local Route = {}
 ns.LogRoute = Route
 
 local WIDTH, HEADER, TAB_GAP = 320, 50, 48
-local TOP, LINE, BOTTOM, MINI = 9, 17, 9, 24  -- a row: top pad, name line, meta line, rewards line
+local TOP, LINE, BOTTOM, MINI = 9, 17, 9, 24  -- row: top pad, name line, meta line, rewards line
 local panel, current, closed
 local rows = {}
 
@@ -59,7 +42,7 @@ local function Row(i)
     r:SetScript("OnClick", function(self, button)
         if not self.questID then return end
         if button == "RightButton" then ns.Window:Menu(self.questID, self)
-        elseif self.step and self.step.place then  -- a guide step: the pin goes there
+        elseif self.step and self.step.place then
             local p, a = self.step.place, self.step.actions[1]
             ns.MapPin.Set(p[1], p[2], p[3], a.quest, a.kind)
             ns.MapPin.Show()
@@ -84,8 +67,7 @@ local function Create()
     panel = CreateFrame("Frame", "SenditQuestsRoute", log)
     Sendit.ownFrames[panel] = true
     local dock = map or log
-    -- The quest log's side tabs (Quests, services nearby) stick out right of the map window:
-    -- the route starts right of them. Their width read safely (Blizzard frame values can be secret).
+    -- the side tabs stick out right of the map window; their width read safely
     local gap = TAB_GAP
     local tab = log.QuestsTab
     if type(tab) == "table" and tab.GetWidth then
@@ -127,7 +109,6 @@ local function Create()
     return true
 end
 
--- While a chain is followed (Guide.lua) the route lists its steps: the next one first.
 local function PaintSteps(steps)
     panel.title:SetText(L.guideTitle)
     panel.empty:SetText(L.trackDone)
@@ -212,7 +193,7 @@ function Route.Show(id, hovered)
     end
     if type(id) == "number" and id > 0 then
         current = id
-        -- a closed route comes back with the next pick, not with a mere hover
+        -- a closed route comes back with a pick, not a hover
         if not hovered then closed = false end
     end
     if not Create() then return end
@@ -224,7 +205,6 @@ function Route.Refresh() Paint() end
 function Route.Panel() return panel end
 function Route.Rows() return rows end
 
--- Hovering a quest in Blizzard's list shows its route; the list stays where it is.
 local function Hovered(_, _, questID)
     if issecretvalue and issecretvalue(questID) then return end
     if type(questID) == "number" and questID > 0 and questID ~= current then Route.Show(questID, true) end

@@ -1,11 +1,7 @@
 --[[
-  MinimapButton: the suite's one button on the minimap edge (drag to move).
-  Left-click: the Sendit window. Right-click: a menu of the modules' quick
-  switches. Also the addon compartment entry (## AddonCompartmentFunc).
-
-  Modules add a quick switch with
-    Sendit:AddQuickToggle{ label = "Fading", get = fn, set = fn(on) }
-  and a tooltip line through module.status() (Init.lua).
+  MinimapButton: the suite's minimap button (drag to move); left click the window, right click the
+  modules' quick switches; also the addon compartment entry.
+  Sendit:AddQuickToggle{ label, get, set(on) };  tooltip lines from module.status()
 ]]
 local _, ns = ...
 
@@ -69,7 +65,7 @@ local function OnClick(self, mouse)
 end
 
 local function Create()
-    -- Named, so minimap button collectors can find it.
+    -- named: minimap button collectors find it
     button = CreateFrame("Button", "SenditMinimapButton", Minimap)
     ns.ownFrames[button] = true
     button:SetSize(31, 31)
@@ -109,7 +105,7 @@ ns.OnSettingsChanged(function()
     button:SetShown(not ns.db.minimap.hide)
 end)
 
--- Addon compartment (global by necessity: the .toc names it).
+-- global: the .toc names it
 function Sendit_OnAddonCompartmentClick(_, mouse)
     OnClick(nil, mouse)
 end

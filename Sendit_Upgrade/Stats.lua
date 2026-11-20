@@ -64,12 +64,10 @@ local API_KEYS = {
 -- Keys that are another key's other name: skipped when that one is there too.
 local SAME_AS = { ITEM_MOD_SPELL_POWER = "ITEM_MOD_SPELL_POWER_SHORT" }
 
--- Forever stores Classic's "+1 %" stats as ratings: GetItemStats says 14 for
--- "critical strike by 1%". Rating per 1 %, confirmed in game by SimGear Forever
--- (Stats.RATING_PER_POINT, items 868 / 15056 / 12639, GetCombatRatingBonus-
--- ForCombatRatingValue on a level-22 character: no level scaling). Upgrade
--- read them as percent before - every crit / hit / dodge / parry / block item
--- counted 10-15 times. The client's own conversion is asked first.
+-- Forever stores Classic's "+1 %" stats as ratings (GetItemStats says 14 for 1 % crit);
+-- rating per 1 % confirmed in game by SimGear Forever (Stats.RATING_PER_POINT, items 868 /
+-- 15056 / 12639, GetCombatRatingBonusForCombatRatingValue at level 22: no level scaling).
+-- The client's own conversion is asked first.
 local RATINGS = {
     crit = { 14, "CR_CRIT_MELEE" }, critMelee = { 14, "CR_CRIT_MELEE" }, critRanged = { 14, "CR_CRIT_RANGED" },
     spellCrit = { 14, "CR_CRIT_SPELL" },
@@ -140,7 +138,6 @@ local function Numbers(text)
 end
 Stats.Numbers = Numbers
 
--- Raw stats with their API values, for claiming green lines.
 local function ApiStats(link)
     local ok, raw = pcall(C_Item.GetItemStats, link)
     local stats, claimable = {}, {}

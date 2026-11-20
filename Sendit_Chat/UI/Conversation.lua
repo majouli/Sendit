@@ -1,27 +1,10 @@
 --[[
-  Conversation: the right pane of the messenger window (UI/Messenger.lua),
-  like WhatsApp on the desktop: one conversation at a time.
-
-  Header: avatar, name, realm (characters) or "Battle.net" + BattleTag (and
-  the character a friend plays); right click = Blizzard's player menu.
-  Messages render as bubbles: incoming left, outgoing right, a date line
-  when the day changes. Links in bubbles are clickable; shift-clicking an
-  item while the input has focus inserts it (Core/Links.lua). Sending goes
-  through Whispers.Send; a refused send (chat lockdown, unreachable) keeps
-  the text and shows why.
-
-  Read rule: a conversation counts as read when the player clicks
-  into the pane (Activate) or closes the window, never by just showing it.
-
-  Conversation.Build(parent)   once; the messenger anchors Conversation.pane
-  Conversation.Show(conv)      switch to a conversation (nil = empty state)
-  Conversation.Current()       the conversation shown
-  Conversation.Activate()      click into the pane: read + cursor in the input
-  Conversation.Copy()          the conversation in the copy box (header button)
-  Conversation.HasFocus()      its input has the keyboard focus
-  Conversation.Render() / ApplyLook()
-  ns.OpenWhisper(name)         open the messenger on a player (player links,
-                               the "new chat" field, Blizzard's Whisper)
+  Conversation: the messenger's right pane - header (avatar, name, realm or Battle.net; right click
+  Blizzard's player menu), message bubbles (in left, out right, date lines, clickable links), the
+  input (Whispers.Send; a refused send keeps the text and says why). Read when the player clicks in or
+  closes the window, never by just showing it.
+  Conversation.Build(parent) / Show(conv) / Current() / Activate() / Copy() / HasFocus() / Render()
+  ns.OpenWhisper(name)
 ]]
 local _, ns = ...
 local T, Widgets, Links, W, Safe = ns.Theme, ns.Widgets, ns.Links, ns.Whispers, ns.Safe
@@ -36,8 +19,8 @@ local INPUT_H = 30
 local RENDER_MAX = 80
 local PAD_X, PAD_Y = 9, 6
 
-local pane          -- the frame, built once
-local current       -- the conversation shown
+local pane
+local current
 local bubbles, seps = {}, {}
 
 local function DayKey(t) return date("%Y%m%d", t) end
@@ -53,10 +36,7 @@ Conversation._DayLabel = DayLabel
 function Conversation.Current() return current end
 function Conversation.HasFocus() return pane ~= nil and pane.input:HasFocus() end
 
----------------------------------------------------------------------------
--- Header
----------------------------------------------------------------------------
--- Character: its realm. Battle.net: "Battle.net  Joe#1234 - playing Bob (Realm)".
+-- realm, or "Battle.net  Joe#1234 - playing Bob (Realm)"
 local function Subtitle(c)
     if not c.bn then return MUTED .. W.RealmOf(c) .. "|r" end
     local r, g, b = T.RGB("bn")
@@ -84,7 +64,6 @@ local function UpdateHeader()
 end
 Conversation.UpdateHeader = UpdateHeader
 
--- Blizzard's own player menu (invite, add friend, ignore, who, report ...).
 function Conversation.PlayerMenu()
     local c = current
     if not c then return end
@@ -98,8 +77,7 @@ function Conversation.PlayerMenu()
     if link and setRef then pcall(setRef, link, "[" .. (c.name or "?") .. "]", "RightButton", _G["DEFAULT_CHAT_FRAME"]) end
 end
 
--- The conversation as plain text in the copy box (UI/CopyBox.lua), one line
--- per message: "17.11. 20:05  Name: text".
+-- the conversation as plain text: "17.11. 20:05  Name: text"
 function Conversation.Copy()
     local c = current
     if not c then return end
@@ -123,9 +101,6 @@ function Conversation.Notice(reason)
     end)
 end
 
----------------------------------------------------------------------------
--- Bubbles
----------------------------------------------------------------------------
 local function NewBubble(content)
     local b = CreateFrame("Frame", nil, content)
     b.bg = T.Tex(b, "BACKGROUND", "bubbleIn", 0.95)
@@ -227,9 +202,6 @@ function Conversation.Render()
 end
 Conversation.bubbles = bubbles
 
----------------------------------------------------------------------------
--- Showing and reading
----------------------------------------------------------------------------
 function Conversation.Show(conv)
     if not pane then return end
     if conv ~= current and pane.input:HasFocus() then pane.input:ClearFocus() end
@@ -281,7 +253,7 @@ function Conversation.Build(parent)
     pane.name = T.Text(who, 13, "text")
     T.Own(pane.name)
     pane.name:SetPoint("TOPLEFT", pane.avatar, "TOPRIGHT", 10, -1)
-    pane.name:SetPoint("RIGHT", header, "RIGHT", -110, 0)  -- room for the window controls (Messenger.lua)
+    pane.name:SetPoint("RIGHT", header, "RIGHT", -110, 0)  -- room for the window controls
     pane.name:SetWordWrap(false)
     pane.sub = T.Text(who, 9, "textMuted")
     pane.sub:SetPoint("BOTTOMLEFT", pane.avatar, "BOTTOMRIGHT", 10, 1)
@@ -351,9 +323,6 @@ function Conversation.Build(parent)
     return pane
 end
 
----------------------------------------------------------------------------
--- Opening by name, Blizzard's "Whisper"
----------------------------------------------------------------------------
 function ns.OpenWhisper(name)
     if ns.Friends and ns.Friends.Resolve then name = ns.Friends.Resolve(name) end
     local c = W.Open(name)
@@ -361,13 +330,9 @@ function ns.OpenWhisper(name)
     return c
 end
 
--- Post-hooks on SendTell / SendBNetTell (friends list, player menu):
--- Blizzard's own code runs untouched and opens its edit box; one frame
--- later the messenger takes the focus. Not in a chat lockdown: there only
--- Blizzard's box can send. Reply (R) uses another path and stays Blizzard's.
--- Known cost: taking the focus closes Blizzard's box from our code, so its
--- chat type is written tainted once; the next normal send from that box
--- rewrites it securely (only matters if that next send is in a boss fight).
+-- post-hooks on SendTell / SendBNetTell: Blizzard opens its box, a frame later the messenger
+-- takes the focus (not in a lockdown: only Blizzard's box can send there). Cost: closing
+-- Blizzard's box from our code writes its chat type tainted once; the next send rewrites it
 local lastTell, lastTellTime
 local function TakeOver(name, bn)
     name = Safe.Str(name)

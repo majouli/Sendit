@@ -1,20 +1,8 @@
 --[[
-  WhisperToasts: a new whisper shows as a small speech bubble right above
-  the main chat window, like a message notification on a phone, instead of
-  opening the messenger (setting whisperAlert = "toast", the default).
-
-  One toast per conversation: further messages from the same partner update
-  it (latest text; the badge counts the conversation's unread messages). Up to MAX toasts, newest at the bottom;
-  each stays HOLD seconds (longer while the mouse is on it).
-  Left click opens the messenger on that conversation (and reads it, like a
-  click into it); right click dismisses. A toast goes away once its
-  conversation is read or shown in the messenger. Toasts.Notice shows other
-  short notices in the same look (the friends list: "came online").
-  No toast while the messenger already shows that conversation.
-
-  The stack is its own top-level frame (SenditWhisperToasts, hidden while
-  empty; no "chat" in the name, so Fade's chat peek does not flash it) and
-  sits directly on the main window; the loot cards stack sits on top of it.
+  WhisperToasts: a new whisper as a small bubble right above the main chat (whisperAlert "toast") - one
+  per conversation (latest text, unread count), up to MAX, HOLD s each; left click opens the messenger on
+  it, right click dismisses; gone once read or shown. Toasts.Notice shows other notices in the same look.
+  Its own top-level frame (no "chat" in the name), on the main window; loot cards stack on top.
 ]]
 local _, ns = ...
 local T, Widgets, Links, W = ns.Theme, ns.Widgets, ns.Links, ns.Whispers
@@ -27,8 +15,8 @@ local HOLD = 8
 local WIDTH, H, GAP, AVATAR = 290, 56, 6, 32
 
 local stack
-local toasts = {}  -- live and idle toast frames; .conv set while live
-local seq = 0      -- arrival order (newest = highest)
+local toasts = {}  -- toast frames; .conv while live
+local seq = 0  -- arrival order
 
 local function Live()
     local list = {}
@@ -175,8 +163,7 @@ function Toasts.Show(conv, msg)
     return Render(t, again, conv, text, msg.t, conv.unread or 1)
 end
 
--- A short notice in the same look (a friend came online ...): one bubble per
--- key, click runs onClick. n = { key, name, class, bn, text, onClick }
+-- a short notice in the same look: n = { key, name, class, bn, text, onClick }
 function Toasts.Notice(n)
     if not stack or not n then return nil end
     local t, again
@@ -197,7 +184,7 @@ end
 
 function Toasts.Count() return #Live() end
 
--- Directly on the main window; follows it when it moves.
+-- directly on the main window, following it
 function Toasts.Anchor()
     local main = ns.Windows.Main()
     if not stack or not main then return end

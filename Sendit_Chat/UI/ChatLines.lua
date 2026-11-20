@@ -1,19 +1,9 @@
 --[[
-  ChatLines: the line flow into Sendit Chat's tabs.
-
-  Blizzard's mirrored line (Core/Mirror.lua; blank ones dropped) -> loot style, short channels,
-  spell links, mentions, links -> the tab (own tabs may take it out of
-  General, Core/Tabs.lua) -> remembered (Core/History.lua) -> unread dot
-  (Windows.Arrived). Combat log lines are shown as they come: not kept, no
-  unread dot, and they follow Blizzard's refilter (clear + backfill).
-  On login the earlier session's lines come first, under an "earlier
-  session" line; then Mirror hands over what arrived since.
-
-  ChatLines.OnLine(index, text, r, g, b, whisper, event, infoID)  Mirror's sink
-  ChatLines.Copy(index)      a tab's text in the copy box (UI/CopyBox.lua)
-  ChatLines.Replay()         the earlier session (tests)
-  ChatLines.CombatReset(kind, text, r, g, b)  Mirror's combat log reset
-  ChatLines.Uncensor(marker, text)  a hidden message shown (Core/Censored.lua)
+  ChatLines: the line flow - Blizzard's mirrored line -> loot style, short channels, spell links,
+  mentions, links -> its tab(s) -> history -> unread dot. Combat log lines are not kept and follow
+  Blizzard's refilter. On login the earlier session comes first.
+  ChatLines.OnLine(index, text, r, g, b, whisper, event, infoID) / Copy(index) / Replay()
+  ChatLines.CombatReset(kind, text, r, g, b) / Uncensor(marker, text)
 ]]
 local _, ns = ...
 local Safe, Links, Mirror, History, Mentions, Tabs = ns.Safe, ns.Links, ns.Mirror, ns.History, ns.Mentions, ns.Tabs
@@ -45,7 +35,7 @@ function ChatLines.OnLine(index, text, r, g, b, whisper, event, infoID)
     if Mirror.IsCombatLog(index) then
         SMF(index):AddMessage(text, r, g, b)
         ns.Windows.Arrived(index, true)
-        -- chat lines Blizzard puts into its combat log (experience, ...) reach own tabs too
+        -- lines Blizzard puts into its combat log (experience ...) reach own tabs too
         local targets = Tabs.Route(index, infoID, event, text, r, g, b)
         for _, i in ipairs(targets or {}) do
             if i ~= index then Show(i, text, r, g, b) end
@@ -57,9 +47,7 @@ function ChatLines.OnLine(index, text, r, g, b, whisper, event, infoID)
         if trace then trace("messenger") end
         return
     end
-    -- Blank lines: this client adds empty yellow system lines in bursts
-    -- (seen in cities, up to ten in a row); they pushed the real lines out
-    -- of view and the tab looked empty.
+    -- blank lines: the client adds empty yellow system lines in bursts - dropped
     local plain = Safe.Str(text)
     if plain and not plain:find("%S") then
         if trace then trace("blank") end
@@ -81,7 +69,7 @@ function ChatLines.OnLine(index, text, r, g, b, whisper, event, infoID)
     for _, i in ipairs(targets) do Show(i, shown, r, g, b) end
 end
 
--- Blizzard refilters its combat log: Clear, then oldest-first BackFillMessage.
+-- Blizzard refilters its combat log: Clear, then oldest-first BackFillMessage
 function ChatLines.CombatReset(kind, text, r, g, b)
     for _, index in ipairs(Tabs.All()) do
         if Mirror.IsCombatLog(index) then
@@ -95,8 +83,7 @@ function ChatLines.CombatReset(kind, text, r, g, b)
     end
 end
 
--- The combat log keeps no history: its lines come from the message frame
--- (secret ones skipped).
+-- the combat log keeps no history (secret lines skipped)
 function ChatLines.Copy(index)
     if not Mirror.IsCombatLog(index) then
         ns.CopyBox.Show(History.Lines(index))
@@ -111,9 +98,7 @@ function ChatLines.Copy(index)
     ns.CopyBox.Show(lines)
 end
 
--- A hidden message the player chose to see (Core/Censored.lua): Blizzard's
--- notice names the sender ("Message from <name> is ..."); the line becomes
--- "<name>: text" in every tab and in the history.
+-- a hidden message shown: "<name>: text" in every tab and the history
 local function Sender(notice)
     local fmt = _G["CENSORED_MESSAGE_HIDDEN"]
     if type(fmt) ~= "string" then return nil end
@@ -143,7 +128,7 @@ function ChatLines.Uncensor(marker, text)
 end
 
 ns.OnReady(function()
-    ChatLines.Replay()  -- earlier session first (windows exist: UI/ChatWindow.lua ran first)
+    ChatLines.Replay()  -- earlier session first (the windows exist already)
     Mirror.SetSink(ChatLines.OnLine)
     Mirror.SetCombatReset(ChatLines.CombatReset)
 end)

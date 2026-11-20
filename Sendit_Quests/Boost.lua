@@ -1,47 +1,20 @@
 --[[
-  Boost: "gear boost" - which quests give an item that is an upgrade for you.
-  Every reward item (guaranteed and pick-one) of the quests you can take now
-  is rated once by Sendit Upgrade (Sendit.ItemRatings -> Sendit.Service
-  "upgrade": the character recalculated with the item, for your spec). A
-  quest counts with its best item; a pick-one reward counts because you can
-  pick it.
-
-  Only quests possible now: not done, your race / class (Track.Allowed), its
-  required level reached, the item usable at your level (no level gate). A
-  quest without a known required level (some new Forever quests) counts only
-  up to its quest level = your level + LEVEL_AHEAD (assumption: the game shows
-  quests up to a few levels above you as takeable; a level-58 quest is not one
-  for a level-45 character - seen in game).
-  Threshold, display and order use one number: the gain for the whole
-  character in the spec's main metric - the same "+1,0 % Damage" as Upgrade's
-  item tooltip. (A ratio against the worn item blew tiny differences up to
-  "+60 % vs Hands" for a sidegrade - seen in game; the character gain only
-  looked broken earlier because items that loaded slowly were dropped.) A
-  loss in the second metric ("but Survival -2,6 %") is shown with it.
-  It runs only when the player starts it (UI/BoostDialog.lua): gear, level
-  or spec changes mark the result stale, they never start it again by
-  themselves (an automatic restart looked like an endless loop in game).
-
+  Boost: which quests give an item that is an upgrade - every reward item (fixed and pick-one) of the
+  quests in range rated once by Sendit Upgrade (Sendit.ItemRatings -> Service "upgrade"); a quest counts
+  with its best item, by the whole character's gain in the spec's main metric (as Upgrade's tooltip).
+  In range: not done, race / class, required level reached (unknown: quest level - LEVEL_AHEAD);
+  Ahead moves the level up. Runs only when started; changes mark it stale.
   Boost.Available() / Start() / Stop() / Active() / Stale()
-  Boost.Min() / SetMin(pct)  the threshold (account layout: boostMin), default 1,
-                             decimals allowed (0,5)
-  Boost.Ahead() / SetAhead(n)  preview: also quests (and their items) up to n
-                             levels above you (account layout: boostAhead), default 0
-  Boost.Locked() / SetLocked(on)  also quests of a chain whose prerequisites are
-                             still open (account layout: boostLocked), default on
-  Boost.SLOTS, Boost.Slot(key) / SetSlot(key, on) / SlotLabel(group)
-                             which slots count (account layout: boostSlots);
-                             a filter on the ratings, so switching is instant
-  Boost.Get(id) -> { pct, slotPct, secondaryPct, secondaryLabel, itemID, label,
-                             equipLoc } or nil (cached; Invalidate() when an input changes)
-  Boost.Progress() -> rated, total, running, missing   (items; missing = never sent by the server)
-  Boost.Report() -> lines (English diagnostics, /sq boost): what was rated,
-                             why items do not count, which ones never arrived
+  Boost.Min() / SetMin(pct)       account: boostMin (decimals allowed)
+  Boost.Ahead() / SetAhead(n)     account: boostAhead;   Boost.NeedsLevel(q) -> level | nil
+  Boost.Locked() / SetLocked(on)  account: boostLocked (also locked chain steps)
+  Boost.SLOTS, Slot(key) / SetSlot(key, on) / SlotLabel(group)   account: boostSlots (a filter)
+  Boost.Get(id) -> { pct, slotPct, secondaryPct, secondaryLabel, itemID, label, equipLoc } | nil
+  Boost.Progress() -> rated, total, running, missing;  Boost.Report() -> lines (/sq boost)
 ]]
 local _, ns = ...
 local Boost = {}
 ns.Boost = Boost
--- the item scanner (Sendit core, shared with Dungeons): this module's own
 local Ratings = Sendit.ItemRatings.New()
 ns.ItemRatings = Ratings
 local active, candidates, subscribed, stale = false, {}, false, false
@@ -56,14 +29,12 @@ function Boost.SetAhead(n)
     if ns.module.db then ns.module.db.boostAhead = math.max(0, math.min(10, math.floor(tonumber(n) or 0))) end
 end
 
--- The level a quest asks for: its required level, else (unknown) its quest level - LEVEL_AHEAD.
 local function Needed(q)
     if q.requiredLevel then return q.requiredLevel end
     return (q.questLevel or 0) - LEVEL_AHEAD
 end
 
--- The level from which a quest can be taken, while that is above the player's (the preview shows such
--- quests: the list says "from level X"); nil when it can be taken now or the level is unknown.
+-- the level a preview quest can be taken from; nil when it can be taken now or unknown
 function Boost.NeedsLevel(q)
     local ok, level = pcall(UnitLevel, "player")
     if not q or not ok or (issecretvalue and issecretvalue(level)) or type(level) ~= "number" then return nil end
@@ -71,7 +42,6 @@ function Boost.NeedsLevel(q)
     return need > level and need or nil
 end
 
--- The preview (Ahead) moves the player's level up.
 function Boost.TooHigh(q, level)
     if not level or not q then return false end
     return Needed(q) > level + Boost.Ahead()
@@ -101,16 +71,14 @@ function Boost.SetMin(pct)
     Boost.Invalidate()
 end
 
--- nil when the client keeps the level secret: then the item's own level gate decides.
 local function Level()
     local ok, level = pcall(UnitLevel, "player")
     if not ok or (issecretvalue and issecretvalue(level)) or type(level) ~= "number" then return nil end
     return level
 end
 
--- [questID] = { itemID, ... } of the quests possible now.
--- Also counts why the other quests are left out (Boost.Report): every quest
--- lands in exactly one bucket, in this order.
+-- [questID] = { itemID, ... } of the quests in range; every other quest lands in one
+-- bucket of Boost.Report's counts, in this order
 local scan = {}
 local function Candidates()
     local level, out = Level(), {}
@@ -138,7 +106,7 @@ local function Candidates()
 end
 
 local function Changed()
-    Boost.Invalidate()  -- new ratings arrived
+    Boost.Invalidate()
     if ns.Window then ns.Window:BoostChanged() end
 end
 
@@ -169,8 +137,6 @@ function Boost.Stop()
     Ratings.Stop()
 end
 
--- Slot groups the player can pick in the dialog: client slot types per group.
--- The label: the client's own slot name, or ours for groups of several types.
 Boost.SLOTS = {
     { key = "head", locs = { "INVTYPE_HEAD" } }, { key = "neck", locs = { "INVTYPE_NECK" } },
     { key = "shoulder", locs = { "INVTYPE_SHOULDER" } }, { key = "back", locs = { "INVTYPE_CLOAK" } },
@@ -191,7 +157,6 @@ function Boost.SlotLabel(g)
     return type(name) == "string" and name or g.key
 end
 
--- Which slot groups count (account layout: boostSlots[key] = false hides one).
 function Boost.Slot(key)
     local slots = ns.module.db and ns.module.db.boostSlots
     return not (slots and slots[key] == false)
@@ -204,28 +169,23 @@ function Boost.SetSlot(key, on)
     Boost.Invalidate()
 end
 
--- Slots filter what is shown, not what is rated: switching one is instant.
 local function Wanted(equipLoc)
     local key = equipLoc and groupOf[equipLoc]
     return key == nil or Boost.Slot(key)
 end
 
--- Answers are kept until something they depend on changes (ratings arrive,
--- threshold, slots, start / stop): the list sorts thousands of quests and
--- asked Get twice per comparison - "script ran too long" in game.
+-- answers are kept until an input changes: the list sorts thousands of quests
 local memo = {}
 function Boost.Invalidate() memo = {} end
 
--- Counts: the character gets at least Min % stronger. The quest shows its
--- best item.
 local function Compute(id)
     local items = active and candidates[id]
-    if not items or ns.Progress.State(id) == "done" then return false end  -- turned in meanwhile
+    if not items or ns.Progress.State(id) == "done" then return false end
     local min, best = Boost.Min(), nil
     local ahead, level = Boost.Ahead(), Level()
     for _, itemID in ipairs(items) do
         local r = Ratings.Get(itemID)
-        if not r and ahead > 0 and level then  -- preview: an item for a level you reach within Ahead counts
+        if not r and ahead > 0 and level then  -- preview: an item for a level reached within Ahead counts
             local g = Ratings.Gated(itemID)
             if g and g.gate and g.gate <= level + ahead then r = g end
         end
@@ -259,7 +219,6 @@ local function ItemName(itemID)
     return ok and type(name) == "string" and name or ("item " .. itemID)
 end
 
--- Why the list looks as it does: every candidate item with its outcome.
 function Boost.Report()
     local out = {}
     local function Add(fmt, ...) out[#out + 1] = fmt:format(...) end

@@ -1,27 +1,10 @@
 --[[
-  Links: everything about hyperlinks in Sendit Chat's own frames.
-
-  Links.Attach(frame)      clickable links + hover tooltips on a frame
-  Links.Decorate(text)     plain text -> URLs become clickable (copy box);
-                           text inside existing hyperlinks stays untouched
-  Links.SetFocusBox(box)   our edit box that has focus (nil = none): a
-                           shift-clicked item, spell, quest ... is inserted
-                           there, exactly like into the Blizzard chat box
-
-  Clicks: a player name (left click) opens our whisper conversation; every
-  other link goes to Blizzard's SetItemRef as in the game's chat (item and
-  spell tooltips, shift-click insert, ctrl-click dressing room, player menu).
-  A hidden message's "Show Message" (censoredmessage) is shown in place by
-  Core/Censored.lua.
-  Except the community kinds (clubTicket, clubFinder, community): SetItemRef
-  runs Blizzard's link handlers in our (tainted) execution, and a community
-  link made Blizzard_Communities create its ticket listener tainted - its
-  CLUB_TICKET_RECEIVED handler was then blocked calling the protected
-  C_Club.GetLastTicketResponse (ADDON_ACTION_FORBIDDEN, seen in game). Those
-  open in the game's own chat only. (Handling items / spells ourselves was
-  tried and broke spell links in game: their kind is not always "spell".)
-  Insertion hooks Blizzard's InsertLink with hooksecurefunc (post-hook, the
-  original runs untouched); our body only writes into our own edit box.
+  Links: hyperlinks in Sendit Chat's own frames.
+  Links.Attach(frame) clickable links + tooltips;  Links.Decorate(text) URLs clickable (copy box)
+  Links.SetFocusBox(box) shift-clicked links go into our focused box
+  A player name opens our conversation; other links go to Blizzard's SetItemRef - except community
+  links (clubTicket, clubFinder, community): run from addon code they taint Blizzard_Communities
+  (ADDON_ACTION_FORBIDDEN). Censored messages: Core/Censored.lua. InsertLink is post-hooked only.
 ]]
 local _, ns = ...
 local Safe = ns.Safe
@@ -29,7 +12,7 @@ local Safe = ns.Safe
 local Links = {}
 ns.Links = Links
 
--- Link kinds that must not go through SetItemRef from addon code (see header).
+-- link kinds that must not go through SetItemRef from addon code
 local COMMUNITY = { clubTicket = true, clubFinder = true, community = true }
 Links.COMMUNITY = COMMUNITY
 
@@ -38,14 +21,12 @@ local TOOLTIP_TYPES = {
     currency = true, talent = true, instancelock = true, mount = true, unit = true,
 }
 
----------------------------------------------------------------------------
 -- URLs
----------------------------------------------------------------------------
 local URL_COLOR = "|cff7cc4ff"
 
 local function WrapToken(token)
     if token:match("^https?://.") or token:match("^www%.[%w%-]+%.%a") then
-        -- Trailing punctuation belongs to the sentence, not the address.
+        -- trailing punctuation belongs to the sentence
         local url, tail = token:match("^(.-)([%.,;:!%?%)]*)$")
         return URL_COLOR .. "|Hsenditurl:" .. url .. "|h[" .. url .. "]|h|r" .. tail
     end
@@ -57,7 +38,6 @@ local function DecoratePlain(piece)
     return (piece:gsub("[^%s|]+", WrapToken))
 end
 
--- fn(piece) -> piece applied only to the text outside hyperlinks.
 function Links.MapPlain(text, fn)
     local out, pos = {}, 1
     while true do
@@ -81,7 +61,7 @@ function Links.Decorate(text)
     return Links.MapPlain(text, DecoratePlain)
 end
 
--- "[1. Allgemein - Wald von Elwynn]" -> "[1. Allgemein]" (the zone part goes).
+-- "[1. General - Elwynn Forest]" -> "[1. General]"
 function Links.ShortChannels(text)
     if not Safe.Str(text) or not text:find("|Hchannel:", 1, true) then return text end
     return (text:gsub("(|Hchannel:[^|]*|h%[)(%d+)%. ([^%]]-)%]|h", function(pre, num, name)
@@ -90,8 +70,7 @@ function Links.ShortChannels(text)
     end))
 end
 
--- Your name written by someone else (outside links: your own lines carry it
--- only in your player link) -> gold. Returns text, true when found.
+-- your name in someone else's text (outside links) -> gold; returns text, found
 function Links.Mention(text, name)
     if not Safe.Str(text) or not name or name == "" or not text:find("|Hplayer:", 1, true) then
         return text, false
@@ -108,7 +87,6 @@ function Links.Mention(text, name)
     return out, hit
 end
 
--- Removes hyperlink and colour markup, keeps the visible text ("[Item]").
 function Links.Plain(text)
     if not Safe.Str(text) then return "" end
     return (text:gsub("|H.-|h(.-)|h", "%1"):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|cn[^:]*:", "")
@@ -147,9 +125,6 @@ function Links.ShowURL(url)
     urlBox.eb:HighlightText()
 end
 
----------------------------------------------------------------------------
--- Click and hover
----------------------------------------------------------------------------
 local function NoModifier()
     return not (IsShiftKeyDown() or IsControlKeyDown() or IsAltKeyDown())
 end
@@ -162,7 +137,7 @@ function Links.Click(_, link, text, button)
             Links.ShowURL(rest)
             return
         end
-        if kind == "censoredmessage" then  -- Core/Censored.lua: shown in place, never via SetItemRef
+        if kind == "censoredmessage" then  -- shown in place, never via SetItemRef
             ns.Censored.Show(rest)
             return
         end
@@ -184,7 +159,7 @@ function Links.Enter(frame, link)
     local plain = Safe.Str(link)
     local kind = plain and plain:match("^([^:]+)")
     if kind and COMMUNITY[kind] then
-        -- often dressed up as a spell or item ("[Mark of the Pack Leader]")
+        -- often dressed up as a spell or item
         GameTooltip:SetOwner(frame, "ANCHOR_CURSOR")
         GameTooltip:SetText(ns.L.LINK_COMMUNITY, 1, 0.82, 0)
         GameTooltip:AddLine(ns.L.LINK_COMMUNITY_DESC, 1, 1, 1, true)
@@ -202,16 +177,13 @@ function Links.Leave()
 end
 
 function Links.Attach(frame)
-    frame:EnableMouse(true)  -- link clicks need a mouse-enabled frame
+    frame:EnableMouse(true)
     frame:SetHyperlinksEnabled(true)
     frame:SetScript("OnHyperlinkClick", Links.Click)
     frame:SetScript("OnHyperlinkEnter", Links.Enter)
     frame:SetScript("OnHyperlinkLeave", Links.Leave)
 end
 
----------------------------------------------------------------------------
--- Shift-click insertion into our edit boxes
----------------------------------------------------------------------------
 local focusBox
 function Links.SetFocusBox(box) focusBox = box end
 function Links.FocusBox() return focusBox end
@@ -221,15 +193,12 @@ local function OnInsert(text)
     if not focusBox or not focusBox:HasFocus() then return end
     local plain = Safe.Str(text)
     if not plain or plain == "" then return end
-    -- The global alias and ChatFrameUtil.InsertLink may both be hooked and
-    -- one may call the other: insert once per click.
+    -- the global alias and ChatFrameUtil.InsertLink may call each other: insert once
     local now = GetTime()
     if plain == lastText and lastTime == now then return end
     lastText, lastTime = plain, now
     focusBox:Insert(plain)
-    -- With no Blizzard chat box active, InsertLink reports "not inserted" and
-    -- a shift-clicked bag stack also opens the split-stack frame. The click
-    -- went into our box, so that frame is closed right after.
+    -- no Blizzard box active: a shift-clicked stack also opens the split frame - closed again
     C_Timer.After(0, function()
         local split = _G["StackSplitFrame"]
         if split and split:IsShown() then pcall(split.Hide, split) end

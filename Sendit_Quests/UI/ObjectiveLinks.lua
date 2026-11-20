@@ -1,7 +1,5 @@
 --[[
-  ObjectiveLinks: replace literal objective item names with client item links.
-  Unmatched names stay available as links below the text (locale/grammar gaps).
-  AH labels mean tradable item type, never a claim about current listings.
+  ObjectiveLinks: objective item names become client item links; unmatched ones listed below.
 ]]
 local _, ns = ...
 local Links = {}

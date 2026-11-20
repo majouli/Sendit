@@ -1,14 +1,7 @@
 --[[
-  Elements page: shows ElementTree as a virtual list (a pool of rows over
-  the item array).
-    toolbar      search, "Show hidden", "Show on screen", Rescan
-    list header  counts; "STATUS: ALL" opens the filter menu
-    family row   switch = fade every addon of the family
-    addon row    switch = fade this addon
-    element row  switch = fade this element (a row click toggles too);
-                 elements held by another rule show that rule instead
-  Hovering an element row outlines it on screen (Highlight).
-  page:Reveal(e) opens the path to an element and scrolls to it.
+  ElementList: the Elements page - ElementTree as a virtual list: toolbar (search, show hidden, show on
+  screen, rescan), counts and status filter, family / addon / element rows with switches; hovering an
+  element outlines it on screen. page:Reveal(e) opens the path to an element.
 ]]
 local _, ns = ...
 
@@ -18,9 +11,6 @@ local ROW = 34
 local HEADER = 32
 local INDENT = 18
 
----------------------------------------------------------------------------
--- Rows
----------------------------------------------------------------------------
 local function ElementTooltip(row, e, status)
     GameTooltip:SetOwner(row, "ANCHOR_NONE")
     GameTooltip:SetPoint("LEFT", row, "RIGHT", 16, 0)
@@ -66,7 +56,6 @@ local function CreateRow(list, i)
     div:SetPoint("BOTTOMRIGHT")
     div:SetHeight(1)
 
-    -- family / addon rows
     row.chev = T.Text(row, "heading", "textMuted")
     row.gname = T.Text(row, "heading", "text")
     row.gname:SetPoint("LEFT", row.chev, "LEFT", 18, 0)
@@ -75,7 +64,6 @@ local function CreateRow(list, i)
     row.switch = HeaderSwitch(row)
     row.switch:SetPoint("RIGHT", -14, 0)
 
-    -- element rows
     row.label = T.Text(row, "body", "text")
     row.kind = T.Text(row, "small", "textMuted")
     row.kind:SetPoint("LEFT", row.label, "RIGHT", 8, 0)
@@ -169,9 +157,6 @@ local function RenderRow(row, it, selected)
     end
 end
 
----------------------------------------------------------------------------
--- List header: counts, status filter
----------------------------------------------------------------------------
 local function CreateHeader(list, page)
     local h = CreateFrame("Frame", nil, list)
     h:SetPoint("TOPLEFT", 1, -1)
@@ -211,13 +196,9 @@ local function CreateHeader(list, page)
     return h
 end
 
----------------------------------------------------------------------------
--- Page
----------------------------------------------------------------------------
 local function Build(frame)
     local page = { items = {}, rows = {}, offset = 0 }
 
-    -- toolbar
     local searchBox = W.Search(frame, L.SEARCH, function(text)
         if Tree:SetSearch(text) then
             page.offset = 0
@@ -243,7 +224,6 @@ local function Build(frame)
     local onScreen = W.Button(frame, L.SHOW_ON_SCREEN, function() ns.Overlay:Show() end, "primary")
     onScreen:SetPoint("RIGHT", rescan, "LEFT", -8, 0)
 
-    -- list
     local list = CreateFrame("Frame", nil, frame)
     list:SetPoint("TOPLEFT", SIZE.pad, -60)
     list:SetPoint("BOTTOMRIGHT", -SIZE.pad, 16)
@@ -340,11 +320,9 @@ ns.Options:Register({
     build = Build,
 })
 
--- Open the Elements page scrolled to one element (overlay click).
 function ns.RevealElement(e)
     local def = ns.Options:Show("fade.elements")
     if def and def.key == "fade.elements" and def.page then def.page:Reveal(e) end
 end
 
--- The on-screen outline belongs to the page: gone when the page or window closes.
 ns.Options:OnLeave(function() ns.Highlight:Hide() end)

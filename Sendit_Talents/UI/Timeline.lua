@@ -1,18 +1,9 @@
 --[[
-  Timeline: the whole route as a list docked to the right of the talent
-  window, folded in and out by a side tab (UI/Tab.lua) on its right edge (state kept
-  in the account section: module.db.timeline). It never covers the tree.
-  One row per talent point (Route.Plan's steps): level, icon, talent, rank
-  (2/5). Points taken are muted, then the open points re-timed to the
-  character, the next one standing out; points dropped for the player's own
-  choices come last, faded ("dropped"). The list opens scrolled to the next.
-  Hovering a row lights its node in the tree (Markers.Highlight), so the
-  route can be followed with the mouse. Rows are our own buttons; nothing
-  here touches Blizzard's frames.
-  Contract: Timeline.Create(overlay, dock) -> timeline   dock = the window
-            timeline:Toggle() / :SetOpen(open) / :SetAvailable(on)
-            timeline:Update(state) - state = { configID, routeName, steps, next }
-    steps = Route.Plan(...).steps, next = the plan's next step (or nil).
+  Timeline: the whole route as a list docked right of the talent window, one row per point (level,
+  icon, talent, rank); taken points muted, the next one marked, dropped ones last. Opens scrolled to
+  the next point; hovering a row highlights its node.
+  Timeline.Create(overlay, dock) -> timeline;  :Toggle() / :SetOpen(open) / :SetAvailable(on)
+  timeline:Update(state)  state = { configID, routeName, steps, next }
 ]]
 local _, ns = ...
 local L = ns.L
@@ -71,7 +62,6 @@ function Timeline.Create(overlay, dock)
     t.rows = {}
     t:Hide()
 
-    -- The tab (UI/Tab.lua): on the window's edge when folded, on the list's edge when open.
     t.tab = ns.Tab.Create(overlay, function() t:Toggle() end)
     local state, available
 
@@ -95,7 +85,7 @@ function Timeline.Create(overlay, dock)
             if isNext then self.nextIndex = i end
             r.node = step.node
             r.level:SetText(step.dropped and "-" or step.level)
-            r.icon:SetTexture(info.icon or 134400)  -- question mark icon
+            r.icon:SetTexture(info.icon or 134400)
             r.icon:SetDesaturated(step.done or step.dropped)
             r:SetAlpha(step.dropped and 0.4 or 1)
             r.name:SetText(info.name)
@@ -108,7 +98,6 @@ function Timeline.Create(overlay, dock)
         self.scroll.content:SetHeight(#steps * ROW)
     end
 
-    -- Scroll so the next point sits in the middle of the list.
     local function ScrollToNext()
         local steps = state and state.steps or {}
         local index = t.nextIndex or #steps
@@ -136,7 +125,6 @@ function Timeline.Create(overlay, dock)
 
     function t:Toggle() self:SetOpen(not self:IsShown()) end
 
-    -- A route to show: the tab appears and the list keeps its saved state.
     function t:SetAvailable(on)
         if on == available then return end
         available = on

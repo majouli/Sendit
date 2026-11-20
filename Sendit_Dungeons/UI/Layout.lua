@@ -1,12 +1,7 @@
 --[[
-  Layout: the browser's geometry from the window size alone. One header line:
-  emblem and name left; search, filter, range and boost chips right, next to the
-  close button. Narrower than Style.size.wide and they move to a toolbar line
-  below. Below: the list (34 %) and the picked dungeon, each scrolling on its
-  own; a resize grip bottom right, the size saved in the account layout.
-
-  Layout.Measure(width, height) -> m { left, right, x, top, height, toolbar }
-  Layout.Apply(frame)  /  Layout.Enable(frame)
+  Layout: the browser's geometry from the window size - header (controls move to a toolbar line
+  when narrow), list (34 %) and detail pane, resize grip (size saved in the account).
+  Layout.Measure(width, height) -> m;  Layout.Apply(frame) / Enable(frame)
 ]]
 local _, ns = ...
 local T, S = Sendit.Theme, ns.Style
@@ -60,7 +55,6 @@ function Layout.Apply(f)
     f.detailScroll.content:SetWidth(m.right)
 end
 
--- Three short diagonal strokes, drawn (no client glyph).
 local function Grip(grip)
     local lines = {}
     for i = 1, 3 do

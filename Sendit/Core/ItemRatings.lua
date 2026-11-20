@@ -1,32 +1,12 @@
 --[[
-  ItemRatings: rates items through Sendit Upgrade (Sendit.Service "upgrade"),
-  reliably - each item once, however many quests / bosses give it. Shared by
-  the modules (Quests' gear boost, Dungeons): Sendit.ItemRatings.New() makes
-  one scanner with its own state; the module holds it.
-
-  Sendit Upgrade needs the item's data in the client cache. The server sends
-  uncached items slowly and drops mass requests: asking for all of them at
-  once let most time out, and they were counted as "no upgrade" (seen in
-  game: only items seen before showed up). Now items are requested in small
-  batches, each item gets its own wait (WAIT seconds per request, asked again
-  up to RETRIES times), and an item that never arrives counts as "not loaded"
-  - never as "no upgrade". A few items per frame, so the game never stalls; a
-  full scan may take a while.
-
-  local Ratings = Sendit.ItemRatings.New()
-  Ratings.Start(itemIDs, onProgress, onDone)   rate these (replaces a running scan)
-  Ratings.Stop()
-  Ratings.Get(itemID) -> rating, false (no upgrade / unusable / above your
-                         level) or nil (not rated yet / not loaded)
+  ItemRatings: rates items through Sendit Upgrade (Service "upgrade"), each item once; one scanner per
+  module (Sendit.ItemRatings.New()). Uncached items are requested in small batches with their own wait
+  (WAIT s, RETRIES times); an item that never arrives counts as "not loaded", never "no upgrade".
+  Ratings.Start(itemIDs, onProgress, onDone) / Stop()
+  Ratings.Get(itemID) -> rating | false (no upgrade / unusable / above level) | nil (not yet / not loaded)
+  Ratings.Gated(itemID) -> rating of an item that needs a higher level (rating.gate = that level)
   Ratings.Progress() -> rated, total, running, missing
-      rated = answered items, missing = items the server never sent
-  Ratings.Gated(itemID) -> the rating of an item that needs a higher level
-      (gain for the character as it is now; rating.gate = its required level),
-      for previews of higher content - Get never returns these
-  Ratings.Why(itemID) -> why an item is not an upgrade (diagnostics, /sq boost):
-      "missing" (never sent), "worse" (weaker than the worn item), "nogain"
-      (rated, changes nothing for the spec), "gate" (needs a
-      higher level), "error", or Upgrade's status ("unusable", "equipped" ...)
+  Ratings.Why(itemID) -> "missing" | "worse" | "nogain" | "gate" | "error" | Upgrade's status
 ]]
 local _, ns = ...
 local PER_TICK, TICK, BATCH, WAIT, RETRIES = 8, 0.05, 20, 8, 3
@@ -38,7 +18,6 @@ end
 
 local function Service() return ns.Service("upgrade") end
 
--- One scanner: its own queue and results (Quests and Dungeons scan apart).
 local function New()
     local Ratings = {}
     local results, queue, waiting, why, gated = {}, {}, {}, {}, {}
@@ -65,8 +44,7 @@ local function New()
         rated = rated + 1
     end
 
-    -- Items on their way from the server: give up on one only after RETRIES
-    -- requests of WAIT seconds each without an answer.
+    -- an item on its way: given up only after RETRIES requests of WAIT seconds
     local function Waiting(now)
         local count = 0
         for itemID, w in pairs(waiting) do
@@ -91,7 +69,6 @@ local function New()
         if not svc then Stop() return end
         local now = GetTime()
         local inFlight = Waiting(now)
-        -- items asked for earlier: rate the ones that arrived
         for itemID in pairs(waiting) do
             local ok, r = pcall(svc.Rate, itemID)
             if not ok or type(r) ~= "table" then

@@ -64,9 +64,7 @@ local function Procs(s)
     return (s.procDps or 0) * Model.SpellLanded(s)
 end
 
----------------------------------------------------------------------------
 -- Casters
----------------------------------------------------------------------------
 local function CastTime(sp, key, o)
     if o.instant and o.instant[key] then return GCD end
     return math.max(GCD, sp.time + (o.castDelta and o.castDelta[key] or 0))
@@ -145,9 +143,7 @@ function Common.Caster(o)
     end
 end
 
----------------------------------------------------------------------------
 -- Healers
----------------------------------------------------------------------------
 local function Heal(s, sp, o)
     o = o or {}
     local power = (s.heal or 0) + (s.spiritHeal or 0)
@@ -177,9 +173,7 @@ function Common.Healer(o)
     end
 end
 
----------------------------------------------------------------------------
 -- Melee
----------------------------------------------------------------------------
 -- One use of an ability: weapon abilities, a share of attack power
 -- (Bloodthirst), flat school damage (Arcane Shot: rolls on the attack table,
 -- crits like a weapon hit) or damage over time (Serpent Sting: needs to land,

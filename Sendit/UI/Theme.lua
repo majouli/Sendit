@@ -1,30 +1,12 @@
 --[[
-  Theme: palettes, fonts and paint helpers shared by every Sendit module.
-  Modules paint through Sendit.Theme, so the design picked in the profile
-  (Design page) repaints all of them live.
-
-  Design language after Polestar's house style: a night ground, a text
-  ladder (100 / ~77 / ~61 %), 1px hairlines as low-alpha "ink" washes, one
-  accent, the game's own font. Own code, no Polestar code or media.
-
-  Palettes: dusk (default, Polestar's navy), light, wood (dark wood brown,
-  WoW gold). Each palette carries a chat sub-palette (roles "chat.<name>",
-  Sendit_Chat): dusk and light share the dark modern chat (Blizzard's white
-  and yellow chat text needs a dark ground), wood has the azeroth chat.
-
-  Frame style (profile.design.style): "modern" hairlines or "azeroth"
-  ornaments (Theme.Decorate, UI/Ornaments.lua). Fonts for every alphabet:
-  Theme.SetFont (UI/Fonts.lua).
-
-  Every painted texture/text remembers its colour role and alpha, so a
-  palette switch repaints the whole UI live (Theme.SetPalette).
-  Never call SetAlpha on a painted texture: in this client it shares the
-  value with SetVertexColor's alpha, and the next repaint would undo it.
-  Use Theme.Paint(obj, role, alpha) / Theme.Alpha(obj, alpha) instead.
+  Theme: palettes, fonts and paint helpers of every module; the profile's design repaints all live.
+  Palettes dusk (default), light, wood, each with a chat sub-palette ("chat.<name>"); frame style
+  "modern" | "azeroth" (Theme.Decorate); fonts for every alphabet (Theme.SetFont).
+  Painted objects remember role and alpha. Never SetAlpha a painted texture (it shares SetVertexColor's
+  alpha): use Theme.Paint(obj, role, alpha) / Theme.Alpha(obj, alpha).
 ]]
 local _, ns = ...
 
--- The design section of the active profile (nil until the saved variables load).
 local function Design() return ns.profile and ns.profile.design end
 
 local Theme = {}
@@ -34,10 +16,7 @@ local WHITE = "Interface\\Buttons\\WHITE8x8"
 local CIRCLE_MASK = "Interface\\CHARACTERFRAME\\TempPortraitAlphaMask"
 Theme.WHITE = WHITE
 
----------------------------------------------------------------------------
--- Palettes
----------------------------------------------------------------------------
--- Washes: ink colour at these alphas (white ink on dark grounds, black on light).
+-- washes: ink colour at these alphas (white ink on dark grounds, black on light)
 local WASH = { border = 0.10, divider = 0.10, hover = 0.07, selected = 0.12, track = 0.12, toggle = 0.14, box = 0.22 }
 local LIGHT_WASH = { border = 0.12, divider = 0.10, hover = 0.05, selected = 0.08, track = 0.12, toggle = 0.18, box = 0.30 }
 
@@ -76,7 +55,6 @@ local PALETTES = {
         ink = { 1, 0.92, 0.75 }, wash = WASH,
     },
 }
--- Chat colours (Sendit_Chat's own roles).
 local MODERN_CHAT = {
     bg = { 0.060, 0.072, 0.112 }, header = { 0.085, 0.102, 0.158 }, raised = { 0.120, 0.143, 0.215 },
     text = { 0.967, 0.974, 0.991 }, textDim = { 0.765, 0.793, 0.868 }, textMuted = { 0.606, 0.637, 0.726 },
@@ -107,14 +85,11 @@ Theme.SIZE = {
     width = 860, height = 600, sidebar = 220, header = 96, footer = 52, pad = 28, row = 52,
 }
 
----------------------------------------------------------------------------
--- Colour lookup and live repaint
----------------------------------------------------------------------------
-local painted = setmetatable({}, { __mode = "k" })    -- object -> role
-local alphas = setmetatable({}, { __mode = "k" })     -- object -> alpha multiplier
-local byRole = {}                                     -- role -> weak set
+local painted = setmetatable({}, { __mode = "k" })  -- object -> role
+local alphas = setmetatable({}, { __mode = "k" })  -- object -> alpha multiplier
+local byRole = {}  -- role -> weak set
 local gradients = setmetatable({}, { __mode = "k" })  -- texture -> { top, bottom }
-local noShadow = setmetatable({}, { __mode = "k" })   -- font strings without shadow
+local noShadow = setmetatable({}, { __mode = "k" })  -- font strings without shadow
 
 function Theme.Color(name)
     local chatRole = name:match("^chat%.(.+)$")
@@ -145,7 +120,6 @@ local function Apply(obj, role)
     end
 end
 
--- Paint (and remember) an object's colour role, optionally with an alpha.
 function Theme.Paint(obj, role, alpha)
     local old = painted[obj]
     if old ~= role then
@@ -158,14 +132,12 @@ function Theme.Paint(obj, role, alpha)
     Apply(obj, role)
 end
 
--- The caller colours obj itself from now on (repaints leave it alone).
 function Theme.Own(obj)
     local role = painted[obj]
     if role and byRole[role] then byRole[role][obj] = nil end
     painted[obj], alphas[obj] = nil, nil
 end
 
--- Change only the alpha of a painted object.
 function Theme.Alpha(obj, alpha)
     alphas[obj] = alpha
     if painted[obj] then Apply(obj, painted[obj]) end
@@ -195,15 +167,11 @@ local function RepaintAll()
     for tex, g in pairs(gradients) do ApplyGradient(tex, g[1], g[2]) end
 end
 
----------------------------------------------------------------------------
--- Palette switching
----------------------------------------------------------------------------
 function Theme.PaletteKey()
     local d = Design()
     return d and PALETTES[d.palette] and d.palette or "dusk"
 end
 
--- The active palette table (read-only for callers).
 function Theme.Current() return C end
 
 function Theme.Style()
@@ -217,7 +185,7 @@ function Theme.SetPalette(key)
     RepaintAll()
 end
 
-Theme.SetPalette("dusk")  -- until the saved variables are loaded
+Theme.SetPalette("dusk")
 
 local applied = "dusk"
 ns.OnSettingsChanged(function()
@@ -228,10 +196,7 @@ ns.OnSettingsChanged(function()
     end
 end)
 
----------------------------------------------------------------------------
--- Building blocks
----------------------------------------------------------------------------
--- Text roles: size, heavier (stronger shadow). The game font has one weight.
+-- text roles: size, heavier = stronger shadow (the game font has one weight)
 local ROLES = {
     hero    = 24, title = 17, heading = 13, body = 13,
     label   = 12, note = 12, small = 11, caption = 10,
@@ -256,7 +221,6 @@ function Theme.Fill(parent, color, layer, sub, alpha)
     return t
 end
 
--- 1px hairline border around a frame.
 function Theme.Border(frame, color)
     local edges = {}
     for i, p in ipairs({ { "TOPLEFT", "TOPRIGHT" }, { "BOTTOMLEFT", "BOTTOMRIGHT" },
@@ -270,7 +234,6 @@ function Theme.Border(frame, color)
     return edges
 end
 
--- Clip a texture to a circle.
 function Theme.RoundOff(tex)
     local mask = tex:GetParent():CreateMaskTexture()
     mask:SetTexture(CIRCLE_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
@@ -279,14 +242,12 @@ function Theme.RoundOff(tex)
     return tex
 end
 
--- A filled circle, e.g. switch knobs and pill caps.
 function Theme.Circle(parent, color, size, layer, sub)
     local t = Theme.Fill(parent, color, layer or "ARTWORK", sub)
     t:SetSize(size, size)
     return Theme.RoundOff(t)
 end
 
--- Pill shape (rect + two round caps), painted as one.
 function Theme.Pill(parent, color, w, h, layer, sub)
     local left = Theme.Circle(parent, color, h, layer, sub)
     local right = Theme.Circle(parent, color, h, layer, sub)
@@ -302,15 +263,11 @@ function Theme.Pill(parent, color, w, h, layer, sub)
     return p
 end
 
----------------------------------------------------------------------------
--- Motion (skipped when animations are off)
----------------------------------------------------------------------------
 local function Animated()
     return not Design() or Design().animations
 end
 Theme.Animated = Animated
 
--- Fade a frame in, optionally rising `rise` px into place.
 function Theme.FadeIn(frame, duration, rise)
     if not Animated() then return end
     local ag = frame.senditFadeIn
@@ -341,7 +298,6 @@ function Theme.FadeIn(frame, duration, rise)
     ag:Play()
 end
 
--- Slow random twinkle on a texture (header stars), from its painted alpha.
 function Theme.Twinkle(tex, seed)
     local base = alphas[tex] or 1
     local ag = tex:GetParent():CreateAnimationGroup()

@@ -1,22 +1,7 @@
 --[[
-  ChatKinds: the message kinds a chat tab can show, laid out like Blizzard's
-  chat settings (Chat: player and creature messages; Other: combat, PvP,
-  system). Channels are not kinds: Core/Tabs.lua lists the joined ones.
-
-  A kind's key is Blizzard's chat type group name ("SAY", "WHISPER", ...).
-  Which chat types (ChatTypeInfo keys, the line's info.id) belong to it
-  comes from Blizzard's ChatTypeGroup ("WHISPER" = whisper, whisper inform,
-  AFK, DND); without that table the key alone. The key is also the chat
-  type whose colour the settings show and change (as Blizzard's dialog).
-
-  ChatKinds.Sections()        { { id, label, heads = { { label, keys = {...} } } } }
-                              ids "chat" / "other"
-  ChatKinds.Label(key)        the kind's text in the suite language
-  ChatKinds.KeyOf(chatType)   the kind a chat type belongs to, or nil
-  ChatKinds.All()             every kind key
-  ChatKinds.ColorType(key)    the chat type whose colour the kind shows
-  ChatKinds.Types(key)        every chat type of the kind with a colour (the
-                              swatch changes them all, as Blizzard's)
+  ChatKinds: the message kinds a tab can show, laid out like Blizzard's chat settings (Chat / Other).
+  Key = Blizzard's chat type group name; members from ChatTypeGroup (else the key alone).
+  ChatKinds.Sections() / Label(key) / KeyOf(chatType) / All() / ColorType(key) / Types(key)
 ]]
 local _, ns = ...
 local L = ns.L
@@ -54,8 +39,7 @@ function ChatKinds.All()
     return out
 end
 
--- Members of a kind under another chat type (Blizzard's ChatTypeGroup,
--- ChatTypeInfoConstants.lua, branch forever), in case that table is missing.
+-- members under another chat type (ChatTypeGroup), in case that table is missing
 local MEMBERS = {
     TEXT_EMOTE = "EMOTE", WHISPER_INFORM = "WHISPER", AFK = "WHISPER", DND = "WHISPER",
     SMART_WHISPER = "WHISPER", REPLY = "WHISPER",
@@ -70,22 +54,19 @@ local MEMBERS = {
     BN_INLINE_TOAST_BROADCAST = "BN_INLINE_TOAST_ALERT", BN_INLINE_TOAST_BROADCAST_INFORM = "BN_INLINE_TOAST_ALERT",
 }
 
--- A kind whose own name is no chat type (ChatTypeInfo): the type whose
--- colour it shows. ERRORS has two types and no colour of its own.
+-- a kind whose own name is no chat type: the type whose colour it shows
 local COLOR = {
     MONSTER_BOSS_EMOTE = "RAID_BOSS_EMOTE", MONSTER_BOSS_WHISPER = "RAID_BOSS_WHISPER",
     BG_HORDE = "BG_SYSTEM_HORDE", BG_ALLIANCE = "BG_SYSTEM_ALLIANCE", BG_NEUTRAL = "BG_SYSTEM_NEUTRAL",
 }
 function ChatKinds.ColorType(key) return COLOR[key] or key end
 
--- chat type -> kind key, built on first use (ChatTypeGroup is Blizzard's,
--- complete once the chat frames loaded).
+-- chat type -> kind key, built on first use (ChatTypeGroup is complete once chat loaded)
 local kindOf
 local function Build()
     kindOf = {}
     local groups = _G["ChatTypeGroup"]
-    -- a kind's own chat type is always its own (a group listed earlier must
-    -- not take it), then the other members of Blizzard's groups
+    -- a kind's own chat type stays its own; then the other members of Blizzard's groups
     for _, key in ipairs(ChatKinds.All()) do kindOf[key] = key end
     for _, key in ipairs(ChatKinds.All()) do
         local events = type(groups) == "table" and groups[key]
@@ -99,8 +80,7 @@ local function Build()
     for chatType, key in pairs(MEMBERS) do kindOf[chatType] = kindOf[chatType] or key end
 end
 
--- Every chat type of the kind that has a colour (ChatTypeInfo): what
--- Blizzard's colour swatch changes (the group's message types).
+-- every chat type of the kind with a colour: what Blizzard's swatch changes
 function ChatKinds.Types(key)
     if not kindOf then Build() end
     local info, out = _G["ChatTypeInfo"], {}

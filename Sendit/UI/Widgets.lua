@@ -1,8 +1,8 @@
 --[[
-  Widgets: the control kit of Sendit's window and of every module's pages.
-  Controls paint themselves through ns.Theme. Value controls take a getter
-  and a setter and have :Refresh(), which re-reads the getter, so changes
-  from slash commands or resets show up everywhere.
+  Widgets: the control kit of the window and module pages, painted through the Theme. Value controls
+  take a getter and a setter and have :Refresh().
+  Switch, Slider, Button ("primary"), Segmented, Chevron, ShowMenu, Dropdown, Movable, Value, Inline,
+  Check, Search, ScrollArea
 ]]
 local _, ns = ...
 
@@ -24,9 +24,6 @@ local function ToggleSound()
     PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 end
 
----------------------------------------------------------------------------
--- Switch (on/off pill)
----------------------------------------------------------------------------
 function W.Switch(parent, get, set)
     local b = CreateFrame("Button", nil, parent)
     b:SetSize(36, 20)
@@ -50,9 +47,6 @@ function W.Switch(parent, get, set)
     return b
 end
 
----------------------------------------------------------------------------
--- Slider (track, gold fill, round thumb, value text on the left)
----------------------------------------------------------------------------
 function W.Slider(parent, lo, hi, step, get, set, fmt, width)
     local s = CreateFrame("Slider", nil, parent)
     s:SetOrientation("HORIZONTAL")
@@ -101,9 +95,6 @@ function W.Slider(parent, lo, hi, step, get, set, fmt, width)
     return s
 end
 
----------------------------------------------------------------------------
--- Button: default (panelAlt with hairline) or "primary" (accent fill)
----------------------------------------------------------------------------
 function W.Button(parent, text, onClick, style)
     local primary = style == "primary"
     local b = CreateFrame("Button", nil, parent)
@@ -119,7 +110,7 @@ function W.Button(parent, text, onClick, style)
         self:SetWidth(math.max(80, self.text:GetStringWidth() + 28))
     end
     b:SetLabel(text)
-    function b.Refresh() end  -- nothing to show; lets a button sit in a Layout row
+    function b.Refresh() end  -- lets a button sit in a Layout row
     b:SetScript("OnClick", function(self, ...)
         ClickSound()
         onClick(self, ...)
@@ -127,10 +118,7 @@ function W.Button(parent, text, onClick, style)
     return b
 end
 
----------------------------------------------------------------------------
--- Segmented control: one choice of a few. options = { { value, text }, ... };
--- a text may be a function (follows a language switch on Refresh).
----------------------------------------------------------------------------
+-- Segmented: options = { { value, text } } (text may be a function)
 function W.Segmented(parent, options, get, set)
     local f = CreateFrame("Frame", nil, parent)
     f:SetHeight(28)
@@ -174,10 +162,7 @@ function W.Segmented(parent, options, get, set)
     return f
 end
 
----------------------------------------------------------------------------
--- Chevron from two rotated hairlines (no font glyph needed); dir = "down"
--- (default, "v"), "up", "left" or "right": where it points.
----------------------------------------------------------------------------
+-- Chevron: two rotated hairlines; dir "down" | "up" | "left" | "right"
 local CHEVRON = {  -- per direction: { x, y, angle } of both lines
     down = { { -2, 0, -45 }, { 2, 0, 45 } }, up = { { -2, 0, 45 }, { 2, 0, -45 } },
     right = { { 0, 2, -45 }, { 0, -2, 45 } }, left = { { 0, 2, 45 }, { 0, -2, -45 } },
@@ -203,10 +188,7 @@ function W.Chevron(parent, color, dir)
     return f
 end
 
----------------------------------------------------------------------------
--- Dropdown menu: W.ShowMenu(anchor, { { value, text }, ... }, current, onSelect)
--- A click anywhere else closes it.
----------------------------------------------------------------------------
+-- W.ShowMenu(anchor, { { value, text } }, current, onSelect); a click elsewhere closes it
 local menu, catcher
 
 local function HideMenu()
@@ -266,10 +248,7 @@ function W.ShowMenu(anchor, options, current, onSelect)
     T.FadeIn(menu, 0.12, 4)
 end
 
----------------------------------------------------------------------------
--- Dropdown: shows the current choice, opens W.ShowMenu.
--- options() returns { { value, text }, ... } each time it opens.
----------------------------------------------------------------------------
+-- Dropdown: options() -> { { value, text } } each time it opens
 function W.Dropdown(parent, width, options, get, set)
     local b = CreateFrame("Button", nil, parent)
     b:SetSize(width, 28)
@@ -299,15 +278,7 @@ function W.Dropdown(parent, width, options, get, set)
     return b
 end
 
----------------------------------------------------------------------------
--- Movable: dragging `handle` moves `frame`, kept on screen. Options:
---   store, key   save the position in store[key] = { point, relPoint, x, y }
---                (relative to the frame's parent) and restore it now
---   default      { point, relPoint, x, y } when nothing is saved
---   canMove()    false blocks dragging (e.g. a locked icon)
---   onDrop()     after a drag
--- -> Restore(): puts the frame back at the saved (or default) position.
----------------------------------------------------------------------------
+-- Movable(frame, handle, { store, key, default, canMove(), onDrop() }) -> Restore()
 function W.Movable(frame, handle, opts)
     opts = opts or {}
     frame:SetMovable(true)
@@ -329,7 +300,7 @@ function W.Movable(frame, handle, opts)
         if opts.store then
             local point, _, relPoint, x, y = frame:GetPoint(1)
             opts.store[opts.key] = { point, relPoint, x, y }
-            Restore()  -- StartMoving may re-anchor to UIParent; keep the parent
+            Restore()  -- StartMoving may re-anchor to UIParent: keep the parent
         end
         if opts.onDrop then opts.onDrop() end
     end)
@@ -337,9 +308,6 @@ function W.Movable(frame, handle, opts)
     return Restore
 end
 
----------------------------------------------------------------------------
--- Value: read-only text for a row, right-aligned; text() on every Refresh.
----------------------------------------------------------------------------
 function W.Value(parent, width, text)
     local f = CreateFrame("Frame", nil, parent)
     f:SetSize(width, 28)
@@ -351,9 +319,6 @@ function W.Value(parent, width, text)
     return f
 end
 
----------------------------------------------------------------------------
--- Inline: several controls side by side, usable as one row control.
----------------------------------------------------------------------------
 function W.Inline(parent, widgets, gap)
     local f = CreateFrame("Frame", nil, parent)
     local x, h = 0, 0
@@ -373,9 +338,6 @@ function W.Inline(parent, widgets, gap)
     return f
 end
 
----------------------------------------------------------------------------
--- Checkbox
----------------------------------------------------------------------------
 function W.Check(parent, onClick)
     local b = CreateFrame("Button", nil, parent)
     b:SetSize(16, 16)
@@ -402,9 +364,6 @@ function W.Check(parent, onClick)
     return b
 end
 
----------------------------------------------------------------------------
--- Search box
----------------------------------------------------------------------------
 function W.Search(parent, placeholder, onChange)
     local e = CreateFrame("EditBox", nil, parent)
     e:SetHeight(28)
@@ -426,9 +385,6 @@ function W.Search(parent, placeholder, onChange)
     return e
 end
 
----------------------------------------------------------------------------
--- Scroll area (mouse wheel) for setting pages
----------------------------------------------------------------------------
 function W.ScrollArea(parent)
     local sf = CreateFrame("ScrollFrame", nil, parent)
     local content = CreateFrame("Frame", nil, sf)

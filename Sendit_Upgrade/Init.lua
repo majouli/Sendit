@@ -1,14 +1,8 @@
 --[[
-  Init: namespace, Sendit module, saved variables, events, slash command.
-  Upgrade has no profile settings: the spec is per character (data), the
-  compare window is a tool. Its page in the Sendit window (UI/Page.lua) picks
-  the spec and opens the window.
-  Saved variables: Sendit_UpgradeDB (account: probe data), Sendit_UpgradeCharDB
-  (character: chosen spec, enemy level - Settings.lua, calibration samples). Format changes get a Migrate step.
-  Slash: /gc = compare window, /gc spec <key|auto>, /gc weights, /gc probe [links],
-  /gc measure on|off|reset (Measure.lua);
-  files add commands to ns.commands.
-  Gear, stats or level changes invalidate the cached character context.
+  Init: namespace, module, saved variables, events, slash. No profile settings: the spec is per
+  character, the window a tool. Sendit_UpgradeDB (account: probe, measure), Sendit_UpgradeCharDB
+  (character: spec, enemy level, calibration). /gc = window, /gc spec <key|auto>, /gc weights,
+  /gc probe [links], /gc measure on|off|reset|window. Gear, stats or level invalidate the context.
 ]]
 local ADDON, ns = ...
 local L = ns.L
@@ -22,7 +16,6 @@ function ns.Print(...)
 end
 
 local function Migrate(db)
-    -- Version 1 is the first saved format; later format changes add steps here.
     db.version = ns.DB_VERSION
 end
 
@@ -37,8 +30,7 @@ ns.module = Sendit:RegisterModule({
     end,
 })
 
--- "automatic (Affliction)": the choice "guess from the gear" with what the
--- guess currently is, so the player sees what Automatic picked.
+-- "automatic (Affliction)": the guess shown with the automatic choice
 function ns.AutoLabel(ctx)
     if ctx == nil then
         local ok, c = pcall(function() return ns.charDB and ns.Compare.Context() end)
@@ -91,7 +83,6 @@ function ns.commands.spec(arg)
     if ctx then ns.Print(L.specSet:format(L.specs[ctx.specKey] .. (ns.charDB.spec and "" or (" (" .. L.specAuto .. ")")))) end
 end
 
--- Slash command (globals by necessity: the client looks them up by name).
 SLASH_SENDITUPGRADE1 = "/gc"
 SLASH_SENDITUPGRADE2 = "/upgrade"
 SlashCmdList.SENDITUPGRADE = function(msg)

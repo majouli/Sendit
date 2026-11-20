@@ -1,19 +1,8 @@
 --[[
-  Scanner: finds every top-level UI element, whichever addon made it.
-
-  Roots are the children of UIParent plus parentless frames (some addons
-  parent to nil so their UI survives Alt+Z). Frames without size, children
-  or regions (pure event frames) are skipped.
-
-  Owner detection, addon-agnostic, first hit wins:
-    1. GetSourceLocation()      the file the frame was created in
-    2. issecurevariable(name)   taint of the global name = the addon that set it
-    3. name prefix              matched against loaded addon names
-    4. descendants              anonymous containers inherit the owner of their
-                                first identifiable child
-
-  Each element: { frame, name, label, key, owner, kind, strata, visible,
-  width, height, protected, anonymous } (label and key from Names.lua).
+  Scanner: every top-level element (UIParent children and parentless frames), whatever addon made it;
+  frames without size, children or regions are skipped. Owner (first hit): GetSourceLocation, taint
+  of the global name, name prefix of a loaded addon, first identifiable descendant.
+  Element: { frame, name, label, key, owner, kind, strata, visible, width, height, protected, anonymous }
 ]]
 local _, ns = ...
 
@@ -36,9 +25,6 @@ local function AddonLabel(addon)
     return addon
 end
 
----------------------------------------------------------------------------
--- Loaded addons
----------------------------------------------------------------------------
 local addonIndex = {}  -- { name, key }, longest first
 
 local function BuildAddonIndex()
@@ -49,11 +35,9 @@ local function BuildAddonIndex()
             addonIndex[#addonIndex + 1] = { name = name, key = Normalize(name) }
         end
     end
-    -- "EllesmereUIUnitFrames" must match before "EllesmereUI".
     table.sort(addonIndex, function(a, b) return #a.key > #b.key end)
 end
 
--- "EllesmereUIQTBackground" -> "QTBackground"
 function Scanner:StripAddonPrefix(name)
     local lname = name:lower()
     for _, a in ipairs(addonIndex) do
@@ -64,8 +48,7 @@ function Scanner:StripAddonPrefix(name)
     return name
 end
 
--- The shortest other loaded addon whose name prefixes the owner:
--- "EllesmereUIActionBars" -> "EllesmereUI", "MaxDps_Druid" -> "MaxDps".
+-- shortest other loaded addon prefixing the owner ("EllesmereUIActionBars" -> "EllesmereUI")
 function Scanner:FamilyOf(owner)
     local lowner, family = owner:lower(), owner
     for _, a in ipairs(addonIndex) do  -- longest first: the last hit is the shortest
@@ -76,9 +59,6 @@ function Scanner:FamilyOf(owner)
     return family
 end
 
----------------------------------------------------------------------------
--- Owner
----------------------------------------------------------------------------
 local function OwnerFromSource(f)
     local loc = Safe.Call(f, "GetSourceLocation")
     if type(loc) ~= "string" then return nil end
@@ -124,9 +104,7 @@ local function OwnerFromDescendants(root)
     end
 end
 
----------------------------------------------------------------------------
--- Kind (heuristic on the name, first match wins)
----------------------------------------------------------------------------
+-- kind: heuristic on the name, first match wins
 local KIND_PATTERNS = {
     { "nameplate", "nameplate" },
     { "minimap",   "minimap" },
@@ -159,9 +137,6 @@ local function KindOf(f, name)
     return "other"
 end
 
----------------------------------------------------------------------------
--- Scan
----------------------------------------------------------------------------
 local function CollectRoots()
     local roots, seen = {}, {}
     local function Add(f)
@@ -222,7 +197,7 @@ function Scanner:Scan()
         end
     end
 
-    ns.Names.AssignKeys(r.elements)  -- needs creation order, so before sorting
+    ns.Names.AssignKeys(r.elements)  -- needs creation order: before sorting
 
     table.sort(r.elements, function(a, b)
         if a.visible ~= b.visible then return a.visible end
@@ -234,9 +209,6 @@ function Scanner:Scan()
     return r
 end
 
----------------------------------------------------------------------------
--- Chat output (/fa scan, /fa list)
----------------------------------------------------------------------------
 local MAX_LINES = 50
 
 local function SortedCounts(t)

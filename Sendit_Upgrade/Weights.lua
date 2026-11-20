@@ -1,13 +1,7 @@
 --[[
-  Weights: what each stat is worth for this character - a plausibility check
-  of the model against known priorities (e.g. Retribution: hit > strength >
-  crit / agility > attack power). Diagnostic output, English.
-
-  /gc weights   per stat: the change of the spec's main metric in percent for
-                a typical amount (10 points, 1 % for hit / crit), and the same
-                in attack power equivalents (how much AP gives that much)
-
-  Weights.Table(ctx) -> { { key, amount, pct, ap }, ... } (tests)
+  Weights: /gc weights - each stat's worth for this character (a typical amount in % of the main metric
+  and in attack power equivalents): a plausibility check, English.
+  Weights.Table(ctx) -> { { key, amount, pct, ap } }
 ]]
 local _, ns = ...
 local Weights = {}

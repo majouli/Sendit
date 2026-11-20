@@ -1,8 +1,5 @@
 --[[
-  Locale: every visible text in the suite's five languages; the language is
-  the suite's (Sendit Design page), a missing key falls back to English.
-  Contract: ns.L[key] always returns a string (missing keys fall back to
-  the key itself, so a typo shows up in game instead of erroring).
+  Locale: the chat's texts in five languages; a missing key shows as the key.
 ]]
 local _, ns = ...
 
@@ -958,12 +955,9 @@ local ru = {
 
 ns.L = Sendit.Locale.New({ enUS = en, deDE = de, frFR = fr, esES = es, ruRU = ru })
 
--- Blizzard names its first chat windows and its combat log filters in the
--- client language when it makes them (GlobalStrings GENERAL, COMBAT_LOG,
--- QUICKBUTTON_NAME_*; wago.tools build 70938) and keeps the name after a
--- client language switch. ns.DefaultName(name, prefix) -> the suite
--- language's text when name is such a default in any language (keys
--- starting with prefix: "TAB_" or "FILTER_"), else name: renamed ones stay.
+-- Blizzard names its first windows and combat log filters in the client language and keeps the
+-- name after a switch (GENERAL, COMBAT_LOG, QUICKBUTTON_NAME_*). ns.DefaultName(name, prefix):
+-- the suite language's text when name is such a default (keys with prefix), else name
 local defaults = {}
 for _, t in ipairs({ en, de, fr, es, ru }) do
     for key, text in pairs(t) do

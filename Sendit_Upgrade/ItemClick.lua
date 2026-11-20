@@ -1,16 +1,7 @@
 --[[
-  ItemClick: Alt-click on an item opens the compare window with it on the
-  left and the equipped item of its slot on the right.
-
-  One post-hook on Blizzard's HandleModifiedItemClick, the function every
-  modified item click goes through in this client: bag slots
-  (ContainerFrameItemButtonMixin:OnModifiedClick), chat item links
-  (SetItemRef), the loot window, merchants - and Sendit Chat's loot cards,
-  which call it too. hooksecurefunc runs after Blizzard's code and never
-  changes it, so Shift (link), Ctrl (try on) and the rest stay as they are.
-  Only Alt alone, only items that can be equipped.
-
-  ItemClick.Handle(link)   (the hook; tests call it)
+  ItemClick: Alt-click on an equippable item opens the compare window with it left and the worn item
+  right - one post-hook on HandleModifiedItemClick (bags, chat links, loot, merchants, Sendit Chat).
+  ItemClick.Handle(link)
 ]]
 local _, ns = ...
 

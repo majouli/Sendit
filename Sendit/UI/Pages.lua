@@ -1,11 +1,6 @@
 --[[
-  Pages: the core pages of the window, below the modules.
-    Design    the look and the language of every module (profile.design):
-              palette, frame style, animations, language; plus the core's
-              account setting (minimap button)
-    Profiles  pick, create, duplicate, delete (Core/Profiles.lua); the picked
-              profile is active at once and every page edits it
-  Texts are functions (Locale.Text) so a language switch shows at once.
+  Pages: the core pages - Design (palette, frame style, animations, language; minimap button and app
+  bar) and Profiles (pick, create, duplicate, delete).
 ]]
 local _, ns = ...
 
@@ -14,9 +9,6 @@ local Changed, SettingsPage = Options.Changed, Options.SettingsPage
 local design = ns:Module("design")
 local function Tx(key) return ns.Locale.Text(L, key) end
 
----------------------------------------------------------------------------
--- Design
----------------------------------------------------------------------------
 local function LanguageChoices()
     local list = { { "auto", L.LANG_AUTO } }
     for _, lang in ipairs(ns.Locale.LANGUAGES) do list[#list + 1] = { lang.code, lang.name } end
@@ -67,11 +59,8 @@ Options:Register({
     end),
 })
 
----------------------------------------------------------------------------
--- Profiles
----------------------------------------------------------------------------
-local message      -- feedback line under the sections
-local toDelete     -- profile picked in the delete dropdown
+local message  -- feedback line under the sections
+local toDelete  -- profile picked in the delete dropdown
 
 local function Say(text, role)
     message:SetText(text or "")

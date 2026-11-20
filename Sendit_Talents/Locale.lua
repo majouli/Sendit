@@ -1,6 +1,5 @@
 --[[
-  Locale: UI text in Sendit's five languages. Talent, tree and form names
-  come from the client (C_Traits, spell names); only the route texts live here.
+  Locale: the route texts in five languages (talent and tree names come from the client).
 ]]
 local _, ns = ...
 local keys = { "route", "off", "next", "nextAt", "done", "toggle", "free", "dropped" }

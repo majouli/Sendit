@@ -1,12 +1,6 @@
 --[[
-  Rules: decides whether an element may be faded.
-
-  Rules:Reason(e) -> text, rule   (nil when the element fades)
-    rule "builtin"  tooltips, nameplates, dialog layers, registered windows
-                    and menus; never faded, not overridable
-    rule "element"  excluded by the user (profile.exclude.elements[e.key])
-    rule "addon"    its addon is excluded (profile.exclude.addons[e.owner])
-    rule "pattern"  matches a /fa exclude text (profile.exclude.patterns)
+  Rules: Rules:Reason(e) -> text, rule (nil when it fades) - "builtin" (tooltips, nameplates, dialogs,
+  registered windows and menus), "element", "addon", "pattern" (profile.exclude).
 ]]
 local _, ns = ...
 
@@ -14,12 +8,12 @@ local Rules = {}
 ns.Rules = Rules
 
 local NEVER_KINDS = { tooltip = true, nameplate = true }
--- TOOLTIP strata is allowed: addons park HUD parts there (GCD bars etc.).
+-- TOOLTIP strata is allowed: addons park HUD parts there
 local NEVER_STRATA = { DIALOG = true, FULLSCREEN = true, FULLSCREEN_DIALOG = true }
 
 local windowNames = {}
 
--- Frames registered as closable windows or menus (Escape closes them).
+-- registered closable windows / menus (Escape closes them)
 function Rules:Refresh()
     wipe(windowNames)
     for _, n in ipairs(UISpecialFrames or {}) do windowNames[n] = true end

@@ -1,24 +1,9 @@
 --[[
-  Markers: what the route draws over Blizzard's talent buttons.
-    next point   Blizzard's own talent glow (atlas talents-node-square-greenglow,
-                 61 px around the 40 px node, additive) in the Sendit accent;
-                 it pulses when a point is free to spend
-    picks        with several free points, a number on each node to buy now
-                 in that order ("1", "2·3" for two ranks)
-    route node   a small badge with the rank the route ends at (accent while
-                 open, success colour once reached)
-                 and, below it, the levels its points come at ("10-14")
-    other nodes  a light veil, only on nodes without points
-    highlight    the same glow, steady, on the node a timeline row points at
-  Every marker is our own frame on our overlay, anchored to Blizzard's
-  button (anchoring writes nothing on it), a few frame levels above it: the
-  buttons sit far above the talent window's own level. Markers never
-  take the mouse, so clicks and tooltips stay Blizzard's.
-  Contract: Markers.Draw(overlay, buttonOf, plan, nodes, rankOf, ready)
-            Markers.Clear()
-            Markers.Highlight(nodeID | nil)
-    buttonOf(nodeID) -> Blizzard's button | nil; ready = the next point can
-    be bought now.
+  Markers: what the route draws over Blizzard's talent buttons - Blizzard's talent glow on the next
+  point (pulsing when a point is free), buy-order numbers with several free points, a rank badge and
+  level range on route nodes, a veil on other empty nodes. Our own frames, anchored to the buttons,
+  never taking the mouse.
+  Markers.Draw(overlay, buttonOf, plan, nodes, rankOf, ready) / Clear() / Highlight(nodeID | nil)
 ]]
 local _, ns = ...
 local T = Sendit.Theme
@@ -30,7 +15,7 @@ ns.Markers = Markers
 local pool, used = {}, {}
 local BADGE, VEIL = 15, 0.45
 local NODE, GLOW = 40, 61  -- Blizzard's square node and its glow atlas
-local current = {}         -- overlay, buttonOf of the last Draw
+local current = {}
 local highlight
 
 local function Glow(parent)
@@ -45,8 +30,6 @@ local function Glow(parent)
     return f
 end
 
--- Place `f` on Blizzard's button: same centre, a few levels above, glow sized
--- to the button (talent buttons may be scaled).
 local function Place(f, button)
     f:ClearAllPoints()
     f:SetAllPoints(button)

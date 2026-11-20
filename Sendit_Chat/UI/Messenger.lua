@@ -1,24 +1,10 @@
 --[[
-  Messenger: the one whisper window, like WhatsApp on the desktop: the
-  conversation list on the left (UI/MessengerList.lua), the chosen
-  conversation on the right (UI/Conversation.lua). This file is the window
-  around them: header, position and size, minimize and its own lock, the
-  open / close animation, the unread glow and what a change of the data
-  means for the window.
-
-  A new whisper while the window is closed: by default a bubble above the
-  chat (UI/WhisperToasts.lua); with whisperAlert = "open" it opens the window
-  on that conversation without taking the keyboard. While another
-  conversation is shown it never switches; the row lights up. Unread until
-  the user clicks into the conversation or closes the window; meanwhile the
-  window breathes, minimized too (minimizing keeps it unread).
-
-  Messenger.Open(conv, focus) / Show() / Close() / Toggle() / Refresh()
-  Messenger.SetMinimized(on)
-  Messenger.Showing(conv)  window shown, not minimized, on that conversation
-  Messenger.IsMinimized()  the window is folded onto its header
-  The friends list docked beside it: UI/FriendsPanel.lua (people icon here).
-  Position: ns.acct.messenger = { x, y, w, h, minimized, locked }.
+  Messenger: the one whisper window - list left (MessengerList), conversation right (Conversation);
+  header, position and size, minimize, its own lock, open / close animation (alpha + translation only),
+  unread glow. A new whisper while closed: a bubble (whisperAlert "toast") or the window opens without
+  the keyboard ("open"); it never switches away from a shown conversation.
+  Messenger.Open(conv, focus) / Show() / Close() / Toggle() / Refresh() / SetMinimized(on)
+  Messenger.Showing(conv) / IsMinimized() / IsOpen();  ns.acct.messenger = { x, y, w, h, minimized, locked }
 ]]
 local _, ns = ...
 local T, Widgets, W = ns.Theme, ns.Widgets, ns.Whispers
@@ -36,8 +22,7 @@ local frame, glow, glowAnim
 
 local function Saved() return ns.acct.messenger end
 local function Minimized() return Saved().minimized == true end
--- Its own lock, independent of the chat lock (a locked chat had pinned this
--- window too and it looked frozen).
+-- its own lock, independent of the chat lock
 local function Locked() return Saved().locked == true end
 local function CanMove() return not Locked() end
 local function IsOpen() return frame ~= nil and frame:IsShown() end
@@ -48,22 +33,16 @@ local function SavePosition()
     if not Minimized() then d.w, d.h = frame:GetWidth(), frame:GetHeight() end
 end
 
----------------------------------------------------------------------------
--- Refresh: the list, the unread count in the header and the glow
----------------------------------------------------------------------------
 function Messenger.Refresh()
     if not frame then return end
     List.Refresh()
     local unread = W.UnreadChats()
     frame.count:SetText(unread > 0 and ("(" .. unread .. ")") or "")
-    -- unread anywhere: the window breathes until it is read
+    -- unread anywhere: the window breathes
     glow:SetShown(unread > 0 and frame:IsShown())
     if unread > 0 then glowAnim:Play() else glowAnim:Stop() end
 end
 
----------------------------------------------------------------------------
--- Position, size, minimize
----------------------------------------------------------------------------
 local function Place()
     local d = Saved()
     local main = ns.Windows and ns.Windows.Main()
@@ -87,7 +66,7 @@ end
 
 function Messenger.IsMinimized() return Minimized() end
 
--- The people icon shows whether the friends list is open (and only while it is enabled).
+-- the people icon shows whether the friends list is open
 function Messenger.UpdateFriendsButton()
     local b = frame and frame.friendsBtn
     if not b then return end
@@ -96,7 +75,7 @@ function Messenger.UpdateFriendsButton()
     b:SetKind("friends")
 end
 
--- Minimizing keeps unread messages unread; restoring by itself does not read.
+-- minimizing keeps unread messages unread
 function Messenger.SetMinimized(on)
     if not frame then return end
     if on and not Minimized() then SavePosition() end
@@ -107,15 +86,8 @@ function Messenger.SetMinimized(on)
     Messenger.Refresh()
 end
 
----------------------------------------------------------------------------
--- Open / close animation: the real window fades in while it glides a few
--- pixels up, and fades out while it sinks a little. Only alpha and
--- translation: both are cheap. Scaling was choppy in game (the client
--- re-renders every font string per scale step), and a zooming stand-in
--- frame flickered on its 1px edges and blinked at the hand-over.
--- No SetToFinalAlpha (Fade owns frame alpha): the window is hidden by a
--- timer just before its fade-out ends.
----------------------------------------------------------------------------
+-- open / close: alpha + translation only (scaling re-renders every font string)
+-- no SetToFinalAlpha (Fade owns frame alpha): a timer hides the window before the fade ends
 local OPEN, CLOSE, RISE, SINK = 0.18, 0.12, 12, 6
 
 local function BuildAnimations()
@@ -150,10 +122,6 @@ local function BuildAnimations()
     frame.fadeOut = close
 end
 
----------------------------------------------------------------------------
--- Building
----------------------------------------------------------------------------
--- Left header: title and unread count; a drag handle for the window.
 local function BuildHeader()
     local header = CreateFrame("Button", nil, frame)
     header:SetPoint("TOPLEFT")
@@ -168,7 +136,6 @@ local function BuildHeader()
     frame.count:SetPoint("LEFT", frame.title, "RIGHT", 6, 0)
 end
 
--- Window controls, top right over the conversation header.
 local function BuildControls()
     local function OnTop(b) b:SetFrameLevel(frame:GetFrameLevel() + 10) end
     local close = Widgets.IconButton(frame, "close", "CLOSE", Messenger.Close)
@@ -195,7 +162,7 @@ local function BuildControls()
     OnTop(frame.copyBtn)
 end
 
--- Unread glow: an accent frame just outside the border, breathing.
+-- unread glow: an accent frame outside the border
 local function BuildGlow()
     glow = CreateFrame("Frame", nil, frame)
     glow:SetPoint("TOPLEFT", -3, 3)
@@ -220,7 +187,6 @@ local function BuildGlow()
     frame.glow = glow
 end
 
--- Body: the list on the left, the conversation on the right.
 local function BuildBody()
     local body = CreateFrame("Frame", nil, frame)
     body:SetPoint("TOPLEFT", 0, -HEADER)
@@ -235,7 +201,7 @@ local function BuildBody()
     divider:SetPoint("BOTTOMLEFT", LIST_W, 0)
     divider:SetWidth(1)
 
-    -- the conversation's header shares the top row and moves the window too
+    -- the conversation's header moves the window too
     local pane = ns.Conversation.Build(frame)
     pane:SetPoint("TOPLEFT", LIST_W + 1, 0)
     pane:SetPoint("BOTTOMRIGHT")
@@ -262,14 +228,11 @@ local function Build()
     Place()
 end
 
--- Azeroth: the gold banner carries the title, the header keeps the count.
+-- azeroth: the gold banner carries the title
 local function UpdateTitle()
     frame.title:SetText(T.style == "azeroth" and "" or L.MESSAGES)
 end
 
----------------------------------------------------------------------------
--- Show / open / close
----------------------------------------------------------------------------
 function Messenger.Show()
     if not frame then Build() end
     Place()
@@ -293,8 +256,7 @@ function Messenger.Show()
     Messenger.Refresh()
 end
 
--- Show a conversation (the list switches to its tab); focus = the user asked
--- for it (click, link, name): restore, read, cursor in the input.
+-- focus = the user asked for it: restore, read, cursor in the input
 function Messenger.Open(conv, focus)
     if not conv then return end
     if not frame then Build() end
@@ -306,7 +268,7 @@ function Messenger.Open(conv, focus)
     Messenger.Refresh()
 end
 
--- Closing counts as read for the conversation shown.
+-- closing counts as read for the conversation shown
 function Messenger.Close()
     if not frame or not frame:IsShown() or frame.closing then return end
     local cur = ns.Conversation.Current()
@@ -346,16 +308,13 @@ function Messenger.Showing(conv)
         and conv ~= nil and ns.Conversation.Current() == conv
 end
 
----------------------------------------------------------------------------
--- What a change of the data means for the window (W.OnChange)
----------------------------------------------------------------------------
 local function OnChange(conv, msg, incoming)
     local arrived = msg ~= nil and incoming
     local autoOpen = arrived and ns.db.whisperAlert == "open" and not IsOpen()
     if not frame and not autoOpen then return end
     local cur = ns.Conversation.Current()
     local listed = List.Holds(conv)
-    -- deleted, archived or restored while shown: show the next one of the list
+    -- deleted, archived or restored while shown: the next one
     if not listed and cur == conv then
         cur = List.First()
         ns.Conversation.Show(cur)

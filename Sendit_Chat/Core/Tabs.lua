@@ -1,39 +1,11 @@
 --[[
-  Tabs: the tab list - Blizzard's mirrored chat windows plus Sendit Chat's
-  own tabs, and what General and each own tab show (as Blizzard's chat
-  settings: message kinds, Core/ChatKinds.lua, and channels).
-
-  Why own tabs: a new Blizzard chat window needs FCF_OpenNewWindow, which
-  run from addon code writes the chat frames' fields tainted (taint:
-  never write Blizzard's chat frames). Own tabs only sort lines Blizzard already added to
-  its windows (General, the combat log, ...): by the line's kind (its event, its
-  channel link or Blizzard's info.id), never by its words (secret in chat
-  lockdown). So a tab can only show what one of Blizzard's windows receives
-  (Blizzard's defaults put experience into the combat log, not General).
-  As in Blizzard's client a line shows in every tab that takes it: General shows everything except the kinds switched off there.
-
-  Saved in ns.acct.tabs = { { id, name, take = { [key] = label } } } and
-  ns.acct.generalHide = { [key] = true }; key = a kind ("SAY", "LOOT", ...)
-  or "channel:<name>" (channel name without the zone part, lower case - the
-  number changes). An own tab's index is OWN_BASE + id, above Blizzard's
-  window indices. Tabs saved before the kinds (keys "say", "guild", "group",
-  "loot", "system", lines left General) are converted once: their kinds,
-  hidden in General.
-
-  Tabs.All()                 Blizzard indices (Mirror.Indices) + own indices
-  Tabs.Name(index)           tab label
-  Tabs.Get(index)            own tab definition or nil
-  Tabs.Route(index, infoID, event, text, r, g, b)  tab indices that show a line
-                             of Blizzard window index (may be empty), or nil (= index)
-  Tabs.KeyFor(infoID, event, text, r, g, b)  the line's kind / channel key (Core/Trace.lua)
-  Tabs.Channels(take)        { { key, label }, ... } joined channels (GetChannelName
-                             per number, as the routing reads them), then
-                             channels in take the player has left
-  Tabs.ChannelType(key)      "CHANNEL<n>" of a joined channel (its colour), or nil
-  Tabs.Take(index)           copy of what the tab shows: { [key] = label }
-                             (General: every kind and channel not hidden)
-  Tabs.Save(index|nil, name, take) -> index   create / change a tab (1 = General)
-  Tabs.Delete(index)
+  Tabs: Blizzard's mirrored chat windows plus our own tabs (a new Blizzard window needs
+  FCF_OpenNewWindow, which taints the chat frames). Own tabs sort the lines Blizzard already added by
+  kind (event, channel link, info.id), never by text (secret in lockdown); General shows everything
+  not switched off there. ns.acct.tabs = { { id, name, take = { [key] = label } } },
+  ns.acct.generalHide = { [key] = true }; key = a kind or "channel:<name>"; own index = OWN_BASE + id.
+  Tabs.All() / Name(index) / Get(index) / Route(index, infoID, event, text, r, g, b) / KeyFor(...)
+  Tabs.Channels(take) / ChannelType(key) / Take(index) / Save(index, name, take) / Delete(index)
 ]]
 local _, ns = ...
 local Safe, Mirror, ChatKinds = ns.Safe, ns.Mirror, ns.ChatKinds
@@ -43,7 +15,7 @@ ns.Tabs = Tabs
 
 local OWN_BASE = 100
 
--- Keys of tabs saved before the kinds existed -> kinds.
+-- keys of tabs saved before the kinds existed -> kinds
 local OLD = {
     say    = { "SAY", "YELL", "EMOTE" },
     guild  = { "GUILD", "OFFICER", "GUILD_ACHIEVEMENT" },
@@ -97,11 +69,7 @@ function Tabs.Name(index)
     return Mirror.Name(index)
 end
 
----------------------------------------------------------------------------
----------------------------------------------------------------------------
--- Routing
----------------------------------------------------------------------------
--- "Trade - City" -> "channel:trade", "Trade" (the zone part changes).
+-- "Trade - City" -> "channel:trade", "Trade" (the zone part changes)
 local function ChannelKey(name)
     name = Safe.Str(name)
     if not name or name == "" then return nil end
@@ -109,7 +77,6 @@ local function ChannelKey(name)
     return "channel:" .. base:lower(), base
 end
 
--- Channel number -> key, label; the same source for routing and the editor.
 local function Channel(n)
     local fn = _G["GetChannelName"]
     if not fn then return nil end
@@ -120,9 +87,7 @@ end
 
 local function MaxChannels() return _G["MAX_WOW_CHAT_CHANNELS"] or 20 end
 
--- A channel line carries its channel link: "|Hchannel:channel:2|h[2. Trade - City]|h".
--- The number gives the key (as the editor reads it); the link's name when
--- the client does not know the number (any more).
+-- a channel line carries its link ("|Hchannel:channel:2|h"): the number gives the key
 local function LinkedChannel(text)
     text = Safe.Str(text)
     if not text then return nil end
@@ -131,12 +96,7 @@ local function LinkedChannel(text)
     return Channel(tonumber(n)) or (ChannelKey(name))
 end
 
--- The line's kind or channel key:
--- 1. its event ("CHAT_MSG_GUILD"; Blizzard passes it with player messages
---    only, and a channel message's event has no number),
--- 2. channels: the channel link in the text ("|Hchannel:channel:2|h"),
--- 3. its type id (shared ids: the line's colour, Mirror.ChatType; still
---    open: the kind every type with that id belongs to).
+-- kind / channel key: the event (player messages only), the channel link, the type id
 local function KeyOf(infoID, event, text, r, g, b)
     local e = Safe.Str(event)
     local chatType = e and e ~= "CHAT_MSG_CHANNEL" and e:match("^CHAT_MSG_(.+)$")
@@ -165,8 +125,7 @@ end
 
 function Tabs.KeyFor(infoID, event, text, r, g, b) return KeyOf(infoID, event, text, r, g, b) end
 
--- A line Blizzard adds to two of its windows (General and the combat log
--- both take loot, say) arrives twice in the same frame: own tabs take it once.
+-- a line Blizzard adds to two windows arrives twice in one frame: own tabs take it once
 local recent, recentAt = {}, nil
 local function Fresh(text, index)
     local plain = Safe.Str(text)
@@ -194,9 +153,6 @@ function Tabs.Route(index, infoID, event, text, r, g, b)
     return out
 end
 
----------------------------------------------------------------------------
--- Editing
----------------------------------------------------------------------------
 function Tabs.Channels(take)
     local out, seen = {}, {}
     for n = 1, MaxChannels() do
@@ -239,8 +195,6 @@ function Tabs.Take(index)
     return take
 end
 
--- General: everything not taken is hidden; a channel the player has left
--- stays as it was.
 local function SaveGeneral(take)
     local hidden, old = {}, Hidden()
     for _, kind in ipairs(ChatKinds.All()) do

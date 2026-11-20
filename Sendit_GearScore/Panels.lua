@@ -1,21 +1,11 @@
 --[[
-  Panels: GearScore on the character window and the inspect window.
-  Character window: our own row "GearScore" at the top of Blizzard's stats
-  list, directly above "General" / Health. Blizzard's list box is moved down
-  by one row with SetPoint (a C call on an unprotected frame: no Lua state of
-  Blizzard's is written, nothing taints) and our row sits in the freed space,
-  styled like the list's own rows (font and colours copied from a shown row,
-  so skins such as EllesmereUI carry over).
-  NOT through Blizzard's PAPERDOLL_STATCATEGORIES / PAPERDOLL_STATINFO: verified
-  in game, Blizzard calling our updateFunc taints the whole character window
-  OnShow, and the player frame's status text then fails on secret health
-  values ("attempt to compare a secret number value, tainted by <our addon>").
-  Rule: Blizzard code must never call or read anything of ours.
-  Inspect window: "GS N" small between name and level line;
-  talents live in TalentView's tab.
-  All our frames are children of Blizzard frames (show and hide with them),
-  named so skins that sweep unnamed frames leave them alone; we never hook
-  Blizzard frames or write fields on them.
+  Panels: GearScore on the character and inspect windows.
+  Character window: our own row above Blizzard's stats list, which is moved down one row with
+  SetPoint (no Lua state of Blizzard's written); the row copies a shown row's font and colours.
+  Never through PAPERDOLL_STATCATEGORIES / STATINFO: Blizzard calling our code taints the window
+  (secret health then fails). Rule: Blizzard code must never call or read anything of ours.
+  Inspect window: "GS N" at inspectPos ("top" above the level line, "bottom" under the slots).
+  All frames are named children of Blizzard frames; nothing hooked, no fields written.
 ]]
 local _, ns = ...
 local L = ns.L
@@ -31,8 +21,7 @@ local function FirstFrame(...)
     end
 end
 
--- Character stats row -------------------------------------------------------
--- Blizzard's list box anchors (CharacterStatsPaneScrollBoxTemplate): TOPLEFT 10, -8.
+-- Blizzard's list box anchors (CharacterStatsPaneScrollBoxTemplate): TOPLEFT 10, -8
 local LIST_LEFT, LIST_TOP = 10, -8
 local ROW_HEIGHT = 26
 
@@ -43,7 +32,6 @@ local function RefreshRow()
     row.value:SetText(entry and Score.Colored(entry.score) or "-")
 end
 
--- Font and label colour of a shown stat row (Blizzard's or a skin's look).
 local function CopyStyle(list)
     local box = list.ScrollBox
     if not (box and box.ForEachFrame) then return end
@@ -97,7 +85,6 @@ function Panels.BuildStatRow()
     row:SetScript("OnLeave", function() GameTooltip:Hide() end)
     row:SetScript("OnShow", function()
         RefreshRow()
-        -- the list fills its rows on the same show; copy their look a frame later
         if not row.styled then C_Timer.After(0, function() CopyStyle(list) end) end
     end)
     RefreshRow()
@@ -105,12 +92,6 @@ function Panels.BuildStatRow()
     return true
 end
 
--- Inspect score line ---------------------------------------------------------
--- "GS 260", placed by the option inspectPos: "top" = between the name (title
--- bar) and Blizzard's level line, its bottom on InspectLevelText's top; "bottom" = under the right slot column (InspectTrinket1Slot).
--- Item level in its tooltip. On the paper doll frame: character tab only.
--- Not inside the title bar: skins draw their own top bar over it (verified in
--- game under EllesmereUI: hidden).
 local LEVEL_GAP, SLOT_GAP = 2, -8
 
 local badge
@@ -131,7 +112,6 @@ local function BuildInspect()
     local inspect = FirstFrame("InspectFrame")
     local doll = FirstFrame("InspectPaperDollFrame") or inspect
     if not doll or badge then return end
-    -- named for the same reason as TalentView's frames (skins sweep unnamed ones)
     badge = CreateFrame("Frame", "SenditGearScoreBadge", doll)
     badge.doll = doll
     badge:SetHeight(14)
@@ -154,8 +134,6 @@ local function BuildInspect()
     if ns.TalentView then ns.TalentView.Attach() end
 end
 
--- Options -> frames: row shown or not (Blizzard's list box back in place when
--- hidden; anchors only), inspect score position.
 function Panels.Apply()
     local db = ns.db or {}
     if row then

@@ -1,28 +1,8 @@
 --[[
-  MessengerList: the left column of the messenger.
-
-  From top to bottom: the "Name to whisper" field (suggestions:
-  UI/NameComplete.lua), the tabs "Chats | Archive" and the list itself.
-  One row per partner: round avatar (initial, class colour; cyan for
-  Battle.net), name with realm or "Battle.net", time and a one-line preview
-  plus unread badge - in the archive the day it was archived and when it is
-  deleted for good. The conversation shown on the right is highlighted.
-
-  Row mouse buttons:
-    left    show it (and read it)
-    middle  archive (Chats) / restore (Archive) at once - both reversible
-    right   menu: Add as friend (characters not yet friends: opens Blizzard's
-            add-friend window with the name filled in), Archive | Restore,
-            Delete for good (asks)
-
-  The view ("chats" | "archive") lives for the session. Data comes from
-  Core/Whispers.lua; the window around it is UI/Messenger.lua.
-
-  List.Build(parent, width) -> column frame (the messenger anchors it)
-  List.Refresh()            redraw from the data
-  List.View() / List.SetView(view) / List.ViewOf(conv)
-  List.First()              the first conversation of the current view
-  List.Holds(conv)          true while conv is listed in the current view
+  MessengerList: the messenger's left column - "Name to whisper" field (NameComplete), tabs Chats |
+  Archive, one row per partner (avatar, name, time, preview, unread badge; archive: archived / delete
+  dates). Left click shows, middle click archives / restores, right click menu (add friend, archive,
+  delete). List.Build(parent, width) / Refresh() / View() / SetView(view) / ViewOf(conv) / First() / Holds(conv)
 ]]
 local _, ns = ...
 local T, Widgets, Links, W = ns.Theme, ns.Widgets, ns.Links, ns.Whispers
@@ -32,15 +12,12 @@ local List = {}
 ns.MessengerList = List
 
 local ROW = 52
-local TOP = 68  -- field + tabs above the scrolling list
+local TOP = 68  -- field + tabs above the list
 
 local column, content, emptyText
 local rows = {}
 local view = "chats"
 
----------------------------------------------------------------------------
--- Texts
----------------------------------------------------------------------------
 local function TimeLabel(t)
     local now = time()
     if date("%Y%m%d", t) == date("%Y%m%d", now) then return date("%H:%M", t) end
@@ -69,15 +46,12 @@ local function Hex(role)
     return ("|cff%02x%02x%02x"):format(math.floor(r * 255), math.floor(g * 255), math.floor(b * 255))
 end
 
--- Battle.net friend or character (with realm): different channels.
+-- Battle.net friend or character (with realm)
 local function NameLine(c)
     local tag = c.bn and (" " .. Hex("bn") .. L.BATTLENET .. "|r") or (" |cff8a8f9c- " .. W.RealmOf(c) .. "|r")
     return (c.name or "?") .. tag
 end
 
----------------------------------------------------------------------------
--- View
----------------------------------------------------------------------------
 function List.View() return view end
 function List.ViewOf(conv) return conv and conv.archived and "archive" or "chats" end
 
@@ -96,9 +70,6 @@ function List.Holds(conv)
     return conv ~= nil and W.Get(conv.key) ~= nil and List.ViewOf(conv) == view
 end
 
----------------------------------------------------------------------------
--- Rows
----------------------------------------------------------------------------
 local function AskDelete(c)
     StaticPopup_Show("SENDIT_DELETE_CHAT", c.name or "?", nil, c.key)
 end
@@ -192,9 +163,6 @@ local function FillRow(r, c, archive)
     r.sel:SetShown(Highlight(r))
 end
 
----------------------------------------------------------------------------
--- Tabs
----------------------------------------------------------------------------
 local function NewTab(key, index, width)
     local tab = CreateFrame("Button", nil, column)
     tab:SetSize(width, 22)
@@ -221,9 +189,6 @@ local function RefreshTabs()
     List.tabs.archive:SetSelected(view == "archive")
 end
 
----------------------------------------------------------------------------
--- Column
----------------------------------------------------------------------------
 local function NewChatField()
     local field = Widgets.Input(column, "NEW_CHAT", 12)
     field:SetPoint("TOPLEFT", 10, -8)

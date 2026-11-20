@@ -1,37 +1,10 @@
 --[[
-  Whispers: the messenger's data. One conversation per partner, saved per
-  character (ns.char.convs), newest conversations first.
-
-  conversation = {
-    key, name (display), target (whisper name or BattleTag), bn (true for
-    Battle.net), class (English class file, optional), realm (players),
-    kname (Battle.net account token, this session only), unread, last (epoch),
-    archived (epoch, while in the archive),
-    msgs = { { t = epoch, o = true for outgoing, m = text }, ... }
-  }
-
-  W.List()                 active conversations, most recent first
-  W.Archived()             archived ones, most recently archived first
-  W.Archive(key) / W.Restore(key)   into / out of the archive (reversible:
-                           "deleting" in the messenger archives). An archived
-                           conversation is deleted for good ARCHIVE_DAYS after
-                           archiving (W.Purge, on login and on every look at
-                           the archive); a new message brings it back.
-  W.Get(key) / W.Open(name) existing / new-or-existing conversation
-  W.Send(conv, text)       true | false, reason ("lockdown", "offline", "empty")
-  W.Split(text, max)       chunks <= max bytes; never cuts a link or a
-                           UTF-8 character
-  W.MarkRead(conv), W.Delete(key) (for good)
-  W.OnChange(fn)           fn(conv, msg, incoming) after every change
-  W.viewing                set by the UI: fn(key) -> true while the user is
-                           in that conversation (its input has the focus);
-                           anything else counts as unread until read
-  W.UnreadChats()          conversations with unread messages
-  W.RealmOf(conv)          the partner's realm (players)
-  W.BNGame(conv)           "Bob (Realm)" while a Battle.net friend plays WoW
-
-  Secret texts or senders (chat lockdown) are skipped: they cannot be
-  compared, keyed or saved. Those lines stay in the main chat (Mirror).
+  Whispers: the messenger's data - one conversation per partner, per character (ns.char.convs).
+  conversation = { key, name, target, bn, class, realm, kname, unread, last, archived, msgs }
+  W.List() / Archived() / Archive(key) / Restore(key) (archived ones go after ARCHIVE_DAYS)
+  W.Get(key) / Open(name) / Send(conv, text) -> ok, reason / Split(text, max) (never cuts a link)
+  W.MarkRead(conv) / Delete(key) / OnChange(fn) / UnreadChats() / RealmOf(conv) / BNGame(conv)
+  W.viewing = fn(key) set by the UI. Secret texts or senders (lockdown) are skipped.
 ]]
 local _, ns = ...
 local Safe = ns.Safe
@@ -65,7 +38,7 @@ function W.List()
     return list
 end
 
--- Seconds until an archived conversation is deleted for good.
+-- seconds until an archived conversation is deleted
 function W.ArchiveLeft(conv, now)
     return (conv.archived or 0) + ARCHIVE_DAYS * 86400 - (now or time())
 end
@@ -113,9 +86,6 @@ local function RealmPart(full)
     return realm or OwnRealm()
 end
 
----------------------------------------------------------------------------
--- Names
----------------------------------------------------------------------------
 local function Short(full)
     local amb = _G["Ambiguate"]
     if amb then
@@ -161,7 +131,6 @@ local function Ensure(key, fields)
     return c
 end
 
--- New or existing conversation with a player name typed or clicked.
 function W.Open(name)
     name = Safe.Str(name)
     if not name then return nil end
@@ -176,9 +145,6 @@ function W.Open(name)
     return c
 end
 
----------------------------------------------------------------------------
--- Battle.net
----------------------------------------------------------------------------
 local function BNTag(id)
     local bn = _G["C_BattleNet"]
     local info = bn and bn.GetAccountInfoByID and Safe.Call(bn.GetAccountInfoByID, id)
@@ -198,7 +164,7 @@ function W.BNGame(conv)
     return realm and realm ~= "" and (char .. " (" .. realm .. ")") or char
 end
 
--- presence id of a BattleTag this session (ids change between sessions).
+-- presence id of a BattleTag this session (ids change between sessions)
 local function BNResolve(tag)
     local bn, num = _G["C_BattleNet"], _G["BNGetNumFriends"]
     if not bn or not bn.GetFriendAccountInfo or not num then return nil end
@@ -211,8 +177,7 @@ local function BNResolve(tag)
     return nil
 end
 
--- New or existing conversation with a Battle.net friend, by the account
--- name Blizzard passes around (a |K token string, comparable as a string).
+-- conversation with a Battle.net friend by the |K account token
 function W.OpenBN(accountName)
     accountName = Safe.Str(accountName)
     local bn, num = _G["C_BattleNet"], _G["BNGetNumFriends"]
@@ -233,9 +198,6 @@ function W.OpenBN(accountName)
     return nil
 end
 
----------------------------------------------------------------------------
--- Receiving
----------------------------------------------------------------------------
 function W.Add(out, text, who, guid, bnID)
     text = Safe.Str(text)
     if not text then return nil end
@@ -266,8 +228,7 @@ function W.Add(out, text, who, guid, bnID)
     return c
 end
 
--- A hidden message the player chose to see (Core/Censored.lua): the
--- notice holding marker becomes the original text.
+-- a hidden message the player chose to see: the notice becomes the text
 function W.Uncensor(marker, text)
     for _, c in pairs(Convs()) do
         for _, m in ipairs(c.msgs or {}) do
@@ -310,10 +271,6 @@ function W.Delete(key)
     Notify(c, nil, false)
 end
 
----------------------------------------------------------------------------
--- Sending
----------------------------------------------------------------------------
--- Character length of the UTF-8 sequence starting with byte b.
 local function SeqLen(b)
     if b >= 0xF0 then return 4 elseif b >= 0xE0 then return 3 elseif b >= 0xC0 then return 2 end
     return 1
@@ -335,7 +292,7 @@ end
 function W.Split(text, max)
     max = max or MAX_BYTES
     if #text <= max then return { text } end
-    -- Links are atoms: "[Mitstreiter Claymore]" has spaces but must not split.
+    -- links are atoms: never split inside one
     local links = {}
     local function Protect(l)
         links[#links + 1] = l
@@ -364,11 +321,7 @@ function W.Split(text, max)
     return out
 end
 
--- The Forever server strips spell links whose text carries a rank or a note
--- in brackets ("[Siegel des Kreuzfahrers (Rang 4)]", "[Parieren (Passiv)]"):
--- they arrive as plain (sometimes mangled) text, from Blizzard's chat too;
--- talent links without brackets arrive. So the bracket part goes before
--- sending; the spell id in the link stays.
+-- the server strips spell links with a bracket part: it goes before sending
 function W.CleanSpellLinks(text)
     return (text:gsub("(|Hspell:[^|]*|h%[)(.-)%s*%b()(%]|h)", "%1%2%3"))
 end
@@ -395,11 +348,8 @@ function W.Send(conv, text)
     return true
 end
 
----------------------------------------------------------------------------
--- Events
----------------------------------------------------------------------------
 ns.OnReady(function()
-    -- Battle.net ids and account tokens are only valid in the session that got them.
+    -- Battle.net ids and tokens are only valid in their session
     for _, c in pairs(Convs()) do c.kname, c.bnID = nil, nil end
     W.Purge()
     ns.Listen("CHAT_MSG_WHISPER", function(_, text, sender, ...)

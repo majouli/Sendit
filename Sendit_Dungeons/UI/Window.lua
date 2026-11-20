@@ -1,15 +1,6 @@
 --[[
-  Window: the dungeon browser, built like the Quests journal. Header: emblem
-  and name left, the controls right (UI/Toolbar.lua; a line of their own when
-  the window is narrow, UI/Layout.lua). Left: the dungeons
-  (virtual rows, UI/DungeonRow.lua) in level order - while the gear boost
-  runs only those with an upgrade, the biggest gain first. Right: the picked
-  dungeon - its loading screen as a banner with name, level and size on it,
-  then one card per boss in the dungeon's order with its portrait and what
-  it drops (UI/BossCard.lua, UI/Art.lua).
-
-  The header controls (search, filter, range, gear boost): UI/Toolbar.lua.
-
+  Window: the dungeon browser - list left (level order; while the boost runs only upgrades, biggest
+  first), the picked dungeon right (loading-screen banner, one card per boss).
   Window:Open(text) / Search(text, keep) / Pick(map) / Refresh() / BoostChanged() / Hide()
 ]]
 local _, ns = ...
@@ -20,7 +11,7 @@ ns.Window = Window
 local frame, picked, query
 local results, rowPool, cards = {}, {}, {}
 local ROW = S.size.row + S.size.rowGap
-local BANNER = 150  -- height of the loading-screen banner over the boss cards
+local BANNER = 150
 function Window:Pick(map)
     picked = map
     if frame then frame.detailScroll:SetVerticalScroll(0) end
@@ -56,7 +47,6 @@ local function Detail()
     frame.detailEmpty:SetText(#results == 0 and "" or L.pick)
     frame.detailTitle:SetText(d and DB.Name(d) or "")
     for _, c in ipairs(cards) do c:Hide() end
-    -- the dungeon's loading screen as a banner, fading into the window; the name on it
     local art = ns.Art.Screen(frame.banner, d, frame.metrics.right, BANNER)
     frame.bannerFade:SetShown(art)
     if art then
@@ -94,7 +84,7 @@ function Window:Refresh()
     if not frame or not frame:IsShown() then return end
     local boosting = ns.Boost.Active()
     ns.Toolbar.Update(frame)
-    ns.Layout.Apply(frame)  -- after the labels: the chips are as wide as their text
+    ns.Layout.Apply(frame)  -- after the labels: chips size to their text
     frame.resultTitle:SetText(ResultTitle())
     frame.resultScroll.content:SetHeight(math.max(1, #results * ROW))
     frame.listEmpty:SetShown(#results == 0)
@@ -129,7 +119,6 @@ function Window:Search(text, keep)
     self:Refresh()
 end
 
--- New ratings arrived or the boost started / ended: the list keeps its scroll.
 function Window:BoostChanged()
     if frame and frame:IsShown() then self:Search(query, true) end
 end
@@ -150,7 +139,7 @@ end
 
 local function DetailPane()
     frame.detail = CreateFrame("Frame", nil, frame)
-    pcall(frame.detail.SetClipsChildren, frame.detail, true)  -- banner and cards stay inside the pane
+    pcall(frame.detail.SetClipsChildren, frame.detail, true)
     local i = S.space.inner
     frame.banner = frame.detail:CreateTexture(nil, "BACKGROUND", nil, 1)
     frame.banner:SetPoint("TOPLEFT")
@@ -173,7 +162,6 @@ local function DetailPane()
     frame.detailEmpty:SetPoint("CENTER")
 end
 
--- Icons arrive from the server one by one: repaint once a moment later.
 local pendingPaint = false
 local function ItemArrived()
     if pendingPaint or not frame or not frame:IsShown() then return end
@@ -211,7 +199,7 @@ local function Create()
     ns.Toolbar.Create(frame, {
         search = function(text) if text ~= query then Window:Search(text) end end,
         refilter = function() Window:Search(query) end,
-        restart = function()  -- a new boost list: from the top, without a search text
+        restart = function()
             frame.search:SetText("")
             Window:Search("")
         end,
@@ -242,7 +230,6 @@ function Window:Hide() if frame then frame:Hide() end end
 
 function Window:IsShown() return frame ~= nil and frame:IsShown() end
 
--- Settings change all the time in the suite: repaint texts (language, palette).
 Sendit.OnSettingsChanged(function() if frame then Window:Refresh() end end)
 
 Sendit:AddLauncher({

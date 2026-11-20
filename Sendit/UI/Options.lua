@@ -1,26 +1,9 @@
 --[[
-  Options: the one settings window of the suite (layout after Polestar's shell).
-    sidebar  wordmark, one entry per module (its pages unfold under it while
-             it is selected), then Design and Profiles, version
-    header   night-sky band, module + page title, subtitle, profile picker
-             (every page edits the active profile)
-    body     the current page
-    footer   Defaults (resets the page's resetKeys), status, Reload UI, Close
-
-  Pages register with Sendit.Options:Register{
-    key,                 -- unique, e.g. "fade.general"
-    module,              -- the registered module (its sections are edited)
-    title, subtitle,     -- strings or functions (follow a language switch)
-    resetKeys = { keys of the module's sections } or nil,
-    onReset = fn or nil, -- after a reset (e.g. restart fading)
-    build = function(frame) -> page   -- page:Refresh() is required
-  }. Core pages (Design, Profiles) have core = true and sit below the modules.
-  hidden = true keeps a page out of the sidebar (the search results page).
-  Options.SettingsPage(fn) builds a scrolling page of setting rows.
-  Options:OnLeave(fn) runs when the page changes or the window closes.
-  Options:OnPage(fn) runs with the new page after every page change.
-  Options:Pages() / BuildPage(def) / Reveal(def, row): the search lists every
-  page's rows (built on first use) and jumps to one (UI/Search.lua).
+  Options: the suite's settings window - sidebar (modules with their pages, Design, Profiles), header
+  (title, profile picker), body (the page), footer (Defaults, status, Reload UI, Close).
+  Sendit.Options:Register{ key, module, title, subtitle, resetKeys, onReset, build(frame) -> page,
+                           core, hidden }   page:Refresh() is required
+  Options.SettingsPage(fn) / OnLeave(fn) / OnPage(fn) / Pages() / BuildPage(def) / Reveal(def, row)
 ]]
 local _, ns = ...
 
@@ -32,7 +15,7 @@ local Resolve = ns.Locale.Resolve
 local SIZE = T.SIZE
 local NAV_TOP, NAV_H, SUB_H = -120, 36, 28
 
-local pages = {}      -- registration order
+local pages = {}
 local byKey = {}
 local leaveHooks = {}
 local pageHooks = {}
@@ -61,7 +44,6 @@ function Options:Pages()
     return pages
 end
 
--- The first page of the sidebar (hidden pages are never a default).
 function Options:FirstPage()
     for _, def in ipairs(pages) do
         if not def.hidden then return def end
@@ -72,16 +54,12 @@ local function Leave()
     for _, fn in ipairs(leaveHooks) do fn() end
 end
 
--- Persisted setting changed: everything refreshes.
 function Options.Changed()
     ns.SettingsChanged()
 end
 
----------------------------------------------------------------------------
--- Shell
----------------------------------------------------------------------------
 local function Stars(parent, count)
-    -- deterministic pseudo-random sky, same every time
+    -- deterministic sky, the same every time
     local seed = 7
     local function rnd()
         seed = (seed * 16807) % 2147483647
@@ -132,7 +110,6 @@ local function NavButton(parent, text, icon, sub, onClick)
     return b
 end
 
--- Sidebar groups: one per module with pages (registration order), then core.
 local function Groups()
     local groups, core, byModule = {}, {}, {}
     for _, def in ipairs(pages) do
@@ -152,7 +129,6 @@ local function Groups()
     return groups, core
 end
 
--- Place the sidebar entries: the selected module unfolds its pages.
 local function LayoutNav()
     local y = NAV_TOP
     for _, g in ipairs(win.groups) do
@@ -226,7 +202,7 @@ local function BuildNav()
     end
 end
 
-function Options._Nav() return win end  -- tests: the sidebar entries
+function Options._Nav() return win end  -- tests
 
 function Options:Rebuild()
     BuildNav()
@@ -262,12 +238,11 @@ local function Build()
     local bg = T.Fill(win, "bg", "BACKGROUND", -7)
     bg:SetAllPoints()
     local edges = T.Border(win, "border")
-    -- azeroth frame style: the game's gold edge replaces the hairline
+    -- azeroth style: the gold edge replaces the hairline
     T.Decorate(win, "window", { level = 20, onApply = function(_, on)
         for _, e in ipairs(edges) do e:SetShown(not on) end
     end })
 
-    -- sidebar
     local side = CreateFrame("Frame", nil, win)
     side:SetPoint("TOPLEFT")
     side:SetPoint("BOTTOMLEFT")
@@ -297,7 +272,6 @@ local function Build()
     version:SetPoint("BOTTOMLEFT", 24, 22)
     win.version = version
 
-    -- header
     local header = CreateFrame("Frame", nil, win)
     header:SetPoint("TOPLEFT", side, "TOPRIGHT")
     header:SetPoint("TOPRIGHT")
@@ -338,7 +312,6 @@ local function Build()
     T.Fill(close, "hover", "HIGHLIGHT"):SetAllPoints()
     close:SetScript("OnClick", function() Options:Hide() end)
 
-    -- footer
     local footer = CreateFrame("Frame", nil, win)
     footer:SetPoint("BOTTOMLEFT", side, "BOTTOMRIGHT")
     footer:SetPoint("BOTTOMRIGHT")
@@ -366,7 +339,6 @@ local function Build()
     win.status:SetPoint("LEFT", win.defaults, "RIGHT", 16, 0)
     win.status:SetPoint("RIGHT", reload, "LEFT", -12, 0)
 
-    -- body
     win.body = CreateFrame("Frame", nil, win)
     win.body:SetPoint("TOPLEFT", header, "BOTTOMLEFT")
     win.body:SetPoint("BOTTOMRIGHT", footer, "TOPRIGHT")
@@ -380,7 +352,6 @@ local function Build()
     BuildNav()
 end
 
--- Star twinkle follows the window and the animations setting.
 function Options:UpdateMotion()
     if not (win and win:IsShown()) then return end
     local animate = ns.profile.design.animations
@@ -389,9 +360,6 @@ function Options:UpdateMotion()
     end
 end
 
----------------------------------------------------------------------------
--- Pages
----------------------------------------------------------------------------
 function Options:Refresh()
     if not (win and win:IsShown()) then return end
     local m = current and current.module
@@ -420,7 +388,6 @@ function Options:Refresh()
     if current and current.page then current.page:Refresh() end
 end
 
--- A page's content, built on first use (hidden until shown).
 function Options:BuildPage(def)
     if not win then Build() end
     if not def.page then
@@ -448,7 +415,6 @@ function Options:ShowPage(def)
     for _, fn in ipairs(pageHooks) do fn(def) end
 end
 
--- Open a page and bring one of its rows into view (search results).
 function Options:Reveal(def, row)
     self:Show(def.key)
     if row and def.page.Reveal then def.page:Reveal(row) end
@@ -474,7 +440,6 @@ function Options:IsShown()
     return win ~= nil and win:IsShown()
 end
 
--- The page on screen (nil while the window is closed).
 function Options:Current()
     return self:IsShown() and current or nil
 end
@@ -485,7 +450,6 @@ end
 
 ns.OnSettingsChanged(function() Options:Refresh() end)
 
--- A scrolling page of setting sections; build(layout, content) adds rows.
 function Options.SettingsPage(build)
     return function(frame)
         local area = W.ScrollArea(frame)

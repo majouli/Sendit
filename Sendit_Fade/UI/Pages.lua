@@ -1,7 +1,5 @@
 --[[
-  Pages: the General and Triggers pages of Fade in the Sendit window.
-  Texts come from Locale.lua as functions (follow a language switch).
-  Each row binds a widget to a setting through a getter and a setter.
+  Pages: Fade's General and Triggers pages; each row binds a widget to a setting (getter, setter).
 ]]
 local _, ns = ...
 
@@ -9,15 +7,13 @@ local Options, W, L = ns.Options, ns.Widgets, ns.L
 local SettingsPage = Options.SettingsPage
 local function Tx(key) return Sendit.Locale.Text(L, key) end
 
--- Persisted setting changed: refresh everything (resync: rebuild fade set).
 local function Changed(resync)
     if resync then ns.Fader:Sync() end
     ns.SettingsChanged()
 end
 ns.Changed = Changed
 
--- getter, setter for a top-level setting: the active profile's if it is a
--- profile key, the account's otherwise.
+-- getter, setter: the profile's key if it is one, else the account's
 local function DB(key)
     local function Store() return ns.profileDefaults[key] ~= nil and ns.profile or ns.db end
     return function() return Store()[key] end, function(v) Store()[key] = v; Changed() end
@@ -26,9 +22,6 @@ end
 local function Percent(v) return math.floor(v * 100 + 0.5) .. "%" end
 local function Seconds(v) return ("%gs"):format(math.floor(v * 100 + 0.5) / 100) end
 
----------------------------------------------------------------------------
--- General
----------------------------------------------------------------------------
 Options:Register({
     key = "fade.general",
     module = ns.module,
@@ -91,9 +84,6 @@ Options:Register({
     end),
 })
 
----------------------------------------------------------------------------
--- Triggers
----------------------------------------------------------------------------
 local TRIGGERS = { "combat", "target", "health", "casting", "mouseover", "typing", "chatGroup", "chatLoot" }
 
 Options:Register({

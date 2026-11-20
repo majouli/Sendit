@@ -1,16 +1,7 @@
 --[[
-  Style: the browser's design tokens and number formats - sizes, spacing,
-  text roles, surfaces, and the boost texts. Components never hard-code these.
-  Colours are Sendit.Theme roles (follow the palette live): gold accent for
-  selection and upgrades, success green for "your level", muted for the rest.
-
-  Style.size / space / font / surface      tokens
-  Style.Hex(role) -> r, g, b, "|cffrrggbb"
-  Style.Pct(v) -> "1,2" (the language's decimal mark)
-  Style.Threshold() -> "1" / "0,5"
-  Style.Upgrade(boost) -> "+1,2 % Damage" (+ "(from level 45)" for a preview item,
-                          + a real loss in the second metric, red)
-  Style.FitRole(fit) -> colour role of Database.Fit
+  Style: the browser's tokens and number formats (colours are Sendit.Theme roles).
+  Style.size / space / font / surface;  Style.Hex(role) -> r, g, b, "|cffrrggbb"
+  Style.Pct(v) / Threshold() / Upgrade(boost) / FitRole(fit)
 ]]
 local _, ns = ...
 local Style = {}
@@ -41,7 +32,7 @@ function Style.Threshold(v)
     return Style.Pct(v)
 end
 
-local TRADE_OFF = -0.5  -- like Upgrade's tooltip: a loss below this is worth saying
+local TRADE_OFF = -0.5  -- a loss below this is worth saying (like Upgrade's tooltip)
 
 function Style.Upgrade(boost)
     local text = "+" .. Style.Pct(boost.pct) .. " % " .. (boost.label or "")

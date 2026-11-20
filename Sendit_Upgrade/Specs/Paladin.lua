@@ -120,7 +120,6 @@ local function Damage(s)
         + (s.procDps or 0) * Model.SpellLanded(s)
 end
 
-
 -- Champion of the Light (Forever trait tree, 5/5, 25 points -> level 34):
 -- spell damage +60% of intellect - feeds Seal and Judgement of Command.
 -- assumption: the standard Ret build takes it.

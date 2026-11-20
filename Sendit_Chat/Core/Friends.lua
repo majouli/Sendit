@@ -1,27 +1,12 @@
 --[[
-  Friends: the friends list as the friends panel shows it (UI/FriendsPanel.lua).
-
-  Sources: Battle.net friends (C_BattleNet.GetFriendAccountInfo, BNGetNumFriends)
-  and character friends (C_FriendList.GetFriendInfoByIndex). Every read goes
-  through Safe (secret / missing values become nil), so a client without one of
-  the APIs just lists fewer friends.
-
-  Friends.List() -> entries, online, total; entries sorted: in World of Warcraft
-  first, then online elsewhere (Blizzard App), then offline; by name within.
-    entry = { key, bn, name (BattleTag first part or character), tag, accountName
-              (Battle.net token, session only), character, realm, level, class (file
-              token), area, client ("WoW" | "App" | ...), online, afk, dnd, note }
-  Friends.Open(entry, viaCharacter)  the messenger on that friend: Battle.net,
-                        or (viaCharacter, Battle.net friend in WoW) the character
-  Friends.CharacterName(entry)  "Name-Realm" to whisper / invite, or nil
-  Friends.Invite(entry)  group invite to the character
-  Friends.SetNote(entry, text)
-  Friends.Favorite(entry [, on]) / Friends.Watched(entry [, on])  pinned to
-                        the top / a notice when they come online (account-wide,
-                        ns.acct.friendFavorites / friendWatch, by key)
-  Friends.OnCameOnline(fn)  fn(entry) for a watched friend going online
-  Friends.Menu(entry)   Blizzard's player menu (invite, note, remove, ...)
-  Friends.OnChange(fn)  after the client's friend events (throttled to one per frame)
+  Friends: the friends list for the friends panel - Battle.net and character friends, every read
+  through Safe. Sorted: in WoW, elsewhere (App), offline; by name.
+  Friends.List() -> entries, online, total
+    entry = { key, bn, name, tag, accountName, character, realm, level, class, area, client, online,
+              afk, dnd, note }
+  Friends.Open(entry, viaCharacter) / CharacterName(entry) / Invite(entry) / SetNote(entry, text)
+  Friends.Favorite(entry [, on]) / Watched(entry [, on])   account: friendFavorites / friendWatch
+  Friends.OnCameOnline(fn) / Menu(entry) / OnChange(fn)
 ]]
 local _, ns = ...
 local Safe = ns.Safe
@@ -39,7 +24,6 @@ local function Marks(field)
     return ns.acct[field]
 end
 
--- getter without `on`, setter with it
 local function Mark(field, e, on)
     local marks = Marks(field)
     if on == nil then return marks[e.key] == true end
@@ -49,7 +33,6 @@ end
 function Friends.Favorite(e, on) return Mark("friendFavorites", e, on) end
 function Friends.Watched(e, on) return Mark("friendWatch", e, on) end
 
--- Localized class name -> class file token (RAID_CLASS_COLORS key).
 local classTokens
 local function ClassToken(localized)
     localized = Safe.Str(localized)
@@ -116,7 +99,6 @@ local function Characters(out)
     end
 end
 
--- Pinned friends first (online before offline), then in WoW, elsewhere, offline.
 local function Rank(e)
     if e.favorite then return e.online and 0 or 0.5 end
     if e.inWoW then return 1 end
@@ -141,8 +123,7 @@ function Friends.List()
     return out, online, #out
 end
 
--- "Name-Realm" of the character (realm without spaces, like the client wants it).
--- Realm as the client writes it in names: no spaces, dashes or apostrophes.
+-- "Name-Realm" (realm without spaces, dashes or apostrophes, as the client wants it)
 local function NormalRealm(realm)
     return (tostring(realm or ""):gsub("[%s%-']", ""))
 end
@@ -151,9 +132,8 @@ local function OwnRealm()
     return NormalRealm(Safe.Str(Safe.Call(_G["GetNormalizedRealmName"])) or Safe.Str(Safe.Call(_G["GetRealmName"])))
 end
 
--- The name to whisper / invite. Forever names can carry a surname ("Adamned
--- Sendit"); the realm is added only for another realm (seen in game: whispers
--- to "Name Surname-Realm" on the own realm found nobody).
+-- Forever names can carry a surname; the realm only for another realm (own-realm
+-- "Name Surname-Realm" whispers found nobody)
 function Friends.CharacterName(e)
     if not (e and e.character and e.online) then return nil end
     if not e.bn or not e.realm or e.realm == "" then return e.character end
@@ -162,8 +142,7 @@ function Friends.CharacterName(e)
     return e.character .. "-" .. realm
 end
 
--- A typed first name -> the full name of the one friend or conversation it
--- fits ("Adamned" -> "Adamned Sendit"); anything else stays as typed.
+-- a typed first name -> the one friend or conversation it fits; else as typed
 function Friends.Resolve(name)
     name = name and strtrim(name) or ""
     if name == "" or name:find("[%s%-]") then return name end
@@ -202,8 +181,7 @@ function Friends.Invite(e)
     if invite then pcall(invite, name) end
 end
 
--- Is this character (a conversation's target) already a friend - as a
--- character friend or as a Battle.net friend's character?
+-- already a friend - as a character or a Battle.net friend's character?
 function Friends.IsFriend(name)
     name = name and name:lower()
     if not name then return false end
@@ -217,11 +195,8 @@ function Friends.IsFriend(name)
     return false
 end
 
--- Add a friend: C_FriendList.AddFriend has restrictions (client API docs:
--- HasRestrictions) - called from addon code it does nothing (seen in game).
--- So Blizzard's own "Add Friend" window opens with the name filled in; its
--- Accept runs Blizzard's code (for a plain character name it reads nothing we
--- wrote), the player confirms with Enter. The list refreshes on FRIENDLIST_UPDATE.
+-- C_FriendList.AddFriend does nothing from addon code (restricted): Blizzard's "Add Friend"
+-- window opens with the name filled in, the player confirms
 function Friends.Add(name)
     if not name or name == "" then return false end
     if not _G["AddFriendFrame"] then
@@ -274,8 +249,7 @@ function Friends.Menu(e)
     if link and setRef then pcall(setRef, link, "[" .. e.name .. "]", "RightButton", _G["DEFAULT_CHAT_FRAME"]) end
 end
 
--- Watched friends going online: compared with the last list (the first
--- list after login only sets the baseline).
+-- watched friends going online (the first list after login only sets the baseline)
 local wasOnline
 local function CheckOnline()
     local list = Friends.List()
@@ -289,7 +263,6 @@ local function CheckOnline()
     wasOnline = now
 end
 
--- The client's friend events, at most one refresh per frame.
 local pending = false
 local function Changed()
     if pending then return end

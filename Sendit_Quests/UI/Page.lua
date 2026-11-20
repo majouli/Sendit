@@ -1,6 +1,5 @@
 --[[
-  Page: Sendit's settings/search entry: opens the independent quest browser;
-  switches the quest route beside Blizzard's quest log (account: route).
+  Page: settings / search entry - opens the quest browser, switches the quest route (account: route).
 ]]
 local _, ns = ...
 local O, W = Sendit.Options, Sendit.Widgets

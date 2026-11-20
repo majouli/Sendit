@@ -1,19 +1,8 @@
 --[[
-  Widgets: the few controls Sendit Chat needs, in the Theme look.
-
-  Texts (tips, placeholders) may be a locale key ("CLOSE") or a function:
-  they are read when shown, so they follow a language switch.
-  Widgets.Text(v)                key / function / plain string -> text now
-  Widgets.IconButton(parent, kind, tip, onClick)  line icon, hover = accent
-  Widgets.Badge(parent)          unread counter (:Set(n), hidden at 0)
-  Widgets.Slider(parent, label, min, max, step, get, set, fmt)
-  Widgets.Switch(parent, label, get, set)
-  Widgets.Button(parent, text, onClick)
-  Widgets.Input(parent, placeholder, size)  edit box with placeholder
-                                 (:SetPlaceholder(v) changes it)
-  Widgets.Grip(frame, onDone)    resize corner (bottom right)
-  Widgets.Menu(anchor, items)    small context menu; items = { { text, fn } }
-  Widgets.Drag(handle, frame, canMove, onDone)  move a frame by a handle
+  Widgets: the chat's controls in its look; texts may be a locale key or a function (read when shown).
+  Text(v) / IconButton(parent, kind, tip, onClick) / Badge(parent) / Slider(...) / Switch(...) /
+  Button(...) / Input(parent, placeholder, size) / Grip(frame, onDone) / Menu(anchor, items) /
+  Drag(handle, frame, canMove, onDone)
 ]]
 local _, ns = ...
 local T = ns.Theme
@@ -63,7 +52,7 @@ function Widgets.Badge(parent)
     f.text:SetDrawLayer("OVERLAY", 7)
     f.text:SetPoint("CENTER", 0, 0)
     f.text:SetShadowColor(0, 0, 0, 0)
-    -- a gentle pulse while there is something unread
+    -- a gentle pulse while something is unread
     f.anim = f:CreateAnimationGroup()
     f.anim:SetLooping("BOUNCE")
     local pulse = f.anim:CreateAnimation("Alpha")
@@ -159,7 +148,7 @@ function Widgets.Switch(parent, label, get, set)
     return b
 end
 
--- Label over two or more choices side by side; options = { { value, text }, ... }
+-- label over choices side by side
 function Widgets.Segmented(parent, label, options, get, set)
     local f = CreateFrame("Frame", nil, parent)
     f:SetSize(220, 42)
@@ -289,7 +278,7 @@ function Widgets.Drag(handle, frame, canMove, onDone)
     end)
 end
 
--- Bounds for resizable frames (SetResizeBounds in modern clients).
+-- bounds for resizable frames
 function Widgets.Bounds(frame, minW, minH, maxW, maxH)
     frame:SetResizable(true)
     if frame.SetResizeBounds then
@@ -297,9 +286,6 @@ function Widgets.Bounds(frame, minW, minH, maxW, maxH)
     end
 end
 
----------------------------------------------------------------------------
--- Context menu
----------------------------------------------------------------------------
 local menu
 local function BuildMenu()
     menu = T.Panel(UIParent, "FULLSCREEN_DIALOG")

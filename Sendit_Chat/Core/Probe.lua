@@ -1,10 +1,6 @@
 --[[
-  Probe: /chat probe - records the chat input's visibility for 12 seconds
-  (start it, press Enter within 3 s, keep typing). Prints every change of
-  the input's own alpha, its effective alpha and its parent's alpha, plus
-  the facts that decide who could fade it (parent, ignore-parent-alpha,
-  chat style). Saved to SenditDB.account.chat.probe for reading outside the game.
-  Read-only: never changes anything.
+  Probe: /chat probe - records the chat input's alpha and who could fade it for 12 s (read-only),
+  saved to SenditDB.account.chat.probe.
 ]]
 local _, ns = ...
 local Safe = ns.Safe

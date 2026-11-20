@@ -1,15 +1,7 @@
 --[[
-  JournalProbe: /gs probe journal. Does Forever's dungeon journal deliver loot?
-  That decides whether a gear planner can run on Blizzard's own data alone.
-  Walks every tier, instance (dungeons and raids) and encounter through the
-  journal API (EJ_* globals, C_EncounterJournal.GetLootInfoByIndex), loot
-  filter cleared so every class's items count. Loot loads asynchronously
-  (EJ_LOOT_DATA_RECIEVED), so it walks twice, the second time 3 s later, and
-  keeps the larger counts. Result: Sendit_GearScoreDB.probeJournal (per instance:
-  bosses, loot rows, a few sample items) and one chat line.
-  Blizzard's journal UI is not loaded on Forever (its .toc excludes the
-  vanilla game type), so selecting instances here disturbs no Blizzard window.
-  Every call is pcall'd: a missing or refusing API is recorded, not an error.
+  JournalProbe: /gs probe journal - does Forever's dungeon journal deliver loot? Walks every tier,
+  instance and encounter (EJ_*, C_EncounterJournal), loot filter cleared, twice (loot loads
+  asynchronously); stores Sendit_GearScoreDB.probeJournal and prints one line. Every call pcall'd.
 ]]
 local _, ns = ...
 
@@ -45,7 +37,6 @@ local function LootRow(index)
     return nil
 end
 
--- One full walk; returns { instances = {...}, totals }.
 local function Walk()
     local out = { instances = {}, encounters = 0, loot = 0, withItem = 0 }
     local cej = C_EncounterJournal
@@ -92,8 +83,6 @@ local function Walk()
     return out
 end
 
--- Raw answers of the entry points, printed to chat: tiers, the current tier,
--- the first instances with and without initialising, Deadmines by map.
 local function Raw(label, fn, ...)
     if type(fn) ~= "function" then
         ns.Print(label .. ": <missing>")

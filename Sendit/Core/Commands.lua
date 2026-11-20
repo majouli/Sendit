@@ -1,9 +1,6 @@
 --[[
-  Commands: /sendit (no args = the window).
-    /sendit profile [name]   list profiles or switch to one
-    /sendit <page key>       open a page, e.g. /sendit design
-  Modules keep their own slash commands and may add sub commands here
-  through Sendit.commands[name] = function(rest) end.
+  Commands: /sendit (the window), /sendit profile [name], /sendit <page key>;
+  modules add sub commands through Sendit.commands[name] = function(rest) end.
 ]]
 local _, ns = ...
 

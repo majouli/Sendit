@@ -1,23 +1,10 @@
 --[[
-  Effects: green tooltip lines that GetItemStats does not cover - weapon
-  enchants and "chance on hit" damage procs.
-  Contract: Effects.Parse(text) -> effect or nil (not understood -> "not rated")
-    { kind = "stat", key = "sta", value = 5 }        "Verzaubert: +5 Ausdauer"
-    { kind = "weaponDamage", value = 4 }             "Verzaubert: Waffenschaden +4"
-    { kind = "proc", min = 25, max = 35 }            "Trefferchance: ... 25 bis 35 Feuerschaden ..."
-    { kind = "stat", key = "fireDmg", value = 7 }    "Anlegen: Erhöht durch Feuerzauber ... um bis zu 7."
-  School spell damage has no GetItemStats key: the line is matched against
-  the client's own texts (Data/SchoolDamage.lua, generated per language).
-  Stats.lua only asks for lines whose number no item stat explains, so nothing
-  is counted twice.
-
-  Deliberately narrow, because a wrong guess is worse than "not rated":
-    - stat effects only from enchant lines with exactly one number and a known
-      stat name (the client's own localized names first, ns.ParseStatNames second);
-    - equip sentences ("Anlegen: Erhöht ...") stay with GetItemStats;
-    - use effects ("Benutzen:") and set bonuses stay unrated.
-  Line prefixes come from the client's global strings where they exist, so other
-  languages work; the fallbacks (ns.Parse, Locale.lua) follow the client language.
+  Effects: green tooltip lines GetItemStats does not cover - weapon enchants, damage procs, school
+  spell damage (matched against the client's own texts, Data/SchoolDamage.lua).
+  Effects.Parse(text) -> { kind = "stat" | "weaponDamage" | "proc", ... } | nil ("not rated")
+  Narrow on purpose (a wrong guess is worse than "not rated"): enchant lines with one number and a
+  known stat name; equip sentences stay with GetItemStats; use effects and set bonuses stay unrated.
+  Line prefixes from the client's global strings, fallbacks in Locale.lua (client language).
 ]]
 local _, ns = ...
 local L = ns.L

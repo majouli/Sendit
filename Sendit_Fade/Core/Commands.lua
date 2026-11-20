@@ -1,7 +1,6 @@
 --[[
-  Commands: /fa (alias /fade). Without arguments it opens Fade's pages in
-  the Sendit window. Profiles are the suite's (/fa profile = the core's).
-  Each entry of ns.commands takes the rest of the line as one string.
+  Commands: /fa (/fade) - no arguments opens Fade's pages; profiles are the suite's. Each ns.commands
+  entry takes the rest of the line.
 ]]
 local _, ns = ...
 
@@ -15,16 +14,12 @@ local function Changed()
     ns.SettingsChanged()
 end
 
--- Setting commands change the active profile and name it.
 local function Say(text) ns.Print(text .. "  (profile " .. ns.Profiles:Active() .. ")") end
 
 local function FadedCount()
     return (ns.Fader:Count())
 end
 
----------------------------------------------------------------------------
--- Fading
----------------------------------------------------------------------------
 function commands.toggle()
     ns.profile.enabled = not ns.profile.enabled
     if ns.profile.enabled then ns.Fader:Reset() end
@@ -32,7 +27,7 @@ function commands.toggle()
     ns.Print("Fading " .. OnOff(ns.profile.enabled))
 end
 
--- Always restarts the fader, so it also recovers from a paused error.
+-- always restarts the fader (recovers from a paused error)
 function commands.on()
     ns.profile.enabled = true
     ns.Fader:Reset()
@@ -117,9 +112,6 @@ function commands.status()
     commands.exclude("")
 end
 
----------------------------------------------------------------------------
--- Elements and diagnostics
----------------------------------------------------------------------------
 function commands.scan()
     ns.Scanner:PrintSummary(ns:Rescan())
 end
@@ -147,7 +139,6 @@ local function InspectLine(e)
         tostring(Safe.Alpha(s.frame) or "secret"))
 end
 
--- What happens to the element(s) under the mouse.
 function commands.inspect()
     local r = ns.Scanner.last
     if not r then return ns.Print("No scan yet.") end
@@ -216,7 +207,6 @@ function commands.minimap()
     ns.Print("Sendit minimap button " .. OnOff(not m.hide))
 end
 
--- Fade's pages in the Sendit window (toggles when they are already shown).
 function ns.OpenSettings()
     local O = ns.Options
     local cur = O:Current()
@@ -224,7 +214,6 @@ function ns.OpenSettings()
     O:Show("fade.general")
 end
 
--- Quick switch in the Sendit minimap menu.
 Sendit:AddQuickToggle({
     label = function() return ns.L.FADING_QUICK end,
     get = function() return ns.profile and ns.profile.enabled end,
@@ -250,7 +239,6 @@ function commands.cinema(arg)
         .. (ns.Cinema:HasSpoken() and "" or " (Spoken not loaded)"))
 end
 
--- What the client offers to hide the minimap's engine arrows.
 function commands.probe()
     local map = _G.Minimap
     if type(map) ~= "table" then return ns.Print("No Minimap.") end

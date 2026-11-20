@@ -1,18 +1,8 @@
 --[[
-  Locale: one language for the whole suite (Design page, profile.design.language).
-
-  Sendit.Locale.New(tables) -> L     tables[code] = { key = text, ... }
-    L.key is the text of the active language, else English, else the key
-    itself (a missing key shows up in game instead of erroring).
-  Sendit.Locale.Code()               the active code ("auto" resolved to the
-                                     client's language; esMX -> esES, enGB -> enUS)
-  Sendit.Locale.LANGUAGES            { { code, name }, ... } the suite speaks
-  Sendit.Locale.Text(L, key)         a function returning L[key]: page texts
-                                     given as functions follow a switch live
-  Sendit.Locale.Missing(L)           { [code] = { key, ... } } English keys a
-                                     language of LANGUAGES lacks (tests keep every
-                                     module complete in every language)
-  A language switch fires Sendit.SettingsChanged like any setting.
+  Locale: one language for the whole suite (profile.design.language).
+  Sendit.Locale.New(tables) -> L   L.key = active language, else English, else the key
+  Sendit.Locale.Code()             "auto" resolved (esMX -> esES, enGB -> enUS)
+  Sendit.Locale.LANGUAGES / Text(L, key) (a function: follows a switch) / Missing(L)
 ]]
 local _, ns = ...
 
@@ -71,7 +61,6 @@ function Locale.Text(L, key)
     return function() return L[key] end
 end
 
--- Resolve a text that may be given as a function (page titles, rows).
 function Locale.Resolve(text)
     if type(text) == "function" then return text() end
     return text

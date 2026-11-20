@@ -1,30 +1,9 @@
 --[[
-  FriendsPanel: the friends list docked beside the messenger window.
-
-  A child of the messenger: it opens, closes, fades and moves with it, and
-  hides while the messenger is minimized. Docked to the right edge, or to the
-  left when the screen has no room there. Open or closed is remembered
-  (ns.acct.friendsOpen); the setting friendsPanel switches the feature off.
-
-  Layout: header "Friends (online/total)", a filter field, then the rows -
-  online friends first (in World of Warcraft, then elsewhere), the offline ones
-  under a folded "Offline (n)" line. A row: round avatar (initial, class colour;
-  cyan for Battle.net) with a status dot (online, away, busy, offline), the
-  name with the character and level, below the zone or "Blizzard App".
-  Left click whispers (the messenger opens on that friend; Battle.net friends
-  in WoW: their character with the setting friendsCharClick). Right click opens
-  our menu: Battle.net message / whisper the character, invite, pin to the top
-  (favorites: accent bar, listed first), a notice when they come online (the
-  chat's bubble, Toasts.Notice), edit note (shown under offline friends), copy
-  name, archive the conversation, and Blizzard's own menu for the rest (ignore,
-  report, remove). Marks on a row: accent bar = pinned, bell = online notice
-  on, note sheet = has a note. Data: Core/Friends.lua.
-
-  Opened from: the messenger header (people icon) and the main chat header
-  (people icon, left of the messages icon - opens the messenger too).
-
-  FriendsPanel.Toggle() / Open() / Close() / IsOpen() / FromChat()
-  FriendsPanel.Sync()   show or hide it as the messenger and the setting say
+  FriendsPanel: the friends list docked beside the messenger (right, or left without room); moves, fades
+  and hides with it; open state in ns.acct.friendsOpen, off with friendsPanel. Rows: avatar with status
+  dot, name, character and level, zone; left click whispers, right click our menu (message, invite, pin,
+  online notice, note, copy name, archive, Blizzard's menu). Data: Core/Friends.lua.
+  FriendsPanel.Toggle() / Open() / Close() / IsOpen() / FromChat() / Sync()
 ]]
 local _, ns = ...
 local T, Widgets, F = ns.Theme, ns.Widgets, ns.Friends
@@ -44,9 +23,6 @@ local function Wanted() return ns.acct and ns.acct.friendsOpen ~= false end
 
 local function Messenger() return ns.Messenger and ns.Messenger.Frame() end
 
----------------------------------------------------------------------------
--- Rows
----------------------------------------------------------------------------
 local STATUS = { online = "online", afk = "away", dnd = "busy", offline = "ink" }
 
 local function Status(e)
@@ -97,7 +73,7 @@ local function NewRow()
     T.Own(r.name)
     r.name:SetPoint("TOPLEFT", r.avatar, "TOPRIGHT", 9, -1)
     r.name:SetPoint("RIGHT", r, "RIGHT", -10, 0)
-    -- marks on the right: what you set up for this friend (notice, note)
+    -- marks: online notice, note
     r.bell = CreateFrame("Frame", nil, r)
     r.bell:SetSize(16, 16)
     r.bell:SetPoint("RIGHT", -6, 0)
@@ -157,9 +133,6 @@ local function FillRow(r, e)
     r.pin:SetVertexColor(T.RGB("accent"))
 end
 
----------------------------------------------------------------------------
--- Menu
----------------------------------------------------------------------------
 StaticPopupDialogs["SENDIT_FRIEND_NOTE"] = {
     text = "%s", button1 = _G["OKAY"] or "OK", button2 = _G["CANCEL"] or "Cancel",
     hasEditBox = 1, maxLetters = 127,
@@ -222,9 +195,6 @@ function FriendsPanel.Menu(anchor, e)
     return items
 end
 
----------------------------------------------------------------------------
--- Refresh
----------------------------------------------------------------------------
 local function Matches(e)
     if filter == "" then return true end
     local hay = (e.name .. " " .. (e.character or "") .. " " .. (e.tag or "") .. " " .. (e.area or "")):lower()
@@ -280,9 +250,6 @@ function FriendsPanel.Refresh()
     emptyText:SetShown(n - shownOffline == 0 and #offline == 0)
 end
 
----------------------------------------------------------------------------
--- Window
----------------------------------------------------------------------------
 local function Dock()
     local m = Messenger()
     if not (panel and m) then return end
@@ -352,7 +319,7 @@ local function Build()
         FriendsPanel.Refresh()
     end)
 
-    -- the messenger can move: re-dock now and then while shown
+    -- the messenger can move: re-dock now and then
     local acc = 0
     panel:SetScript("OnUpdate", function(_, elapsed)
         acc = acc + elapsed
@@ -406,8 +373,7 @@ function FriendsPanel.Toggle()
     if FriendsPanel.IsOpen() then FriendsPanel.Close() else FriendsPanel.Open() end
 end
 
--- The people icon on the main chat: the messenger with the list; a second
--- click while both are open folds the list away again.
+-- the people icon on the main chat: messenger with the list; a second click folds the list
 function FriendsPanel.FromChat()
     local m = Messenger()
     if m and m:IsShown() and FriendsPanel.IsOpen() then
@@ -422,7 +388,7 @@ end
 FriendsPanel.Enabled = Enabled
 FriendsPanel._Rows = function() return rows end
 
--- A watched friend came online: the chat's bubble, click whispers them.
+-- a watched friend came online: the chat's bubble, a click whispers
 local function CameOnline(e)
     if not (ns.WhisperToasts and ns.WhisperToasts.Notice) then return end
     local where = e.inWoW and e.character and (e.character .. (e.area and (" - " .. e.area) or "")) or L.FRIENDS_APP

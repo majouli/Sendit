@@ -1,17 +1,7 @@
 --[[
-  Theme: the chat's drawing helpers on top of Sendit's theme (one paint
-  registry, one live repaint for the whole suite).
-
-  Chat roles ("bg", "header", "bubbleIn", ...) are the core palette's chat
-  sub-palette (Sendit.Theme, roles "chat.<name>"): dusk and light give the
-  dark modern chat, wood the azeroth chat. Ornaments (gold borders, banner,
-  seal) are Sendit.Theme.Decorate and follow the core frame style.
-
-  Theme.Color(obj, role, alpha) paints and remembers; objects coloured by
-  hand later (class colours) call Theme.Own(obj) first so a repaint leaves
-  them alone. Never SetAlpha on a painted texture: in this client that is
-  the same value as SetVertexColor's alpha. Pass the alpha to Theme.Tex /
-  Theme.Color.
+  Theme: the chat's drawing helpers on Sendit's theme - chat roles are the palette's "chat.<name>"
+  sub-palette, ornaments are Sendit.Theme.Decorate. Theme.Color(obj, role, alpha) paints and remembers;
+  Theme.Own(obj) for objects coloured by hand. Never SetAlpha a painted texture.
 ]]
 local _, ns = ...
 
@@ -26,7 +16,6 @@ Theme.FONT = STANDARD_TEXT_FONT
 Theme.STYLES = { "modern", "azeroth" }
 Theme.style, Theme.palette = "modern", "dusk"
 
--- The active chat colours (read-only view of the core palette's chat part).
 Theme.C = setmetatable({}, { __index = function(_, k) return Core.Current().chat[k] end })
 
 local iconOwners = setmetatable({}, { __mode = "k" })
@@ -37,15 +26,14 @@ function Theme.RGB(name)
     return r, g, b
 end
 
--- The chat font of the client (its roman file).
+-- the client's chat font (roman file)
 function Theme.ChatFont()
     local f = _G["ChatFontNormal"]
     local file = f and f.GetFont and f:GetFont()
     return file or STANDARD_TEXT_FONT
 end
 
--- Font for every alphabet (the core's families): chat = the client's chat
--- font with ChatFontNormal's alphabets, else the UI font.
+-- font for every alphabet: the chat font with ChatFontNormal's alphabets, else the UI font
 function Theme.SetFont(obj, size, chat)
     if chat then
         Core.SetFont(obj, size, Theme.ChatFont(), _G["ChatFontNormal"])
@@ -54,9 +42,7 @@ function Theme.SetFont(obj, size, chat)
     end
 end
 
----------------------------------------------------------------------------
 -- Painting with remembered roles (the core's registry)
----------------------------------------------------------------------------
 function Theme.Color(obj, color, alpha)
     Core.Paint(obj, "chat." .. color, alpha or 1)
 end
@@ -70,7 +56,7 @@ function Theme.Tex(parent, layer, color, alpha, sub)
     return t
 end
 
--- chat: true = the chat font (bubbles, previews, inputs), else the UI font.
+-- chat = the chat font, else the UI font
 function Theme.Text(parent, size, color, layer, chat)
     local fs = parent:CreateFontString(nil, layer or "OVERLAY")
     Theme.SetFont(fs, size or 12, chat)
@@ -81,9 +67,7 @@ function Theme.Text(parent, size, color, layer, chat)
     return fs
 end
 
--- 1px (or px) frame line around a frame; Theme.SetBorder changes it later.
--- Hidden on decorated frames in the azeroth style (their ornament is the
--- border; px sets the ornament's width there).
+-- 1px (or px) frame line; hidden on decorated frames in the azeroth style
 function Theme.Border(frame, px, color, alpha)
     local b = {
         top = Theme.Tex(frame, "BORDER", color or "ink", alpha or 0.10),
@@ -102,8 +86,7 @@ function Theme.Border(frame, px, color, alpha)
     return b
 end
 
--- In the azeroth style px sets the gold edge instead (1 = the standard
--- width, each pixel more 3 px of edge, 0 = none).
+-- azeroth: px sets the gold edge (1 = standard, +3 px per pixel, 0 = none)
 local function EdgeSize(px) return px > 0 and 14 + (px - 1) * 3 or 0 end
 
 function Theme.SetBorder(frame, px)
@@ -118,8 +101,7 @@ function Theme.SetBorder(frame, px)
     b.left:SetWidth(px); b.right:SetWidth(px)
 end
 
--- A floating panel: ground, hairline border, mouse enabled.
--- name only where the client needs one (UISpecialFrames: Escape closes).
+-- named only where the client needs it (UISpecialFrames)
 function Theme.Panel(parent, strata, name)
     local f = CreateFrame("Frame", name, parent or UIParent)
     f:SetFrameStrata(strata or "MEDIUM")
@@ -131,7 +113,6 @@ function Theme.Panel(parent, strata, name)
     return f
 end
 
--- Ornaments: the core's, in the chat's gold and font.
 function Theme.Decorate(frame, kind, opts)
     opts = opts or {}
     return Core.Decorate(frame, kind, {
@@ -141,9 +122,7 @@ function Theme.Decorate(frame, kind, opts)
     })
 end
 
--- The core's design: palette (colours) and frame style (ornaments). The core
--- repaints painted objects and ornaments itself; the chat redraws its line
--- icons and hairlines.
+-- the core repaints painted objects and ornaments; the chat redraws its icons and hairlines
 function Theme.SetLook(paletteKey, style)
     Theme.palette = paletteKey
     Theme.style = style == "azeroth" and "azeroth" or "modern"
@@ -151,9 +130,6 @@ function Theme.SetLook(paletteKey, style)
     for frame in pairs(bordered) do Theme.SetBorder(frame, frame.senditBorderPx or 1) end
 end
 
----------------------------------------------------------------------------
--- People
----------------------------------------------------------------------------
 function Theme.ClassRGB(class)
     local colors = _G["RAID_CLASS_COLORS"]
     local c = class and colors and colors[class]
@@ -161,13 +137,13 @@ function Theme.ClassRGB(class)
     return Theme.RGB("text")
 end
 
--- First character of a name (UTF-8 aware), upper-cased when ASCII.
+-- first character (UTF-8 aware), upper-cased when ASCII
 function Theme.Initial(name)
     local ch = type(name) == "string" and name:match("^[%z\1-\127\194-\244][\128-\191]*") or "?"
     return ch:upper()
 end
 
--- Round avatar with the partner's initial in their class colour.
+-- round avatar: the initial in the class colour
 function Theme.Avatar(parent, size)
     local a = CreateFrame("Frame", nil, parent)
     a:SetSize(size, size)
@@ -191,9 +167,6 @@ function Theme.Avatar(parent, size)
     return a
 end
 
----------------------------------------------------------------------------
--- Line icons (drawn in a 16x16 box centred on the owner)
----------------------------------------------------------------------------
 local ICONS = {
     close = { { -4, 4, 4, -4 }, { -4, -4, 4, 4 } },
     minimize = { { -5, -3, 5, -3 } },
@@ -215,7 +188,7 @@ local ICONS = {
              { -4, 2, -2, 5 }, { 4, 2, 2, 5 }, { -2, 5, 2, 5 }, { -1, -5, 1, -5 } },
     note = { { -4, 6, 4, 6 }, { 4, 6, 4, -6 }, { 4, -6, -4, -6 }, { -4, -6, -4, 6 },
              { -2, 3, 2, 3 }, { -2, 0, 2, 0 }, { -2, -3, 1, -3 } },
-    -- two people: a head (diamond) and shoulders in front, one behind to the right
+    -- two people: one in front, one behind to the right
     friends = { { -4, 4, -2, 6 }, { -2, 6, 0, 4 }, { 0, 4, -2, 2 }, { -2, 2, -4, 4 },
                 { -6, -5, -6, -2 }, { -6, -2, -4, 0 }, { -4, 0, 0, 0 }, { 0, 0, 2, -2 }, { 2, -2, 2, -5 },
                 { 3, 5, 5, 3 }, { 5, 3, 3, 1 }, { 3, -1, 6, -1 }, { 6, -1, 7, -3 }, { 7, -3, 7, -5 } },

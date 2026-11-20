@@ -1,24 +1,11 @@
 --[[
-  Guide: "follow the chain" - every step the data knows, in chain order, as a
-  list like a leveling guide: pick up, objective, turn in. Where one place
-  ends a quest and starts the next (same spot), that is one step. Left out:
-  done quests, steps another race / class cannot take (Track.Allowed),
-  quests locked by a done alternative (exclusiveTo), an objective step whose
-  place the data does not know.
-
-  With Shortest Path Forever (optional, its public API
-  ShortestPathForever.API.NavigateRoute): the steps with a known place go to
-  it as one itinerary - pick-up stops carry questID, turn-ins handins - and
-  it plans the way (flight points, boats, portals). Taking, finishing or
-  turning in a quest changes the steps: the new itinerary goes to it again
-  (only when it differs - the same owner's resubmission keeps its journey).
-  Without it: Sendit's map pin on the first step; quest events move it on.
-
-  Guide.Steps(id) -> { { place = { UiMapID, x, y } | nil, title,
-                          actions = { { kind = "g"|"t"|"f", quest = id }, ... } }, ... }
-  Guide.Start(id) -> notice text      Guide.Stop()
-  Guide.Following() -> the followed chain's quest ID or nil
-  Guide.UsesSPF() -> true while Shortest Path Forever leads the way
+  Guide: follow a chain - every known step in chain order: pick up, objective, turn in; one place
+  that ends a quest and starts the next is one step. Left out: done quests, other race / class,
+  quests locked by a done alternative, objectives without a known place.
+  With Shortest Path Forever: the steps go to ShortestPathForever.API.NavigateRoute as one itinerary
+  (questID / handins), re-sent when quest events change them. Without it: our map pin, moved on.
+  Guide.Steps(id) -> { { place, title, actions = { { kind, quest } } } }
+  Guide.Start(id) -> notice text;  Guide.Stop();  Guide.Following();  Guide.UsesSPF()
 ]]
 local _, ns = ...
 local Guide = {}
@@ -89,7 +76,6 @@ local function SPF()
     return type(api) == "table" and type(api.NavigateRoute) == "function" and api or nil
 end
 
--- What an itinerary is, to tell a changed one from the same one.
 local function Signature(stops)
     local parts = {}
     for _, s in ipairs(stops) do
@@ -116,8 +102,7 @@ local function Stops(steps)
     return stops
 end
 
--- Sendit's own guidance: the pin on the first step that has a place; the map opens
--- only when the player asked (Start), never when quest events move the pin on.
+-- our pin on the first step with a place; the map opens only on Start
 local function PinFirst(steps, open)
     for _, step in ipairs(steps) do
         if step.place then
@@ -163,7 +148,6 @@ end
 function Guide.Following() return following end
 function Guide.UsesSPF() return viaSPF == true end
 
--- Without Shortest Path Forever our pin moves on as quests are taken, done and turned in.
 local events = CreateFrame("Frame")
 for _, e in ipairs({ "QUEST_ACCEPTED", "QUEST_TURNED_IN", "QUEST_LOG_UPDATE" }) do events:RegisterEvent(e) end
 events:SetScript("OnEvent", function()

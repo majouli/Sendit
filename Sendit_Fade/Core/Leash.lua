@@ -1,26 +1,18 @@
 --[[
-  Leash: has the player walked away from where something started?
-
-  Leash:Start() remembers the spot; Leash:Exceeded() is true once the player
-  is more than RANGE yards from it. UnitPosition is not readable everywhere
-  (instances, maybe secret): then walking counts instead, MOVE_TIME seconds
-  of continuous movement (about RANGE yards at run speed). Turning or
-  jumping in place never counts.
-
-  Used by Cinema: the film of an NPC's line ends when the player leaves.
+  Leash: has the player walked away? Start() remembers the spot; Exceeded() once more than RANGE yards
+  away - or, where UnitPosition is unreadable, after MOVE_TIME s of continuous walking.
 ]]
 local _, ns = ...
 
 local Leash = {}
 ns.Leash = Leash
 
-local RANGE = 12      -- yards: well past the interaction range of an NPC
+local RANGE = 12  -- yards: well past an NPC's interaction range
 local MOVE_TIME = 2   -- seconds of walking when the position is unreadable
 
 local origin = nil       -- { x, y, map, at } (x nil: position unreadable); nil = off
 local movingSince = nil  -- GetTime() when the current walk began
 
--- -> x, y, instance map, or nil when unreadable.
 local function Position()
     local fn = _G.UnitPosition
     if type(fn) ~= "function" then return nil end
@@ -49,7 +41,6 @@ function Leash:Exceeded()
             return dx * dx + dy * dy > RANGE * RANGE
         end
     end
-    -- Only walking since Start counts: the player may have been moving before.
     if not movingSince then return false end
     return GetTime() - math.max(movingSince, origin.at) > MOVE_TIME
 end

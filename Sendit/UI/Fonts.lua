@@ -1,16 +1,8 @@
 --[[
-  Fonts: font families for every alphabet. A font FILE covers one alphabet:
-  the roman Friz of a deDE client has no Cyrillic, so "Русский" showed as
-  boxes. Blizzard's font objects are families (one file per alphabet);
-  Fonts.Set builds the same for our sizes: roman = the given file, the other
-  alphabets = the files of the base object's own family (fallback: the
-  Cyrillic Friz every client ships). Without CreateFontFamily it falls back
-  to the plain file. Families are cached per file, size and base.
-
-  Fonts.Set(obj, size, file, base)   obj: FontString, EditBox or
-      ScrollingMessageFrame; file: roman font file (default the game font);
-      base: font object for the other alphabets (default GameFontNormal)
-  Theme.SetFont is the same function (the way modules reach it).
+  Fonts: font families for every alphabet (a font file covers one: a deDE client's roman Friz has no
+  Cyrillic). Fonts.Set builds a family per size: roman = the given file, the other alphabets from the
+  base object's family; without CreateFontFamily the plain file. Cached per file, size and base.
+  Fonts.Set(obj, size, file, base) - also Theme.SetFont
 ]]
 local _, ns = ...
 

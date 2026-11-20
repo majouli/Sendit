@@ -1,34 +1,10 @@
 --[[
-  ChatWindow: Sendit Chat's chat windows.
-
-  Window 1 is the main window: it holds every mirrored Blizzard chat window
-  (tab) that is not detached. A tab is detached into its own window by
-  dragging it out of its window or with its right-click menu; dropping it on
-  another window (or "Back to the main window") moves it there. Each tab has
-  one ScrollingMessageFrame (the widget Blizzard renders chat with: wrapping,
-  scrolling, secret text) that moves between windows.
-
-  Windows are anchored BOTTOMLEFT, so minimizing collapses a window onto its
-  header at the bottom edge, where the chat input sits.
-
-  Saved in ns.acct.windows[id] = { x, y, w, h, minimized, selected, tabs }
-  (tabs only for detached windows; the main window takes the rest).
-
-  Own tabs (Core/Tabs.lua) sit beside Blizzard's: "+" after the main
-  window's tabs opens the tab editor (UI/TabEditor.lua); a main-window line
-  an own tab takes goes there instead of General.
-
-  Lines arrive through UI/ChatLines.lua (Windows.Arrived marks them). The
-  combat log tab leaves room at the top for its filter strip
-  (UI/CombatFilters.lua).
-
-  Windows.Main()             the main window object
-  Windows.Refresh()          re-assign tabs (Blizzard windows changed)
-  Windows.Apply()            look: font, background, border, lock
-  Windows.Reset()            default positions
-  Windows.Arrived(index, quiet)  a line came into that tab (UI/ChatLines.lua)
-  Windows.DeleteTab(index)   remove an own tab (Core/Tabs.lua)
-  Windows.CombatLogBody()    the combat log tab's body while it is shown
+  ChatWindow: the chat windows. Window 1 holds every mirrored Blizzard window (tab) not detached; a tab
+  is detached by dragging it out or its menu, dropped back the same way. Each tab has one
+  ScrollingMessageFrame. Anchored BOTTOMLEFT (minimizing folds onto the header). Own tabs beside
+  Blizzard's ("+" opens the editor). ns.acct.windows[id] = { x, y, w, h, minimized, selected, tabs }.
+  Windows.Main() / Refresh() / Apply() / Reset() / Arrived(index, quiet) / DeleteTab(index)
+  Windows.CombatLogBody()
 ]]
 local _, ns = ...
 local T, Widgets, Safe, Links, Mirror = ns.Theme, ns.Widgets, ns.Safe, ns.Links, ns.Mirror
@@ -43,10 +19,10 @@ local PAD = 8
 local MAIN_DEFAULT = { x = 20, y = 52, w = 460, h = 210 }
 local COMBAT_STRIP = 26  -- room for the combat log's filter strip
 
-local smfs = {}     -- [index] = ScrollingMessageFrame
-local unread = {}   -- [index] = true while a line waits unseen
-local owner = {}    -- [index] = window that shows the tab
-local list = {}     -- [id] = window
+local smfs = {}  -- [index] = ScrollingMessageFrame
+local unread = {}  -- [index] = true while a line waits unseen
+local owner = {}  -- [index] = window that shows the tab
+local list = {}
 local holder = CreateFrame("Frame")
 holder:Hide()
 
@@ -58,9 +34,6 @@ end
 
 local function Locked() return ns.db.locked end
 
----------------------------------------------------------------------------
--- Message frames
----------------------------------------------------------------------------
 local function UpdateDown(win)
     if not win or not win.down then return end
     local smf = smfs[win.selected]
@@ -107,10 +80,7 @@ local function SMF(index)
 end
 Windows._SMF = SMF
 
----------------------------------------------------------------------------
--- A line arrived in a tab (UI/ChatLines.lua): unread dot when it is not
--- the shown tab (unless quiet: the combat log), else the scroll-down button.
----------------------------------------------------------------------------
+-- a line arrived: unread dot unless it is the shown tab (quiet: none), else the scroll button
 function Windows.Arrived(index, quiet)
     local win = owner[index]
     if not quiet and (not win or win.selected ~= index or Saved(win.id).minimized) then
@@ -121,9 +91,6 @@ function Windows.Arrived(index, quiet)
     end
 end
 
----------------------------------------------------------------------------
--- Window object
----------------------------------------------------------------------------
 local Win = {}
 Win.__index = Win
 
@@ -289,8 +256,7 @@ end
 
 local function NewWindow(id)
     local self = setmetatable({ id = id, tabs = {}, tabButtons = {} }, Win)
-    -- "Chat" in the name: UI faders that sort elements by name (Fade)
-    -- recognise the window as a chat, e.g. to show it when the group writes.
+    -- "Chat" in the name: Fade recognises the window as a chat
     local f = CreateFrame("Frame", "SenditChatWindow" .. id, UIParent)
     self.frame = f
     f:SetFrameStrata("LOW")
@@ -313,7 +279,6 @@ local function NewWindow(id)
     divider:SetPoint("BOTTOMLEFT"); divider:SetPoint("BOTTOMRIGHT"); divider:SetHeight(1)
     Widgets.Drag(header, f, function() return not Locked() end, function() self:SavePosition() end)
 
-    -- Right side controls, right to left.
     local x = -4
     local function Add(btn)
         btn:SetPoint("RIGHT", header, "RIGHT", x, 0)
@@ -329,7 +294,7 @@ local function NewWindow(id)
             ns.db.locked = not ns.db.locked
             ns.Changed()
         end))
-    -- the shown tab's text in the copy box (also in the tab's right-click menu)
+    -- the shown tab's text in the copy box
     self.copyBtn = Add(Widgets.IconButton(header, "copy", "COPY_TEXT",
         function() if self.selected then ns.ChatLines.Copy(self.selected) end end))
     if id == 1 then
@@ -370,9 +335,6 @@ local function NewWindow(id)
     return self
 end
 
----------------------------------------------------------------------------
--- Tab assignment
----------------------------------------------------------------------------
 function Windows.Main() return list[1] end
 function Windows.Get(id) return list[id] end
 function Windows.All() return list end
@@ -381,7 +343,6 @@ function Windows.Refresh()
     local valid, order = {}, Tabs.All()
     for _, i in ipairs(order) do valid[i] = true end
     local taken = {}
-    -- Detached windows keep their tabs while those Blizzard windows exist.
     for id, d in pairs(ns.acct.windows) do
         if id ~= 1 and type(d) == "table" then
             local keep = {}
@@ -395,7 +356,6 @@ function Windows.Refresh()
     local mainTabs = {}
     for _, i in ipairs(order) do if not taken[i] then mainTabs[#mainTabs + 1] = i end end
     if #mainTabs == 0 and #order > 0 then
-        -- The main window never ends up empty: take the first tab back.
         local first = order[1]
         for id, d in pairs(ns.acct.windows) do
             if id ~= 1 and type(d) == "table" then
@@ -505,7 +465,6 @@ function Windows.Reset()
     if ns.Input then ns.Input.Anchor() end
 end
 
--- The combat log tab's body while that tab is the one shown, else nil.
 function Windows.CombatLogBody()
     for index, w in pairs(owner) do
         if Mirror.IsCombatLog(index) and w.selected == index and not Saved(w.id).minimized
@@ -518,14 +477,14 @@ end
 
 function Windows.UpdateBadge()
     local main = list[1]
-    -- number of conversations with unread messages (not of messages)
+    -- conversations with unread messages
     if main and main.badge and ns.Whispers then main.badge:Set(ns.Whispers.UnreadChats()) end
 end
 
 ns.OnReady(function()
     local d = ns.Design()
     T.SetLook(d.palette, d.style)
-    Windows.Refresh()        -- before UI/ChatLines.lua replays and sinks lines
+    Windows.Refresh()
     ns.OnChanged(function()
         local d = ns.Design()
         if T.style ~= d.style or T.palette ~= d.palette then T.SetLook(d.palette, d.style) end

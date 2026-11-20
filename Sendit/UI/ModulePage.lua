@@ -1,19 +1,7 @@
 --[[
-  ModulePage: switching whole modules on and off (Core/Suite.lua).
-
-  The sidebar shows a small switch on every module entry - also on modules
-  that are off, which stay listed (dimmed) so they can come back. A click
-  switches the addon in the game's addon list (all characters) and asks to
-  reload the UI now or later: only a reload really stops or starts its code.
-  Until then the footer says a reload is pending.
-
-  A module that is off has no pages of its own (its addon is not loaded);
-  its entry opens this page instead: title and description from its .toc,
-  the switch, and whether a reload is pending.
-
-  ModulePage.Switch(button, addonName) -> switch on a sidebar entry
-  ModulePage.Show(addonName)           the page of a module that is off
-  ModulePage.Showing(addonName)        that page is on screen for it
+  ModulePage: modules on / off - a switch on every sidebar entry (off modules stay listed, dimmed);
+  a switch asks to reload now or later. An off module's entry opens this page (title, notes, switch).
+  ModulePage.Switch(button, addonName) / Show(addonName) / Showing(addonName)
 ]]
 local _, ns = ...
 
@@ -23,7 +11,7 @@ local function Tx(key) return ns.Locale.Text(L, key) end
 local ModulePage = {}
 ns.ModulePage = ModulePage
 
-local shown  -- addon name the page is about
+local shown
 
 StaticPopupDialogs["SENDIT_MODULE_RELOAD"] = {
     text = "%s",

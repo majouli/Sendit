@@ -1,14 +1,7 @@
 --[[
-  RewardView: the reward section of an opened timeline step. One block:
-  "You receive" (guaranteed items), "Choose one" (pick-one items, marked),
-  then XP and money on one line. Tiles carry the big icon, the item name in
-  its quality colour and the amount; hovering anywhere on a tile shows the
-  item's full tooltip. Values
-  the client has not sent stay "not known yet" - never 0.
-
-  RewardView.Create(parent) -> frame
-  RewardView.Render(frame, width, data) -> height (0 when there is nothing)
-    data = Rewards.Get(questID)
+  RewardView: the reward section of an opened step - "You receive", "Choose one", then XP and
+  money; whole tiles show the item tooltip; unsent values stay "not known yet".
+  RewardView.Create(parent) -> frame;  RewardView.Render(frame, width, data) -> height
 ]]
 local _, ns = ...
 local T, S, L = Sendit.Theme, ns.Style, ns.L
@@ -27,7 +20,7 @@ local function Tile(f, i)
     if t then return t end
     t = CreateFrame("Button", nil, f)
     t:SetHeight(TILE_H)
-    -- The whole tile (icon and name) shows the item: hovering the name did nothing (seen in game).
+    -- the whole tile shows the item tooltip
     t:SetScript("OnEnter", function(self) self.icon:GetScript("OnEnter")(self.icon) end)
     t:SetScript("OnLeave", function() GameTooltip:Hide() end)
     t.bg = T.Fill(t, "selected", "BACKGROUND")

@@ -1,8 +1,6 @@
 --[[
-  GroupPicker: a searchable, scrolling place/category menu behind a header
-  chip (Sendit.Widgets.Chip). The shared menu widget cannot fit all reference zones
-  on screen, so this owns a bounded pool of visible choices. Click outside or
-  Escape closes the menu.
+  GroupPicker: a searchable, scrolling place / category menu behind a header chip (the shared menu
+  cannot fit every zone). Click outside or Escape closes it.
 ]]
 local _, ns = ...
 local T, W, DB, L = Sendit.Theme, Sendit.Widgets, ns.Database, ns.L

@@ -1,21 +1,8 @@
 --[[
-  Input: the main chat input is Blizzard's own chat edit box, placed under
-  Sendit Chat's main window and restyled.
-
-  Why Blizzard's box: it does slash commands, chat types, channels, the
-  reply target and its history, and its sends stay secure. In a chat
-  lockdown (boss fights) the client refuses sends from addon code, so an
-  own main input would silently swallow messages there.
-
-  Only plain setters are used on the box (points, font, size, region alpha)
-  plus new regions of our own. No script hooks and no field writes: those
-  taint the box's chat type and every later send.
-
-  Input.Anchor()   re-place and restyle (main window moved, resized, font)
-  Input.OnWhisperMode(fn)   fn(target, bn) when the box switches to a whisper
-                   WHILE the user types in it ("/w Bob " -> WHISPER, Bob).
-                   Read from the box's attributes in the same poll; opening
-                   the box already whispering (R, sticky whisper) is no switch.
+  Input: the main chat input is Blizzard's own edit box (slash commands, chat types, reply, history,
+  secure sends - in lockdown addon sends are refused), placed under our main window and restyled with
+  plain setters and our own regions only. No script hooks, no field writes (they taint its sends).
+  Input.Anchor();  Input.OnWhisperMode(fn(target, bn)) when the box switches to a whisper while typing
 ]]
 local _, ns = ...
 local T, Mirror, Safe = ns.Theme, ns.Mirror, ns.Safe
@@ -23,8 +10,8 @@ local T, Mirror, Safe = ns.Theme, ns.Mirror, ns.Safe
 local Input = {}
 ns.Input = Input
 
-local ours = {}     -- eb -> { textures we created }
-local ourSet = {}   -- texture -> true
+local ours = {}  -- eb -> { textures we created }
+local ourSet = {}  -- texture -> true
 
 local function Regions(eb)
     local ok, regions = pcall(function() return { eb:GetRegions() } end)
@@ -50,11 +37,9 @@ local function Skin(eb)
     ourSet[bg], ourSet[line] = true, true
 end
 
--- Our ground shows only while the box is in use. In the "im" chat style
--- Blizzard keeps an idle box shown at low alpha; without this our ground
--- would stay behind as a dim bar. Polled from our own frame: no hooks on
--- the Blizzard box (they taint its sends).
-local shownState = {}  -- eb -> true / false as last applied
+-- our ground shows only while the box is in use ("im" style keeps an idle box at low alpha);
+-- polled from our own frame, no hooks on Blizzard's box
+local shownState = {}  -- eb -> last applied shown state
 local function UpdateGround(eb)
     local skin = ours[eb]
     if not skin then return end

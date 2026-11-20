@@ -1,10 +1,6 @@
 --[[
-  Mentions: your first name in someone's line (group, guild, public chat)
-  turns gold, the tab gets a dot (ChatWindow) and a soft sound plays - at
-  most once every PING_GAP seconds, so a busy channel does not ring on.
-  Finding and colouring the name is Links.Mention (outside links only).
-
-  Mentions.Apply(text) -> text, mentioned   (setting mentions; sound included)
+  Mentions: your first name in group / guild / public chat turns gold, the tab gets a dot, a soft sound
+  plays (at most every PING_GAP s).  Mentions.Apply(text) -> text, mentioned
 ]]
 local _, ns = ...
 local Safe, Links = ns.Safe, ns.Links

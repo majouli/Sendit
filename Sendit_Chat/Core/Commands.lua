@@ -1,15 +1,6 @@
 --[[
-  Commands: /chat
-    (no args)  messages list
-    settings   the Chat page of the Sendit window
-    reset      default window positions
-    probe      records the chat input's visibility for a few seconds
-    trace      records how the next 150 lines are sorted into tabs
-               (SavedVariables, read after /reload; diagnostic, English)
-    ids        chat types that share one type id, and the kind each line
-               type resolves to (diagnostic, English)
-    off | on   turn Sendit Chat off / on (takes effect after /reload; the client
-               does not let addons reload the UI)
+  Commands: /chat - messages list; settings, reset (window positions), probe, trace, ids (diagnostics,
+  English), off | on (after /reload).
 ]]
 local _, ns = ...
 local L = ns.L

@@ -1,9 +1,6 @@
 --[[
-  DungeonRow: one dungeon in the list - a thumbnail of its loading screen, its name, a level pill (green when it
-  fits your level), "Raid · 40 players · 8 bosses", and while the gear boost
-  runs the best upgrade ("+1,8 % Damage · 3 upgrades") with a gold edge.
-  The picked dungeon is painted as selected.
-
+  DungeonRow: one dungeon in the list - loading-screen thumbnail, name, level pill (green when it
+  fits), kind / size / bosses, and while the boost runs its best upgrade with a gold edge.
   DungeonRow.Create(parent, onPick) -> row;  DungeonRow.Paint(row, d, width, selected)
 ]]
 local _, ns = ...
@@ -21,7 +18,6 @@ function Row.Create(parent, onPick)
     r.edge:SetPoint("TOPLEFT")
     r.edge:SetPoint("BOTTOMLEFT")
     r.edge:SetWidth(3)
-    -- the dungeon's loading screen as a small square (UI/Art.lua)
     r.thumb = r:CreateTexture(nil, "ARTWORK")
     r.thumb:SetSize(S.size.row - 16, S.size.row - 16)
     r.thumb:SetPoint("LEFT", 10, 0)

@@ -1,6 +1,5 @@
 --[[
-  Locale: UI text in Sendit's five languages. Dungeon and boss names come
-  from the Forever client's own tables (Data/Names.lua), never from here.
+  Locale: UI texts in five languages (dungeon and boss names come from the client).
 ]]
 local _, ns = ...
 local keys = {

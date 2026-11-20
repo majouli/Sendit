@@ -1,23 +1,9 @@
 --[[
-  Suite: the Sendit module addons as the game sees them, and their on/off
-  switch (the sidebar of the window).
-
-  Switching a module off disables its addon in the game's addon list, for
-  all characters (C_AddOns.DisableAddOn with no character, like the addon
-  list's "All"), so after a reload none of its code runs: no hooks, no
-  frames, no tooltips. That is the only way to switch everything of a module
-  off reliably; a module's own settings stay as they are for when it comes
-  back. On takes a reload too. The core itself is not listed.
-
-  Suite.Addons()            { { name, title, notes, icon, loaded, enabled, module }, ... }
-                            every Sendit_* addon, in the client's order
-  Suite.Get(name)
-  Suite.SetEnabled(name, on)
-  Suite.ReloadNeeded()      true when a switch differs from what is loaded
-  Suite.ModuleAddon(module) the addon of a registered module
-  Sendit.OnModuleSwitch(fn) fn(addonName, on) right after a switch: a module
-                            hides what it shows at once (Fade: fading and its
-                            icon), the reload then stops its code
+  Suite: the Sendit module addons and their on/off switch. Off = C_AddOns.DisableAddOn for all
+  characters, so after a reload none of its code runs; settings stay. The core is not listed.
+  Suite.Addons() -> { { name, title, notes, icon, loaded, enabled, module } }
+  Suite.Get(name) / SetEnabled(name, on) / ReloadNeeded() / ModuleAddon(module)
+  Sendit.OnModuleSwitch(fn(addon, on))   a module hides what it shows at once
 ]]
 local _, ns = ...
 
@@ -29,8 +15,7 @@ local function API() return _G["C_AddOns"] end
 local switchListeners = {}
 function ns.OnModuleSwitch(fn) switchListeners[#switchListeners + 1] = fn end
 
--- A module names its addon (RegisterModule{ addon = ... }); else by key
--- ("fade" -> "Sendit_Fade").
+-- a module names its addon (RegisterModule{ addon }); else by key ("fade" -> "Sendit_Fade")
 local function Matches(module, name)
     if module.addon then return module.addon == name end
     return name:lower() == ("sendit_" .. tostring(module.key)):lower()

@@ -1,6 +1,5 @@
 --[[
-  Highlight: outlines one element on screen with its label (Elements list
-  hover, overlay jump). While shown, the element is kept visible.
+  Highlight: outlines one element with its label (list hover, overlay jump); keeps it visible.
 ]]
 local _, ns = ...
 
@@ -53,7 +52,6 @@ function Highlight:Hide()
     box:Hide()
 end
 
--- Show for a few seconds (after a jump to an element).
 function Highlight:Flash(e, seconds)
     self:Show(e)
     C_Timer.After(seconds or 2, function()

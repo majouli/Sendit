@@ -1,13 +1,7 @@
 --[[
-  LootIcon: one boss drop - the client's icon in a quality coloured frame, its
-  drop chance below, the full item tooltip on hover. While the gear boost runs,
-  an item that counts glows gold and its tooltip names the gain (the same
-  number as Upgrade's item tooltip). Items the client has not cached yet show
-  a dim placeholder and are requested; GET_ITEM_INFO_RECEIVED repaints the
-  window (UI/Window.lua).
-
-  LootIcon.Create(parent) -> button;  button:Set(itemID, chance)
-  LootIcon.WIDTH / HEIGHT   the space one icon takes (icon + chance line)
+  LootIcon: one boss drop - icon in a quality frame, drop chance below, item tooltip; counts glow
+  gold while the boost runs. Uncached items show a placeholder and are requested.
+  LootIcon.Create(parent) -> button;  button:Set(itemID, chance);  LootIcon.WIDTH / HEIGHT
 ]]
 local _, ns = ...
 local T, S = Sendit.Theme, ns.Style
@@ -37,7 +31,7 @@ end
 Icon.Info = Info
 
 local function Chance(v)
-    if v <= 0 then return "?" end  -- collected by hand without a chance
+    if v <= 0 then return "?" end
     if v >= 10 then return tostring(math.floor(v + 0.5)) .. "%" end
     return S.Pct(v) .. "%"
 end

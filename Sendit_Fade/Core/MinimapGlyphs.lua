@@ -1,25 +1,9 @@
 --[[
-  MinimapGlyphs: a Specials handler that removes what the engine draws on
-  the minimap (player arrow, direction arrows, blips, quest area ring) while
-  the minimap is fully faded.
-
-  These ignore alpha (verified on Forever). What does not work, verified:
-  texture setters (missing, or addon textures render green) and shrinking
-  the Minimap (EllesmereUI measures the zone name inside it on every zone
-  change; at 1 % scale the measure explodes and its bar stays huge; other
-  addons resize on OnSizeChanged). What works: hiding the Minimap. Its size,
-  scale and fonts stay as they are, and no installed addon reacts to it.
-
-  - Only a Minimap that is not protected is hidden (Show/Hide of protected
-    frames is off limits). A protected one only gets its icons shrunk
-    (SetIconScale; Edit Mode's Icon Size comes back, else 1).
-  - It is shown again only if it is still hidden. Code that shows it
-    meanwhile makes it "appear" for the Fader: visible for the fade delay,
-    then faded and hidden again.
-  - A hidden frame has no area: HoverRect gives the rect from before, so
-    hovering where the minimap was still wakes it.
-  - After Show a zoom step there and back forces the map to redraw (after
-    an earlier size change the terrain stayed blank until the zoom changed).
+  MinimapGlyphs: a Specials handler for what the engine draws on the minimap (player arrow, blips,
+  quest ring), which ignores alpha. Verified on Forever: texture setters fail and shrinking breaks
+  addons (EllesmereUI measures the zone name in it) - hiding the Minimap works. Only an unprotected
+  Minimap is hidden (a protected one gets its icons shrunk), shown again only if still hidden, with
+  the old rect for hover and a zoom step to force a redraw. Never change its size or scale.
 ]]
 local _, ns = ...
 
@@ -30,10 +14,10 @@ local TINY = 0.01
 local MinimapGlyphs = { name = "Minimap" }
 ns.MinimapGlyphs = MinimapGlyphs
 
-local mode = nil       -- nil | "hidden" | "icons" while entered
-local savedRect = nil  -- { l, b, w, h } before hiding
+local mode = nil
+local savedRect = nil
 
--- Edit Mode's Icon Size as a scale, or 1.
+-- Edit Mode's Icon Size as a scale, or 1
 local function ConfiguredIconScale()
     -- string keys: not in this client's API annotations
     local c = _G["MinimapCluster"]
@@ -102,8 +86,6 @@ function MinimapGlyphs:HoverRect()
     return savedRect
 end
 
--- -> sorted names of the Minimap's methods about arrows, blips and icons
--- (/fa probe: what the client offers).
 function MinimapGlyphs:Methods()
     local map = self:Frame()
     local mt = map and getmetatable(map)

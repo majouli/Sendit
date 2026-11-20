@@ -1,27 +1,14 @@
 --[[
-  Boost: "gear boost" for dungeons - the same algorithm as the Quests journal.
-  Every item the bosses of the dungeons you can enter now drop is rated once
-  by Sendit Upgrade (Sendit.ItemRatings -> Sendit.Service "upgrade": the
-  character recalculated with the item, for your spec). An item counts when
-  your whole character gets at least Min % stronger - the same "+1,0 % Damage"
-  as Upgrade's item tooltip; a dungeon counts with its best item and is sorted
-  by it. Range (Boost.Ahead): standard = what you can do now - dungeons you
-  can enter, items you can wear (like Quests). A preview of N levels above
-  also takes dungeons and items up to level + N: such an item is rated for
-  your character as it is now (what it would give if you could wear it) and
-  carries its level (rating.gate) so the window says "from level X".
-  It runs only when the player starts it; gear, level or spec changes mark it
-  stale (never a restart by itself - that looked like an endless loop in game).
-
+  Boost: gear boost for dungeons, the Quests algorithm - every boss drop of the dungeons in range
+  rated once by Sendit Upgrade (Sendit.ItemRatings -> Service "upgrade"); an item counts at Min %
+  for the whole character, a dungeon with its best item. Ahead = N levels above: such items are rated
+  as if wearable and carry their level (gate). Runs only when started; changes mark it stale.
   Boost.Available() / Start() / Stop() / Active() / Stale()
-  Boost.Min() / SetMin(pct)   threshold (account layout: boostMin), default 1
-  Boost.Ahead() / SetAhead(n) range: levels above yours (account layout: boostAhead),
-                              0 = standard; changing it rates again while it runs
-  Boost.Get(map) -> { pct, label, secondaryPct, secondaryLabel, itemID, boss, count, gate } or nil
-                              (best item, count = items over the threshold; cached)
-  Boost.Item(itemID) -> the item's rating when it counts, else nil
-  Boost.Progress() -> rated, total, running, missing
-  Boost.Report() -> lines (English diagnostics, /sd boost)
+  Boost.Min() / SetMin(pct)      account: boostMin
+  Boost.Ahead() / SetAhead(n)    account: boostAhead
+  Boost.Get(map) -> { pct, label, secondaryPct, secondaryLabel, itemID, boss, count, gate } | nil
+  Boost.Item(itemID) -> the rating when it counts
+  Boost.Progress() -> rated, total, running, missing;  Boost.Report() -> lines (/sd boost)
 ]]
 local _, ns = ...
 local Boost = {}
@@ -29,7 +16,7 @@ ns.Boost = Boost
 local Ratings = Sendit.ItemRatings.New()
 ns.ItemRatings = Ratings
 local active, stale, subscribed = false, false, false
-local candidates = {}   -- [map] = { { itemID, boss }, ... } of the dungeons enterable now
+local candidates = {}
 local memo = {}
 
 local function Service() return Sendit.Service("upgrade") end
@@ -58,7 +45,6 @@ function Boost.SetAhead(n)
     if active then Boost.Start() end
 end
 
--- The highest level the range reaches (nil: the client keeps the level secret).
 local function Reach()
     local level = ns.Database.Level()
     return level and level + Boost.Ahead()
@@ -110,7 +96,6 @@ function Boost.Stop()
     Boost.Invalidate()
 end
 
--- The item's rating within the range (also under the threshold), or nil.
 local function InRange(itemID)
     local r = Ratings.Get(itemID)
     if not r and Boost.Ahead() > 0 then
@@ -157,7 +142,6 @@ end
 
 function Boost.Progress() return Ratings.Progress() end
 
--- Why the list looks as it does: dungeons and items with their outcome.
 function Boost.Report()
     local out = {}
     local function Add(fmt, ...) out[#out + 1] = fmt:format(...) end

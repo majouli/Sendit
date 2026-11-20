@@ -1,11 +1,7 @@
 --[[
-  Tab: the side tab on the talent window's right edge that folds the route
-  timeline in and out. Blizzard's own LargeSideTabButtonTemplate (the icon
-  tabs beside the character and inspect windows), checked while the timeline
-  is open, with a tooltip. Our own frame (a named child of our overlay: skins
-  that sweep unnamed frames leave it alone); never one of Blizzard's tabs.
-  If the template is missing, a plain Sendit tab with a chevron stands in.
-  Contract: Tab.Create(overlay, onClick) -> tab;  tab:SetOpen(open)
+  Tab: side tab on the talent window's edge that folds the timeline in and out
+  (LargeSideTabButtonTemplate; a plain Sendit tab if the template is missing). Named frame.
+  Tab.Create(overlay, onClick) -> tab;  tab:SetOpen(open)
 ]]
 local _, ns = ...
 local L = ns.L

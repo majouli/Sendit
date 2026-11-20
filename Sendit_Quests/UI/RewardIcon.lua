@@ -1,14 +1,7 @@
 --[[
-  RewardIcon: one item as a square button - the client's icon, a quality
-  coloured frame, the amount, the full item tooltip on hover. Items the
-  client has not cached yet show a dim placeholder and are requested; the
-  next GET_ITEM_INFO_RECEIVED repaints the window (Rewards.lua).
-  A choice item carries a small corner mark, so "you get" and "pick one"
-  never look alike.
-
-  RewardIcon.Create(parent, size) -> button
-  button:Set(itemID, amount, choice)
-  RewardIcon.Info(itemID) -> name, icon, quality (nil while not cached)
+  RewardIcon: one item as a square button - icon, quality frame, amount, tooltip; a corner mark for
+  pick-one items; uncached items show a placeholder and are requested.
+  RewardIcon.Create(parent, size) -> button;  button:Set(itemID, amount, choice);  RewardIcon.Info(itemID)
 ]]
 local _, ns = ...
 local T = Sendit.Theme

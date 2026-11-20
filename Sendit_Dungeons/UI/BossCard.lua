@@ -1,19 +1,14 @@
 --[[
-  BossCard: one boss of the picked dungeon - its round portrait (hover: the
-  3D model, UI/Art.lua), its number in the dungeon's order, its name, and what it drops as a grid of loot icons (drop chance
-  below each; upgrades glow gold while the gear boost runs). A boss with
-  an upgrade gets a gold edge and its best gain right of the name. Bosses
-  without loot data say so ("loot unknown"), bosses that drop nothing of
-  their own say "world drops only" - never an empty card.
-
-  BossCard.Create(parent) -> card
-  card:Set(index, boss, width) -> height the card needs at that width
+  BossCard: one boss of the picked dungeon - round portrait (hover: 3D model), order number, name,
+  its drops as a loot grid; upgrades glow gold, the best gain shows by the name. "Loot unknown" /
+  "world drops only" instead of an empty card.
+  BossCard.Create(parent) -> card;  card:Set(index, boss, width) -> height
 ]]
 local _, ns = ...
 local T, S, DB = Sendit.Theme, ns.Style, ns.Database
 local Card = {}
 ns.BossCard = Card
-local HEAD = 58     -- portrait row; the loot grid starts below it
+local HEAD = 58
 local PORTRAIT = 42
 
 function Card.Create(parent)
@@ -24,7 +19,6 @@ function Card.Create(parent)
     c.edge:SetPoint("TOPLEFT")
     c.edge:SetPoint("BOTTOMLEFT")
     c.edge:SetWidth(3)
-    -- the boss's round portrait; hover: the 3D model (UI/Art.lua)
     local face = CreateFrame("Frame", nil, c)
     face:SetSize(PORTRAIT, PORTRAIT)
     face:SetPoint("TOPLEFT", S.space.card + 2, -8)

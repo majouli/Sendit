@@ -1,33 +1,11 @@
 --[[
-  CombatFilters: the combat log tab's filter strip in Sendit's look - one
-  chip per Blizzard quick filter ("My actions", "What happened to me", own
-  filters with a quick button), the current one underlined, and a gear for
-  Blizzard's combat log menu (settings, filters).
-
-  Why secure buttons: Blizzard's combat log filters may only change through
-  Blizzard's own code started by the player's click - ApplyFilterSettings
-  calls the protected ClearEventFilters (from addon code:
-  ADDON_ACTION_FORBIDDEN, seen in game 0.13.34). A chip is a
-  SecureActionButton that presses Blizzard's own quick button (type
-  "click"); the gear runs "/click ChatFrame<n>Tab RightButton" (type
-  "macro"): Blizzard's tab menu with its chat settings. Sendit never calls
-  Blizzard's combat log functions or writes its data; it only reads the
-  quick buttons' names and the current filter to draw the chips.
-
-  Combat lockdown: secure buttons cannot be shown, hidden, moved or changed
-  in combat, and a protected frame anchored into Sendit's windows would lock
-  those too. So the strip is a UIParent child placed by coordinates over the
-  combat log tab's top (ChatWindow leaves the room), laid out out of combat;
-  in combat it only fades and catches up when combat ends.
-  Alpha: Fade owns the strip's alpha (a top-level element; "Chat" in its
-  name, so Fade treats it like the chat windows); the combat fade goes on
-  the inner content frame, which Fade never touches.
-  Chip texts: Blizzard's default filter names in the suite language
-  (ns.DefaultName), the player's own names as they are.
-  Blizzard makes quick buttons only for filters that fit its own (hidden)
-  bar; the others are in the gear's menu.
-
-  CombatFilters.Tick()   one update pass (driven every 0.2 s; tests call it)
+  CombatFilters: the combat log tab's filter strip - one chip per Blizzard quick filter and a gear for
+  Blizzard's combat log menu. Filters may only change through Blizzard's code started by a click
+  (ApplyFilterSettings calls the protected ClearEventFilters): a chip is a SecureActionButton that
+  clicks Blizzard's quick button, the gear runs "/click ChatFrame<n>Tab RightButton". Sendit only
+  reads names and the current filter. Secure buttons cannot change in combat: the strip is a UIParent
+  child placed by coordinates, laid out out of combat. Fade owns its alpha ("Chat" in the name).
+  CombatFilters.Tick()
 ]]
 local _, ns = ...
 local T, Safe, Mirror = ns.Theme, ns.Safe, ns.Mirror
@@ -43,7 +21,7 @@ local layout, geometry  -- signatures of what is drawn
 
 local function QuickButton(i) return _G["CombatLogQuickButtonFrameButton" .. i] end
 
--- Blizzard's quick buttons that are in use: { { button, id, name }, ... }
+-- Blizzard's quick buttons in use: { { button, id, name } }
 local function Filters()
     local out = {}
     for i = 1, 20 do
@@ -124,7 +102,6 @@ local function Build()
     strip:Hide()
 end
 
--- Colours only: allowed in combat too.
 local function Paint()
     local current = CurrentFilter()
     for _, c in ipairs(chips) do
@@ -134,7 +111,6 @@ local function Paint()
     end
 end
 
--- Chips, attributes, widths: out of combat only.
 local function Layout(filters)
     local x = 0
     for k, f in ipairs(filters) do

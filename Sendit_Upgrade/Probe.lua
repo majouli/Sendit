@@ -1,18 +1,12 @@
 --[[
-  Probe: finds out what this client really offers before the stat model is
-  built on it. For every character API the model could use it records whether
-  it exists, errors, returns secret values, or returns plain numbers; for the
-  equipped items and any linked items it records C_Item.GetItemStats and the
-  raw tooltip lines (with colours: green "Equip:" lines matter).
-  Result goes to Sendit_UpgradeDB.probe (written to disk on /reload or logout)
-  so it can be read without copying chat.
-  Secret values are never stored: they cannot be serialized or compared.
+  Probe: /gc probe - what this client offers: every character API the model could use (exists, errors,
+  secret, plain), GetItemStats and raw tooltip lines of worn and linked items; in
+  Sendit_UpgradeDB.probe. Secret values are never stored.
 ]]
 local _, ns = ...
 
 local MAX_RETURNS = 12
 
--- Plain copy of a value for the saved variables.
 local function Plain(v)
     if issecretvalue and issecretvalue(v) then return "<secret>" end
     local t = type(v)
@@ -34,7 +28,6 @@ local function Call(name, ...)
     return { status = secret and "secret" or "ok", values = values }
 end
 
--- name, args...: every API the character model might read.
 local API_CALLS = {
     { "UnitLevel", "player" }, { "UnitClass", "player" }, { "UnitRace", "player" },
     { "UnitStat", "player", 1 }, { "UnitStat", "player", 2 }, { "UnitStat", "player", 3 },

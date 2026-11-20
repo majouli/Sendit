@@ -1,14 +1,6 @@
 --[[
-  ErrorPage: the "Errors" page of the window (/sendit errors), the viewer of
-  Core/ErrorLog.lua - like BugSack for the suite.
-
-    Debug mode     the switch (account-wide): only while it is on, errors of
-                   Sendit addons are logged
-    the log        one row per distinct error, newest first: count, last
-                   time, addon, first line of the message; the picked one is
-                   shown below in full (selectable: Ctrl+A, Ctrl+C) with Copy
-                   and Clear
-  Follows new errors live while the page is open.
+  ErrorPage: the Errors page (/sendit errors) - debug switch, one row per error (count, time, addon,
+  message), the picked one in full (selectable) with Copy and Clear; follows new errors live.
 ]]
 local _, ns = ...
 
@@ -18,9 +10,9 @@ local function Tx(key) return ns.Locale.Text(L, key) end
 local LIST_ROWS, ROW_H = 6, 26
 local DETAIL_H = 190
 
-local picked  -- the entry shown below the list
+local picked
 
--- "Sendit_Chat/UI/Messenger.lua:120: attempt ..." -> "Chat", the rest.
+-- "Sendit_Chat/UI/Messenger.lua:120: attempt ..." -> "Chat", the rest
 local function Split(message)
     local addon = message:match("Sendit_(%w+)") or (message:find("Sendit") and "Sendit") or "?"
     local text = message:gsub("^.-AddOns[/\\]", ""):gsub("\n.*", "")
@@ -50,7 +42,6 @@ end
 local function BuildLog(parent)
     local block = CreateFrame("Frame", nil, parent)
 
-    -- list
     local list = CreateFrame("Frame", nil, block)
     list:SetPoint("TOPLEFT")
     list:SetPoint("RIGHT", block, "RIGHT", 0, 0)
@@ -62,7 +53,6 @@ local function BuildLog(parent)
     local rows, offset = {}, 0
     list:EnableMouseWheel(true)
 
-    -- details: the whole report, selectable
     local details = CreateFrame("Frame", nil, block)
     details:SetPoint("TOPLEFT", list, "BOTTOMLEFT", 0, -10)
     details:SetPoint("RIGHT", block, "RIGHT", 0, 0)
@@ -151,7 +141,7 @@ Options:Register({
             end))
         Lay:EndSection()
         local log = BuildLog(c)
-        Lay:Place(log, log:GetHeight())  -- refreshed with the page
+        Lay:Place(log, log:GetHeight())
         ErrorLog.OnChange(function()
             if Options:Current() and Options:Current().key == "errors" then log:Refresh() end
         end)

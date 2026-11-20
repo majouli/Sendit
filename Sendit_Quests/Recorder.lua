@@ -1,22 +1,11 @@
 --[[
-  Recorder: writes down what the game client shows of a quest, so the data
-  grows with every quest you see - and the next build ships it for everyone
-  (tools/gen_quests.py reads it from the SavedVariables).
-
-  When a quest giver offers a quest (QUEST_DETAIL) and when you turn one in
-  (QUEST_COMPLETE): the reward items (guaranteed and pick-one, with amounts),
-  XP and money (with your level - both scale with it), the NPC / object you
-  talk to and where you stand (map, x, y - next to them), the quest's title.
-  Only plain values are kept: a secret or missing value is left out.
-
-  Recorded rewards and places are used at once: rewards replace the bundled
-  ones (they are what the server sent), places fill the bundled gaps.
-
-  SavedVariables SenditQuestsSeen (account) = { version = 1, quests = {
-    [questID] = { title, level, items = { { itemId, amount } }, choice = {...},
-                  xp, money, giver = { kind, id, map, x, y }, turnIn = {...}, seen } } }
-  Recorder.Record(kind)   "offer" | "complete" (the events call it; tests too)
-  Recorder.Apply()        recorded rewards / places into ns.quests / ns.places
+  Recorder: writes down what the client shows of a quest - on QUEST_DETAIL (offer) and QUEST_COMPLETE
+  (turn-in): reward items with amounts, XP and money with your level, the NPC / object and where you
+  stand, the title. Only plain values. Used at once (rewards replace, places fill gaps) and merged into
+  the data by tools/gen_quests.py.
+  SenditQuestsSeen (account) = { version, quests = { [id] = { title, level, items, choice, xp, money,
+                                 giver = { kind, id, map, x, y }, turnIn, seen } } }
+  Recorder.Record(kind) "offer" | "complete";  Recorder.Apply(only)
 ]]
 local _, ns = ...
 local Recorder = {}
@@ -48,7 +37,7 @@ local function Items(kind, count)
     return out
 end
 
--- Who you talk to: "Creature-0-...-<id>-..." / "GameObject-0-...-<id>-...".
+-- "Creature-0-...-<id>-..." / "GameObject-0-...-<id>-..."
 local function Partner()
     local guid = Call(UnitGUID, "npc")
     if not (Plain(guid) and type(guid) == "string") then return nil end
@@ -99,7 +88,6 @@ function Recorder.Record(kind)
     return true
 end
 
--- What was seen goes into the data in memory: rewards replace, places fill gaps.
 function Recorder.Apply(only)
     local quests = Store()
     for id, rec in pairs(quests) do

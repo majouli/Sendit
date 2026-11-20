@@ -1,11 +1,7 @@
 --[[
-  Rewards: fixed and pick-one items from the pinned reference (the client's
-  own item lists replace them only for quests in the quest log - its calls
-  answer 0 for any other quest), XP and money from the client's cached quest
-  data; until the client answers, the reference's fixed XP figure (xpAmount)
-  stands in for XP. Missing values stay unknown.
-  Aggregation deduplicates quests/items but preserves choice groups; branched
-  components are explicitly catalogs, not an achievable payout promise.
+  Rewards: items from the data; the client's own lists replace them only for quests in the log (it
+  answers 0 for others). XP and money from the client, the data's XP figure until it answers.
+  Unknown stays unknown. Chain totals deduplicate quests and items, keep choice groups.
 ]]
 local _, ns = ...
 local R = {}
@@ -15,8 +11,7 @@ local Read = ns.Read
 local function LiveItems(id, countFn, infoFn)
     local count = Read(countFn, id)
     if type(count) ~= "number" or type(infoFn) ~= "function" then return nil end
-    -- Quest text can be cached before rewards. An unconfirmed zero must not
-    -- erase the bundled items while the separate reward query is pending.
+    -- quest text can be cached before rewards: an unconfirmed 0 must not erase the data's items
     if count == 0 and Read(_G["HaveQuestRewardData"], id) ~= true then return nil end
     local items = {}
     for index = 1, count do
@@ -36,9 +31,7 @@ function R.Get(id)
         if type(xp) ~= "number" or xp < 0 then xp = nil end
         money = Read(_G["GetQuestLogRewardMoney"], id)
         if type(money) ~= "number" or money < 0 then money = nil end
-        -- The client's item reward calls only know quests in the quest log; for
-        -- any other quest they answer 0 (seen in game: quest 1053 lost its four
-        -- choices). Outside the log the bundled reference stays.
+        -- the client's reward calls only know quests in the log (others answer 0)
         if ns.Progress.Log()[id] then
             items = LiveItems(id, _G["GetNumQuestLogRewards"], _G["GetQuestLogRewardInfo"])
             choices = LiveItems(id, _G["GetNumQuestLogChoices"], _G["GetQuestLogChoiceInfo"])

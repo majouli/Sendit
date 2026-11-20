@@ -1,23 +1,12 @@
 --[[
-  Compare: rates an item by equipping it virtually and recomputing the
-  character with the spec's metrics.
-  Contract:
-    Compare.Evaluate(link) -> result or nil (not an equippable item)
-      result.status: "ok" | "equipped" | "unusable" | "noCompare" | "loading"
-                     | "unsupported" | "nodata"
-      result.primary / result.secondary: { label, unit, pct, abs }
-        abs = metric change; pct = change of the whole character in percent
-        ("+5%" = levels 5% faster). Not Pawn's slot share: players read the
-        number as "how much better am I", so that is what it says.
-        result.primary.slotPct: the gain against what the worn item itself is
-        worth (character with that slot empty) - "45 % better than your
-        chest"; nil for an empty slot (result.primary.slotEmpty) or a worn
-        item that adds nothing to the metric.
-      result.breakdown: { { name, value }, ... } primary change per stat
-      result.levelGate (required level above the player's), result.item
-    Compare.Pair(linkA, linkB) -> both items rated in the same slot (window)
-    Compare.Context() -> ctx: gear, snapshot, spec (cached for one second)
-  Rings and trinkets: the better of the two possible replacements counts.
+  Compare: rates an item by equipping it virtually and recomputing the character for the spec.
+  Compare.Evaluate(link) -> result | nil
+    status "ok" | "equipped" | "unusable" | "noCompare" | "loading" | "unsupported" | "nodata"
+    primary / secondary = { label, unit, pct, abs } - pct = change of the whole character;
+    primary.slotPct = gain against what the worn item itself is worth (nil: empty slot / adds nothing)
+    breakdown = { { name, value } }, levelGate, item
+  Compare.Pair(linkA, linkB) -> both rated in one slot;  Compare.Context() -> ctx (cached 1 s)
+  Rings and trinkets: the better of the two replacements counts.
 ]]
 local _, ns = ...
 
@@ -52,7 +41,6 @@ local function DualWields()
     return DUAL_WIELD[class] == true
 end
 
--- The slots an item can go into for this character.
 function Compare.SlotsFor(item)
     local loc = item and item.equipLoc or ""
     if loc == "INVTYPE_WEAPON" and DualWields() then return { 16, 17 } end
@@ -61,7 +49,6 @@ end
 local EPSILON = 1e-6
 
 local cached, cachedAt
-
 
 function Compare.Invalidate()
     cached = nil
@@ -80,7 +67,6 @@ local function ReadGear()
     return gear
 end
 
--- ctx or nil, reason
 function Compare.Context()
     local now = GetTime()
     if cached and cachedAt and now - cachedAt < 1 then return cached end
@@ -172,15 +158,12 @@ local function Breakdown(ctx, delta, weapon)
     return out
 end
 
--- Rates `item` in one slot.
 local function RateInSlot(ctx, item, slot)
     local now = { primary = ctx.spec.primary.fn(ctx.s), secondary = ctx.spec.secondary.fn(ctx.s) }
     local new, delta, weapon = Metrics(ctx, item, slot)
     if not new then return nil end
     local primary = Change(ctx.spec.primary, now.primary, new.primary)
-    -- What the worn item itself is worth: the character with that slot empty.
-    -- slotPct = the new item against it ("45 % better than your chest");
-    -- nil when the slot is empty or its item adds nothing.
+    -- what the worn item is worth: the character with that slot empty
     local empty = Metrics(ctx, nil, slot)
     local worth = empty and now.primary - empty.primary or 0
     primary.slotPct = (ctx.gear[slot] and worth > EPSILON) and primary.abs / worth * 100 or nil
@@ -232,7 +215,6 @@ function Compare.Evaluate(link)
     return best
 end
 
--- Both items rated in the slot of A (ring/trinket: first slot).
 function Compare.Pair(linkA, linkB)
     local a, b = ns.Stats.Read(linkA), ns.Stats.Read(linkB)
     if not (a and b) then return { status = "loading" } end

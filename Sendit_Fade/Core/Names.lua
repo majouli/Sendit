@@ -1,18 +1,8 @@
 --[[
-  Names: a readable label and a reload-stable key for every element.
-
-  Label, first hit wins:
-    1. the frame name, cleaned: loaded addon prefix and short tags dropped,
-       trailing "Frame" dropped, words split
-       ("EllesmereUIQTBackground" -> "QT Background", "ECL_GCDRoot" -> "GCD Root")
-    2. anonymous frames: the cleaned name of the first named descendant
-    3. the first short text shown inside ("Quests")
-    4. the kind ("Bar")
-
-  Key (exclusions are saved under it) never uses addresses or shown text:
-    named      the frame name
-    anonymous  owner / named descendant or kind / strata / anchor,
-               plus "#n" if several share that signature (creation order)
+  Names: a label and a reload-stable key for every element.
+  Label (first hit): the cleaned frame name (addon prefix, tags, "Frame" dropped, words split), else the
+  first named descendant's, else the first short text inside, else the kind.
+  Key: the frame name, else owner / named descendant or kind / strata / anchor (+ "#n" in creation order).
 ]]
 local _, ns = ...
 
@@ -30,9 +20,7 @@ Names.KIND_LABELS = {
     bags = "Bags", unitframe = "Unit frame", bar = "Bar", menu = "Menu", other = "Element",
 }
 
--- Display name of a kind in the suite's language. KIND_LABELS stays English:
--- it feeds labels that exclusion patterns match, which must not change with
--- the language.
+-- kind names in the suite's language; KIND_LABELS stays English (exclusion patterns match it)
 function Names.KindLabel(kind)
     return Names.KIND_LABELS[kind] and ns.L["KIND_" .. kind] or kind
 end
@@ -55,7 +43,6 @@ function Names.Clean(name)
     return s
 end
 
--- "EllesmereUIActionBars" -> "Ellesmere UI Action Bars"
 function Names.Pretty(name)
     return SplitWords(name)
 end
@@ -65,11 +52,9 @@ local function ShortText(region)
     local t = Safe.Call(region, "GetText")
     if type(t) ~= "string" then return nil end
     t = strtrim((t:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")))
-    -- skip counters, timers and sentences
     if #t >= 3 and #t <= MAX_TEXT and not t:find("^[%d%s%.,:/%%%-+kKmM]+$") then return t end
 end
 
--- Breadth-first: first named descendant and first short text.
 local function Inspect(root)
     local named, text
     local queue, head = { root }, 1
@@ -92,7 +77,6 @@ local function Inspect(root)
     return named, text
 end
 
--- "BOTTOM>UIParent:BOTTOM": stable across reloads, distinct for most siblings.
 local function AnchorSignature(f)
     local ok, point, rel, relPoint = pcall(f.GetPoint, f, 1)
     if not ok then return "free" end
@@ -107,7 +91,6 @@ local function AnchorSignature(f)
     return point .. ">" .. relName .. ":" .. tostring(relPoint)
 end
 
--- Sets e.label and e.signature (the key without its "#n").
 function Names.Describe(e, f)
     if not e.anonymous then
         e.label = Names.Clean(e.name)
@@ -119,7 +102,6 @@ function Names.Describe(e, f)
     e.signature = table.concat({ e.owner, named or e.kind, e.strata, AnchorSignature(f) }, "/")
 end
 
--- Elements in creation order -> unique keys.
 function Names.AssignKeys(elements)
     local seen = {}
     for _, e in ipairs(elements) do

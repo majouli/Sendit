@@ -1,7 +1,5 @@
 --[[
-  Strings: every visible text of the core (window, Design, Profiles, minimap
-  button, /sendit) in the suite's five languages. English is the fallback for
-  a missing key. The tagline is the brand claim and stays English everywhere.
+  Strings: the core's texts in five languages (English fallback); the tagline stays English.
 ]]
 local _, ns = ...
 

@@ -1,25 +1,11 @@
 --[[
-  TalentView: the inspected player's talents as the talent window draws them.
-  A side tab under Blizzard's inspect tabs (Character, PvP, Guild) opens a
-  window docked to the right of the inspect window.
-  Geometry is Blizzard's own (Forever UI source, branch "forever" of
-  Gethe/wow-ui-source): the Camelot talent frame is 1218 x 708; a node's
-  CENTER sits at ButtonsParent TOPLEFT + (posX / 10 - panX, -posY / 10 + panY)
-  with pan = basePanOffset (49, 24) minus the class panOffset (60, 31)
-  (TalentButtonUtil.TranslateNodePositionsToAnchorPositions, ClassTalentsFrame
-  UpdateClassVisuals); the class background spans y 77..672, the tree headers
-  sit at BackgroundBorder TOPLEFT + (140 + 400 * (i - 1), -100). We draw on a
-  canvas of exactly that size, scaled to the window, so the tree looks like
-  the game's; a size grip resizes it (aspect kept, height saved), the title
-  bar moves it (position saved, right click docks it again). Art: Blizzard's atlases (square nodes, arrow lines, header ring).
-  Both frames carry a global name: skins sweep unnamed frames out of the
-  inspect window (EllesmereUI hides them), and an addon-set name marks a
-  frame as foreign to such sweeps (EllesmereUI WSkin.IsForeignFrame).
-  We never call Blizzard's talent frame (opening it from addon code taints
-  its talent commits) and never hook Blizzard's tabs: our tab and window are
-  our own frames, parented to the inspect window so they hide with it.
-  Data: the inspect config (-1) while the inspect window shows its unit;
-  redrawn on every Inspect change for that player (talents can lag).
+  TalentView: the inspected player's talents drawn like the talent window, in a window docked right
+  of the inspect window, opened by our own side tab. Geometry is Blizzard's (Camelot frame 1218 x 708,
+  node centre = ButtonsParent TOPLEFT + (posX / 10 - panX, -posY / 10 + panY), pan = (49, 24) -
+  class pan (60, 31); headers at (140 + 400 * (i - 1), -100)) on a canvas scaled to the window;
+  resizable (aspect kept), movable, right click docks it again.
+  Named frames (skins sweep unnamed ones). Never opens Blizzard's talent frame (taints its commits),
+  never hooks its tabs. Data: inspect config -1, redrawn on every Inspect change.
 ]]
 local _, ns = ...
 local L = ns.L
@@ -28,12 +14,10 @@ local Talents, Inspect = ns.Talents, ns.Inspect
 local TalentView = {}
 ns.TalentView = TalentView
 
--- Blizzard's Camelot talent frame geometry (see header).
 local FRAME_W = 1218
 local PAN_X, PAN_Y = 49 - 60, 24 - 31
 local BG_TOP, BG_BOTTOM = 77, 672
 local HEADER_X, HEADER_STEP, HEADER_Y = 140 - 2, 400, -(BG_TOP - 4) - 100
--- The part of the canvas we show: the class background with its border.
 local VIEW_TOP, VIEW_BOTTOM = BG_TOP - 4, BG_BOTTOM + 4
 
 local TAB_ICON = "Interface\\Icons\\Ability_Marksmanship"
@@ -50,7 +34,6 @@ local function InspectUnit()
     return frame and frame.unit
 end
 
--- Square node (Camelot talents are SpendSquare nodes).
 local function NodeButton(canvas, i)
     local b = buttons[i]
     if b then return b end
@@ -80,7 +63,6 @@ local function NodeButton(canvas, i)
     return b
 end
 
--- Tree header like ClassTalentTreeHeaderTemplate: icon in a ring, points box, name.
 local function Header(canvas, i)
     local h = headers[i]
     if h then return h end
@@ -124,7 +106,6 @@ local function HideAll()
     for _, h in ipairs(headers) do h:Hide() end
 end
 
--- Blizzard's anchor offsets of a node on the canvas.
 local function X(n) return n.x - PAN_X end
 local function Y(n) return -n.y + PAN_Y end
 
@@ -190,7 +171,6 @@ function TalentView.Refresh()
     Draw(valid and unit and Talents.Layout(Talents.InspectConfigID(), class) or nil)
 end
 
--- Canvas scale from the window's height; the width keeps the tree's aspect.
 local VIEW_H = VIEW_BOTTOM - VIEW_TOP
 local MIN_HEIGHT, MAX_HEIGHT = 300, 1100
 
@@ -198,7 +178,6 @@ local function Rescale(width, height)
     local scale = math.min((width - 2 * MARGIN) / FRAME_W, (height - TITLE_HEIGHT - MARGIN) / VIEW_H)
     if scale <= 0 then return end
     window.canvas:SetScale(scale)
-    -- the canvas' own offsets are in its scale: show its rows VIEW_TOP..VIEW_BOTTOM
     window.canvas:ClearAllPoints()
     window.canvas:SetPoint("TOPLEFT", window.content, "TOPLEFT", 0, VIEW_TOP)
 end
@@ -211,8 +190,6 @@ local function Size(height)
     Rescale(width, height)
 end
 
--- Size grip: drag freely, the tree follows live; on release the window snaps
--- to the tree's aspect and the height is kept (Sendit_GearScoreDB.talentHeight).
 local function Grip()
     local grip = CreateFrame("Button", nil, window)
     grip:SetSize(16, 16)
@@ -226,7 +203,6 @@ local function Grip()
         local h = window:GetHeight()
         if ns.data then ns.data.talentHeight = math.floor(h + 0.5) end
         Size(h)
-        -- sizing re-anchors the frame: put it back docked, or where it was moved to
         TalentView.Position()
     end)
     window:SetResizable(true)
@@ -245,7 +221,6 @@ local function Build(inspect)
     window:EnableMouse(true)
     window:SetMovable(true)
     window:SetClampedToScreen(true)
-    -- title bar: drag = move freely (position saved), right click = dock again
     local bar = CreateFrame("Frame", nil, window)
     bar:SetPoint("TOPLEFT", 4, -2)
     bar:SetPoint("TOPRIGHT", -28, -2)
@@ -283,7 +258,6 @@ local function Build(inspect)
     local canvas = CreateFrame("Frame", nil, window.content)
     canvas:SetSize(FRAME_W, VIEW_BOTTOM)
     window.canvas = canvas
-    -- class background and its frame where Blizzard puts them
     window.bg = canvas:CreateTexture(nil, "BACKGROUND")
     window.bg:SetPoint("TOPLEFT", canvas, "TOPLEFT", 0, -BG_TOP)
     window.bg:SetPoint("BOTTOMRIGHT", canvas, "TOPLEFT", FRAME_W, -BG_BOTTOM)
@@ -300,7 +274,6 @@ local function Build(inspect)
     window:SetScript("OnHide", function() if tab then tab:SetChecked(false) end end)
 end
 
--- Below the last shown Blizzard side tab (Guild only shows for guild members).
 local function Place(inspect)
     local last
     local modeTabs = inspect.ModeTabs
@@ -323,7 +296,6 @@ local function Place(inspect)
     Size(ns.data and ns.data.talentHeight or inspect:GetHeight() or 500)
 end
 
--- Docked right of the inspect window, or where the user dragged it.
 function TalentView.Position()
     local pos = ns.data and ns.data.talentPos
     window:ClearAllPoints()
@@ -357,11 +329,9 @@ local function BuildTab(inspect)
         GameTooltip:SetText(L.talents, 1, 1, 1)
     end)
     tab:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    -- our own child: shows with the inspect window and re-places the tab
     tab:SetScript("OnShow", function() Place(inspect) end)
 end
 
--- Shown nodes, lines and tree headers (tests).
 function TalentView.Counts()
     local function n(list)
         local c = 0
@@ -379,7 +349,6 @@ function TalentView.Attach()
     Place(inspect)
 end
 
--- The guild tab shows or hides once the inspect data arrives.
 Inspect.OnChange(function(guid)
     local unit = InspectUnit()
     if not (window and unit and ns.GUID(unit) == guid) then return end

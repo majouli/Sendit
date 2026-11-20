@@ -1,21 +1,7 @@
 --[[
-  NameComplete: suggestions under the messenger's "Name to whisper" field.
-
-  Sources, in this order, without duplicates (by lower-case name):
-    1. our conversations (active, then archived): open that conversation
-    2. the client's own whisper completion (C_AutoComplete with
-       AUTOCOMPLETE_LIST.WHISPER: friends, Battle.net friends, guild, group,
-       people you talked to) - the list Blizzard's /w uses
-  Matching: names starting with the typed text first, then names containing it.
-
-  Keys: Up / Down pick, Tab completes the picked name into the field, Enter
-  opens the pick (or the typed name when nothing is picked), Escape closes.
-  Click on a suggestion opens it.
-
-  NameComplete.Attach(eb, openTyped)   eb = our own edit box (scripts on our
-                                       own frames are fine); openTyped(name)
-                                       for a name without a suggestion
-  NameComplete.Suggest(text) -> list   { label, sub, class, open = fn }
+  NameComplete: suggestions under the messenger's name field - our conversations, then the client's
+  whisper completion (C_AutoComplete WHISPER); prefix matches first. Up / Down, Tab completes, Enter
+  opens, Escape closes.  NameComplete.Attach(eb, openTyped) / Suggest(text)
 ]]
 local _, ns = ...
 local T, W, Safe = ns.Theme, ns.Whispers, ns.Safe
@@ -191,7 +177,7 @@ function NameComplete.Attach(eb, openTyped)
         box:Close()
         self:ClearFocus()
     end)
-    -- a click on a suggestion takes the focus first: close a moment later
+    -- a click takes the focus first: close a moment later
     eb:HookScript("OnEditFocusLost", function()
         C_Timer.After(0.2, function() if not eb:HasFocus() then box:Close() end end)
     end)
