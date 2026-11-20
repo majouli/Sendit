@@ -6,74 +6,76 @@
 
 <p align="center"><em>That's what we do.</em></p>
 
-> **Beta.** Sendit is in active development for **WoW Forever**. Things can
-> still change between versions - bug reports are very welcome.
+> **Beta.** Sendit is built for **WoW Forever** and still moving fast. Found a
+> bug? Open an issue - it really helps.
 
-**One suite, one look, one window.** Sendit replaces a pile of single-purpose
-addons with modules that share a design, a language and your profiles. Pick a
-palette once and every window follows - from a calm chat to item ratings that
-actually recalculate your character.
+**Tired of twenty addons that all look different?** Sendit is one suite with
+one look and one window. Chat, gear ratings, quests, dungeons, talents,
+graphics - it all shares the same design, the same language and the same
+profiles. Pick a palette once and everything follows.
 
-- **Designed, not stacked:** three palettes (Dusk, Light, Wood) and two frame
-  styles - clean modern lines or the game's own gold borders.
-- **Five languages, switched live:** English, Deutsch, Français, Español,
-  Русский - no reload.
-- **Built for the Forever client:** Blizzard's own frames stay untouched
-  underneath, so the game's protected actions keep working.
-- **Take only what you need:** every module can be turned off on its own.
-- **Your apps one click away:** a movable app bar slides out the module windows:
-  Messenger, Upgrade, Quests, Dungeons and the Dribbler.
+- **Looks designed, not bolted on:** three palettes (Dusk, Light, Wood) and two
+  frame styles - clean modern lines or the game's own gold borders.
+- **Speaks your language:** English, Deutsch, Français, Español, Русский.
+  Switch any time, no reload.
+- **Made for the Forever client:** Blizzard's frames stay untouched underneath,
+  so nothing breaks protected actions.
+- **Take what you like:** every module can be switched off on its own.
+- **Apps at your fingertips:** a little app bar slides out Messenger, Upgrade,
+  Quests, Dungeons and the Dribbler.
 
-| Module | What it does |
+## What's inside
+
+| Module | What you get |
 |---|---|
-| **Sendit** (core) | The Sendit window, the Design page (colour palette, frame style, animations, language), profiles, the minimap button and the app bar. Every module needs it. |
-| **Fade** | Detects every UI element, from Blizzard and from any addon, and fades it out while nothing is going on. Combat, a target, casting, the mouse, typing, group chat or loot bring it back. Optional cinema look while the addon Spoken reads quests aloud. |
-| **Chat** | A calm chat: movable windows, detachable tabs, your own tabs for channels and message kinds, the combat log with its filters in the same look, whispers in one messenger window with a friends list, your own loot and loot rolls summed up in one line each. |
-| **GearScore** | GearScore on items, on your character and on every player you hover or inspect, plus the inspected player's talents. |
-| **Harvest** | Tooltip lines for what disenchanting, skinning, mining and herbalism yield, with auction house prices. The **Dribbler** turns disenchanting into a gold run: buy disenchantables at the auction house sorted by profit, disenchant them with one click each and see what the session earned. |
-| **Upgrade** | Rates items by recalculating your character: how much more damage, healing or survival an item really gives you - for every class and its talent trees. Alt-click any item to compare it with yours. |
-| **Quests** | Over 6,000 WoW Forever quests offline, kept current from QuestieDB and NorgannonDB: search every text, item, NPC or ID (with wildcards), explore whole chains with their rewards, right-click any quest - done or not - for a map pin on its giver, objective or turn-in, and jump in from Blizzard's quest log. |
-| **Dungeons** | Dungeons, their bosses and what they drop - with how much each item would improve your gear. |
-| **Talents** | A leveling talent route for every class tree, right in Blizzard's talent window: the next talent glows, free points are numbered in buying order, a fold-out timeline lists all 51 points (hover a row to find its talent). The route adapts when you go your own way. |
+| **Sendit** (core) | The Sendit window with design, language, profiles, the minimap button and the app bar. Every module needs it. |
+| **Fade** | Your UI disappears when nothing's going on and comes right back for combat, targets, casting, the mouse, typing, group chat or loot. Works with Blizzard's frames and other addons' alike. |
+| **Chat** | A chat that finally feels calm: movable windows, tabs you can pull out, your own tabs for channels and message types, a combat log with filters in the same look, and all whispers in one messenger with your friends list. Loot and rolls get summed up in a single line. |
+| **GearScore** | GearScore on items, on you and on anyone you hover or inspect - plus their talents. |
+| **Harvest** | See what disenchanting, skinning, mining and herbalism give you, with auction prices, right in the tooltip. The **Dribbler** turns disenchanting into a gold run: buy the most profitable items at the auction house, disenchant each with one click and watch your earnings. |
+| **Upgrade** | How much better is that item, really? Upgrade recalculates your whole character - damage, healing or survival - for every class and talent tree. Alt-click any item to compare. |
+| **Quests** | Over 6,000 Forever quests, offline. Search texts, items, NPCs or IDs (wildcards too), follow whole quest chains with rewards, and right-click any quest for a map pin on its giver, objective or turn-in. |
+| **Dungeons** | Every dungeon, its bosses and their loot - and how much each drop would improve your gear. |
+| **Talents** | A leveling route for every talent tree, right in Blizzard's talent window. The next talent glows, free points are numbered, and a timeline shows all 51 points. Go your own way and the route adapts. |
+| **Graphics** ✨ new | Squeeze the last bit of beauty out of the game: denser grass, longer view distance, more detail in the distance, sharper shadows - everything the graphics menu can't reach, as simple sliders. A "!" warns you where it starts costing frame rate, tooltips explain every setting, and raids can get their own values. One click on **Maximum** and you're there. |
 
 ## Getting started
 
-- `/sendit` (or the minimap button) opens the window. Every module has its
-  own pages there.
+- `/sendit` or the minimap button opens the window - every module has its own
+  pages there.
 - **App bar:** click the round Sendit handle to slide out the module windows,
-  drag it anywhere, right-click it for the Sendit window. Switch it off under
-  Design if you do not want it.
-- **Dribbler:** open the auction house and click the disenchant tab at its
-  right edge, start the mode and buy from the list.
-- **Talents:** open the talent window; pick a route bottom left (one is
-  suggested) and fold the timeline out with the map tab on the right.
-- **Design** sets the look and language for all modules: palettes Dusk, Light
-  and Wood; frame style Modern (fine lines) or Azeroth (the game's gold
-  borders, banners and seals).
-- **Languages:** English, Deutsch, Français, Español, Русский. Automatic
-  follows the game.
-- **Profiles** hold the design plus the settings of every module. Pick one and
-  it applies at once; all characters of the account can share it.
+  drag it wherever you like, right-click for the Sendit window. Don't want it?
+  Turn it off under Design.
+- **Graphics:** `/sendit graphics`. Pick a group at the top, drag the sliders,
+  done. Your values stick, even when you change the preset in the graphics menu.
+- **Dribbler:** open the auction house, click the disenchant tab on the right,
+  start and buy from the list.
+- **Talents:** open the talent window, pick a route bottom left (we suggest
+  one) and fold out the timeline with the tab on the right.
+- **Profiles** hold your design and the settings of every module. Pick one and
+  it's active right away - all characters on the account can share it.
 
 ## Commands
 
 | Command | |
 |---|---|
 | `/sendit` | the Sendit window (`/sendit profile <name>`, `/sendit <page>`) |
-| `/fade`, `/fa` | Fade's pages |
+| `/sendit graphics` | the graphics sliders |
+| `/fade`, `/fa` | Fade |
 | `/chat` | the messenger (`/chat reset`, `/chat off`, `/chat on`) |
-| `/gs`, `/gearscore` | GearScore's page (`/gs score`, `/gs auto`) |
-| `/harvest`, `/dei` | Harvest's page |
+| `/gs`, `/gearscore` | GearScore (`/gs score`, `/gs auto`) |
+| `/harvest`, `/dei` | Harvest |
 | `/upgrade`, `/gc` | the compare window (`/gc spec ret\|holy\|prot\|auto`) |
 | `/sq` | Quests |
 | `/sd` | Dungeons |
 
 ## Installation
 
-With WowUp: install from this repository's latest release. By hand: unpack
-the release zip into `World of Warcraft\_forever_\Interface\AddOns\` (it holds
-one folder per module) and restart the game.
+**WowUp:** install straight from this repository's latest release.
+**By hand:** unpack the release zip into
+`World of Warcraft\_forever_\Interface\AddOns\` (one folder per module) and
+restart the game.
 
 ## Licence
 
-The whole suite is free software under the GNU GPL-3.0 (`LICENSE.md`).
+Free software under the GNU GPL-3.0 (`LICENSE.md`).
