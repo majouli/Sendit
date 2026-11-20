@@ -1,5 +1,5 @@
 --[[
-  Warrior - standard builds of the three trees (warcraft.wiki.gg, Classic):
+  Warrior - standard builds of the three trees (Classic reference):
     ARMS  two-hander; Mortal Strike on cooldown (from level 40); Impale
           (abilities crit for 220%) and Deep Wounds (a crit bleeds 60% of an
           average hit) make crit worth more

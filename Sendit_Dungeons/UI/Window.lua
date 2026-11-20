@@ -1,7 +1,7 @@
 --[[
-  Window: the dungeon browser - list left (level order; while the boost runs only upgrades, biggest
-  first), the picked dungeon right (loading-screen banner, one card per boss).
-  Window:Open(text) / Search(text, keep) / Pick(map) / Refresh() / BoostChanged() / Hide()
+  Window: the dungeon browser - list left (level order; while the boost runs the upgrades first,
+  biggest first, then the other dungeons for your level, dimmed), the picked dungeon right (loading-screen banner, one card per boss).
+  Window:Open(text) / Search(text, keep) / Pick(id) / Refresh() / BoostChanged() / Hide()
 ]]
 local _, ns = ...
 local L, DB, S = ns.L, ns.Database, ns.Style
@@ -10,10 +10,11 @@ local Window = {}
 ns.Window = Window
 local frame, picked, query
 local results, rowPool, cards = {}, {}, {}
+local boosted = 0
 local ROW = S.size.row + S.size.rowGap
 local BANNER = 150
-function Window:Pick(map)
-    picked = map
+function Window:Pick(id)
+    picked = id
     if frame then frame.detailScroll:SetVerticalScroll(0) end
     self:Refresh()
 end
@@ -25,11 +26,11 @@ function Window:RenderResults()
     local used = 0
     for i = first, last do
         used = used + 1
-        local row = rowPool[used] or ns.DungeonRow.Create(scroll.content, function(map) Window:Pick(map) end)
+        local row = rowPool[used] or ns.DungeonRow.Create(scroll.content, function(id) Window:Pick(id) end)
         rowPool[used] = row
         row:ClearAllPoints()
         row:SetPoint("TOPLEFT", 0, -(i - 1) * ROW)
-        ns.DungeonRow.Paint(row, results[i], frame.metrics.left, picked == results[i].map)
+        ns.DungeonRow.Paint(row, results[i], frame.metrics.left, picked == results[i].id)
     end
     for i = used + 1, #rowPool do rowPool[i]:Hide() end
 end
@@ -38,7 +39,7 @@ local function ResultTitle()
     if not ns.Boost.Active() then return "" end
     local done, total, running, missing = ns.Boost.Progress()
     if running then return L.boostRating:format(done + (missing or 0), total) end
-    return (#results == 1 and L.boostCountOne or L.boostCount):format(#results, S.Threshold())
+    return (boosted == 1 and L.boostCountOne or L.boostCount):format(boosted, S.Threshold())
 end
 
 local function Detail()
@@ -96,20 +97,29 @@ end
 
 function Window:Search(text, keep)
     query = text or ""
-    results = DB.Search(query, ns.Toolbar.Filter(), DB.Level())
+    local level = DB.Level()
+    results, boosted = DB.Search(query, ns.Toolbar.Filter(), level), 0
     if ns.Boost.Active() then
-        local out = {}
-        for _, d in ipairs(results) do if ns.Boost.Get(d.map) then out[#out + 1] = d end end
+        local out, rest = {}, {}
+        for _, d in ipairs(results) do
+            if ns.Boost.Get(d.id) then
+                out[#out + 1] = d
+            elseif DB.Fit(d, level) == "fits" then
+                rest[#rest + 1] = d
+            end
+        end
         table.sort(out, function(a, b)
-            local x, y = ns.Boost.Get(a.map), ns.Boost.Get(b.map)
+            local x, y = ns.Boost.Get(a.id), ns.Boost.Get(b.id)
             if x.pct ~= y.pct then return x.pct > y.pct end
             return a.min < b.min
         end)
+        boosted = #out
+        for _, d in ipairs(rest) do out[#out + 1] = d end
         results = out
     end
     local still = false
-    for _, d in ipairs(results) do if d.map == picked then still = true break end end
-    if not still and not keep then picked = results[1] and results[1].map or nil end
+    for _, d in ipairs(results) do if d.id == picked then still = true break end end
+    if not still and not keep then picked = results[1] and results[1].id or nil end
     if keep then
         local max = math.max(0, #results * ROW - frame.resultScroll:GetHeight())
         frame.resultScroll:SetVerticalScroll(math.min(frame.resultScroll:GetVerticalScroll() or 0, max))

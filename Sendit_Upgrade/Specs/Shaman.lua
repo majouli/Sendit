@@ -1,6 +1,6 @@
 --[[
   Shaman - standard builds of the three trees; talent values at full rank from
-  the Forever trait data: TraitDefinitionEffectPoints, wago.tools build 70938:
+  the Forever trait data: TraitDefinitionEffectPoints, client build 70938:
     ELEMENTAL  Lightning Bolt; Elemental Fury (crits 200%), Lightning Mastery
                (Forever: -0.5 s cast)
     ENHANCE    melee damage; Forever lets the Shaman dual wield (Dual Wield 674,

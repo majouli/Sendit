@@ -19,7 +19,7 @@ local ARMOR = {
     4047, 4344, 4641,
 }
 
--- Average raw melee hit by mob level: cMaNGOS classic-db creature_template_
+-- Average raw melee hit by mob level: classic server data creature_template_
 -- classlevelstats, class 1, (BaseDamageExp0 + BaseMeleeAttackPower / 14) * 2.0
 -- (Creature.cpp damage per hit, assumption: a normal mob swings every 2.0 s).
 -- Only used for how much a block stops: an estimate, like the armor.

@@ -8,7 +8,7 @@
   which spells or attacks it uses, how often, and the talents that change the
   worth of a stat (crit damage, off-hand damage, Flurry, stat multipliers).
   Talents cannot be read on this client: every tree assumes its standard
-  build, named where it is used (warcraft.wiki.gg talent pages, Classic).
+  build, named where it is used (Classic talent pages, Classic).
 
     Common.Metric(textKey, unit, fn)
     Common.Caster{ dots, cds, filler, critBonus, dotCritBonus, castDelta, instant, lifeTap,
@@ -205,7 +205,7 @@ function Common.OnCooldown(s, key, o)
     return Ability(s, sp, o or {}) / sp.cd
 end
 
--- Rage from dealing damage, Classic (warcraft.wiki.gg "Rage"): 7.5 * damage / c,
+-- Rage from dealing damage, Classic (reference "Rage"): 7.5 * damage / c,
 -- c = 0.0091107836 * level^2 + 3.225598133 * level + 4.2652911 (rage, not the
 -- client's tenths: the client data stores ability costs * 10).
 local function RagePerDamage(level)

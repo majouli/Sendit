@@ -1,6 +1,5 @@
 --[[
-  Score: the GearScore formula, unchanged from GearScore / GearScoreLite by Mirrikat45 (constants as
-  in LibGearScore-1.0, BSD-2), so numbers match other GearScore users:
+  Score: the GearScore formula, unchanged, so numbers match other GearScore users:
     item  = floor((ilvl - A) / B * SlotMOD * 1.8618 * QualityScale), >= 0; A, B per quality from
             table "A" (ilvl > 120) or "B"; legendary = epic * 1.3, poor/common = uncommon * 0.005,
             heirloom = rare at an item level from the unit level

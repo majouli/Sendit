@@ -1,5 +1,5 @@
 --[[
-  Priest - standard builds of the three trees (warcraft.wiki.gg, Classic):
+  Priest - standard builds of the three trees (Classic reference):
     DISC    Power Word: Shield on its Weakened Soul cooldown, Greater Heal
             family and Flash Heal; Mental Strength (+10% mana: modeled as +10%
             intellect, its mana share; uncertain)

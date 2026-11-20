@@ -38,8 +38,8 @@ ns.Locales.esES = {
     langAuto     = "Automático (juego)",
     secAbout     = "Acerca de",
     aboutText    = "Muestra en el tooltip lo que rinden desencantar, desollar, la minería y la herboristería: "
-        .. "material, cantidad, probabilidad y precio de subasta. Valores de la base clásica cMaNGOS "
-        .. "(GPL-3.0) y del cliente Forever (wago.tools); el addon consulta los precios él mismo en cada "
+        .. "material, cantidad, probabilidad y precio de subasta. Valores de los datos clásicos del juego "
+        .. "y del cliente Forever; el addon consulta los precios él mismo en cada "
         .. "visita a la casa de subastas.",
     thanksTitle  = "Agradecimientos",
     thanks       = "Un agradecimiento especial a Adam.",

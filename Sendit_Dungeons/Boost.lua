@@ -6,7 +6,7 @@
   Boost.Available() / Start() / Stop() / Active() / Stale()
   Boost.Min() / SetMin(pct)      account: boostMin
   Boost.Ahead() / SetAhead(n)    account: boostAhead
-  Boost.Get(map) -> { pct, label, secondaryPct, secondaryLabel, itemID, boss, count, gate } | nil
+  Boost.Get(id) -> { pct, label, secondaryPct, secondaryLabel, itemID, boss, count, gate } | nil
   Boost.Item(itemID) -> the rating when it counts
   Boost.Progress() -> rated, total, running, missing;  Boost.Report() -> lines (/sd boost)
 ]]
@@ -63,7 +63,7 @@ local function Candidates()
             for _, boss in ipairs(d.bosses) do
                 for _, drop in ipairs(ns.Database.Loot(boss)) do items[#items + 1] = { drop[1], boss } end
             end
-            if #items > 0 then out[d.map] = items end
+            if #items > 0 then out[d.id] = items end
         end
     end
     return out
@@ -112,8 +112,8 @@ function Boost.Item(itemID)
     return nil
 end
 
-local function Compute(map)
-    local items = active and candidates[map]
+local function Compute(id)
+    local items = active and candidates[id]
     if not items then return false end
     local best, count, counted = nil, 0, {}
     for _, drop in ipairs(items) do
@@ -131,11 +131,11 @@ local function Compute(map)
     return best or false
 end
 
-function Boost.Get(map)
-    local r = memo[map]
+function Boost.Get(id)
+    local r = memo[id]
     if r == nil then
-        r = Compute(map)
-        memo[map] = r
+        r = Compute(id)
+        memo[id] = r
     end
     return r or nil
 end
@@ -153,7 +153,7 @@ function Boost.Report()
     local rated, total, running, missing = Ratings.Progress()
     local entered, shown, skipped = 0, 0, 0
     for _, d in ipairs(ns.Database.All()) do
-        if candidates[d.map] then entered = entered + 1 if Boost.Get(d.map) then shown = shown + 1 end
+        if candidates[d.id] then entered = entered + 1 if Boost.Get(d.id) then shown = shown + 1 end
         elseif not ns.Database.Enterable(d, Reach()) then skipped = skipped + 1 end
     end
     Add("level %s, range +%d, rated for %s, threshold %s %%, stale: %s", tostring(level or "?"), Boost.Ahead(),

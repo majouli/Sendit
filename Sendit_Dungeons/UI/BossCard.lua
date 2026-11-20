@@ -1,7 +1,7 @@
 --[[
   BossCard: one boss of the picked dungeon - round portrait (hover: 3D model), order number, name,
   its drops as a loot grid; upgrades glow gold, the best gain shows by the name. "Loot unknown" /
-  "world drops only" instead of an empty card.
+  "world drops only" instead of an empty card; a rare spawn says so by its number.
   BossCard.Create(parent) -> card;  card:Set(index, boss, width) -> height
 ]]
 local _, ns = ...
@@ -52,7 +52,7 @@ function Card.Create(parent)
         self:SetWidth(width)
         self.boss = boss
         ns.Art.Portrait(self.portrait, boss, self.face)
-        self.number:SetText(("%02d"):format(index))
+        self.number:SetText(("%02d"):format(index) .. (boss.rare and ("  ·  " .. ns.L.rare) or ""))
         self.name:SetText(DB.BossName(boss))
         local loot = DB.Loot(boss)
         local perRow = math.max(1, math.floor((width - 2 * S.space.card + S.size.iconGap) / (ns.LootIcon.WIDTH + S.size.iconGap)))

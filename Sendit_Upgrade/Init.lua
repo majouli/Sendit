@@ -7,7 +7,7 @@
 local ADDON, ns = ...
 local L = ns.L
 
-ns.DB_VERSION = 1
+ns.DB_VERSION = 2
 ns.commands = {}
 
 local PREFIX = "|cff66c2ffSendit Upgrade|r: "
@@ -16,6 +16,8 @@ function ns.Print(...)
 end
 
 local function Migrate(db)
+    -- 2: measure counts per character; the old account-wide counts mixed classes, pets and groups
+    if (db.version or 1) < 2 and type(db.measure) == "table" then db.measure = { on = db.measure.on } end
     db.version = ns.DB_VERSION
 end
 

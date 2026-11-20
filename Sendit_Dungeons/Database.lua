@@ -1,7 +1,9 @@
 --[[
   Database: the bundled dungeons (Data/Dungeons.lua) - names, level fit, search and filter.
-  Database.All() -> dungeons in level order;  Database.Get(map)
-  Database.Name(d) / BossName(boss)   client names, English fallback; map 0 = world bosses
+  Database.All() -> dungeons in level order;  Database.Get(id)   id = map, a wing 100000 + activity
+  Database.Name(d) / BossName(boss)   client names, English fallback; map 0 = world bosses; a wing by
+                                      its group finder activity; a rare
+                                      (enc 0) by its NPC ID
   Database.Kind(d) -> "Dungeon" | "Raid" | "Open world"
   Database.Loot(boss) -> { { itemID, chance }, ... } biggest chance first
   Database.Fit(d, level) -> "fits" (min .. max + 2) | "above" | "below" | "unknown"
@@ -10,8 +12,8 @@
 local _, ns = ...
 local DB = {}
 ns.Database = DB
-local byMap = {}
-for _, d in ipairs(ns.dungeons) do byMap[d.map] = d end
+local byId = {}
+for _, d in ipairs(ns.dungeons) do byId[d.id] = d end
 local PAST_RANGE = 2
 
 local function Names()
@@ -19,15 +21,19 @@ local function Names()
 end
 
 function DB.All() return ns.dungeons end
-function DB.Get(map) return byMap[map] end
+function DB.Get(id) return byId[id] end
 
 function DB.Name(d)
     if d.map == 0 then return ns.L.worldBosses end
+    if d.wing then return Names().wings[d.wing] or ns.dungeonNames.enUS.wings[d.wing] or ("#" .. d.wing) end
     return Names().maps[d.map] or ns.dungeonNames.enUS.maps[d.map] or ("#" .. d.map)
 end
 
 function DB.BossName(boss)
     if boss.name then return boss.name end
+    if boss.enc == 0 then
+        return Names().npcs[boss.npc] or ns.dungeonNames.enUS.npcs[boss.npc] or ("#" .. boss.npc)
+    end
     return Names().bosses[boss.enc] or ns.dungeonNames.enUS.bosses[boss.enc] or ("#" .. boss.enc)
 end
 

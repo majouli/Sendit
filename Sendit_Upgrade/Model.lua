@@ -15,36 +15,36 @@ ns.Model = Model
 -- Attack table against a mob of equal level, in percent (the standard target;
 -- the player can pick a higher one: Model.Target).
 Model.TARGET = {
-    miss = 5,             -- warcraft.wiki.gg "Hit": 5% base miss vs equal level (single wield)
+    miss = 5,             -- reference "Hit": 5% base miss vs equal level (single wield)
     dodge = 5,            -- assumption: mobs of equal level dodge ~5% (Classic theorycraft)
     parry = 5,            -- assumption: ~5% parry when attacking from the front
     glance = 10,          -- assumption: 10% glancing blows vs equal level
     glancePenalty = 0.05, -- assumption: glancing blows deal 5% less at equal weapon skill
-    dualWieldMiss = 19,   -- warcraft.wiki.gg "Dual wield" (Classic): +19% miss while dual wielding
+    dualWieldMiss = 19,   -- reference "Dual wield" (Classic): +19% miss while dual wielding
     rangedDodge = 5,      -- assumption: ranged attacks can be dodged like melee, never parried
 }
-Model.OFFHAND = 0.5       -- warcraft.wiki.gg "Dual wield": the off hand deals 50% (before talents)
+Model.OFFHAND = 0.5       -- reference "Dual wield": the off hand deals 50% (before talents)
 -- Instant weapon abilities add attack power at a normalized weapon speed
--- (warcraft.wiki.gg "Normalization"): daggers 1.7, other one-handers 2.4,
+-- (reference "Normalization"): daggers 1.7, other one-handers 2.4,
 -- two-handers 3.3, ranged 2.8. The client data marks them as normalized
 -- weapon damage (effect 121).
 Model.NORMALIZED = { dagger = 1.7, oneHand = 2.4, twoHand = 3.3, ranged = 2.8 }
 Model.SPELL_CRIT_DAMAGE = 0.5 -- spell crits deal 150% (Classic, before talents)
-Model.AP_PER_DPS = 14     -- warcraft.wiki.gg "Attack power": 14 AP = 1 weapon DPS (Classic)
+Model.AP_PER_DPS = 14     -- reference "Attack power": 14 AP = 1 weapon DPS (Classic)
 Model.CRIT_MULT = 2       -- melee crits deal 200%
 Model.SPELL_CRIT_HEAL = 0.5 -- heals crit for 150%
 Model.BASE_MISS_ON_YOU = 5 -- equal-level mobs miss you 5% (same table as above)
 Model.UNARMED = { min = 1, max = 2, speed = 2.0 } -- assumption: unarmed damage, only for "empty slot"
-Model.SPELL_HIT = 96      -- warcraft.wiki.gg "Spell hit" (Classic): 4% spell miss vs equal level
+Model.SPELL_HIT = 96      -- reference "Spell hit" (Classic): 4% spell miss vs equal level
 Model.SPELL_HIT_CAP = 99  -- same page: spells always have at least 1% miss
 -- Higher targets (the page's "Enemy level": +0 standard ... +3), index = levels above + 1.
-Model.MISS_BY_DELTA = { 5, 5.5, 6, 8 }         -- warcraft.wiki.gg "Hit" (Classic): white miss, single wield
-Model.SPELL_HIT_BY_DELTA = { 96, 95, 94, 83 }  -- warcraft.wiki.gg "Spell hit" (Classic): 4 / 5 / 6 / 17 % miss
+Model.MISS_BY_DELTA = { 5, 5.5, 6, 8 }         -- reference "Hit" (Classic): white miss, single wield
+Model.SPELL_HIT_BY_DELTA = { 96, 95, 94, 83 }  -- reference "Spell hit" (Classic): 4 / 5 / 6 / 17 % miss
 Model.AVOID_PER_LEVEL = 0.5 -- Classic: dodge / parry +0.1% per defense point over the weapon skill, 5 per level
 -- Glancing blows: chance and damage penalty are SEPARATE parameters, both by
 -- level difference (index = levels above + 1). Chance: Forever's provisional
 -- 30% at +2 (Classic rule 10% + 10% per level); penalty: Classic figures
--- (warcraft.wiki.gg "Glancing blow"), NOT confirmed for Forever - Blizzard's
+-- (reference "Glancing blow"), NOT confirmed for Forever - Blizzard's
 -- beta known issues call the penalty vs higher targets wrong. White miss at +2:
 -- 6% is the Classic figure; a Forever client read gives 5.4% - unconfirmed,
 -- kept at the Classic value until live combat logs settle it.
@@ -71,7 +71,7 @@ function Model.Target(s)
 end
 
 -- Armor damage reduction vs an attacker of the given level.
--- warcraft.wiki.gg "Armor" (Classic): armor / (armor + 400 + 85 * level)
+-- reference "Armor" (Classic): armor / (armor + 400 + 85 * level)
 function Model.ArmorReduction(armor, level)
     if armor <= 0 then return 0 end
     return armor / (armor + 400 + 85 * level)
@@ -131,7 +131,7 @@ end
 -- Share of yellow (ability) attacks that land, and their crit share: the
 -- attack table without the dual wield penalty and without glancing blows.
 -- yellow: special attacks roll crit only on a hit (two-roll table, Classic -
--- warcraft.wiki.gg "Attack table"; Forever unconfirmed): crit share = landed *
+-- reference "Attack table"; Forever unconfirmed): crit share = landed *
 -- crit, so hit also adds crits. White attacks (auto shot) roll once.
 function Model.Special(s, ranged, yellow)
     local t = Model.Target(s)
@@ -220,14 +220,14 @@ end
 -- size the bottleneck. Here, as in play: spirit and mana per 5 refill between
 -- pulls, spell power ends fights sooner (less mana per kill), and a bigger
 -- bar mostly means fewer drink sessions - drinking itself refills at the
--- drink's fixed rate. The same reference scenario SimGear Forever sims
+-- drink's fixed rate. The same reference scenario the reference sim sims
 -- (40 s between pulls, drink below 50 %), here as an expected-value formula.
-Model.PULL_GAP = 40       -- assumption: seconds between two pulls (walk, loot; SimGear Forever's leveling reference)
-Model.FIVE_SECOND_RULE = 5 -- warcraft.wiki.gg "Five second rule": spirit regen pauses 5 s after a cast
-Model.DRINK_BELOW = 0.5   -- assumption: drink once the bar is below half (SimGear Forever's reference)
+Model.PULL_GAP = 40       -- assumption: seconds between two pulls (walk, loot; the reference sim's leveling reference)
+Model.FIVE_SECOND_RULE = 5 -- reference "Five second rule": spirit regen pauses 5 s after a cast
+Model.DRINK_BELOW = 0.5   -- assumption: drink once the bar is below half (the reference sim's reference)
 Model.DRINK_SESSION = 5   -- assumption: seconds lost per drink session (sit down, start, stand up)
 Model.HEAL_FIGHT = 20     -- assumption: seconds a healer heals per pull (a group pull)
--- Mana per 2 s tick out of combat (warcraft.wiki.gg "Spirit", Classic):
+-- Mana per 2 s tick out of combat (reference "Spirit", Classic):
 -- base + spirit / per. Forever unverified: GetManaRegen() shows the live value.
 Model.SPIRIT_REGEN = {
     PRIEST = { 13, 4 }, MAGE = { 13, 4 }, WARLOCK = { 8, 4 },

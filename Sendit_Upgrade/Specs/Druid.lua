@@ -1,6 +1,6 @@
 --[[
   Druid - standard builds of the trees; talent values at full rank from the
-  Forever trait data (TraitDefinitionEffectPoints, wago.tools build 70938).
+  Forever trait data (TraitDefinitionEffectPoints, client build 70938).
   Feral Combat counts twice, as its two roles:
     BALANCE  spell damage: Wrath or Starfire (the better one known); Vengeance
              (5/5: crits 200%), Improved Wrath / Improved Starfire (-0.5 s cast),
@@ -21,7 +21,7 @@
 
   Forms ignore the weapon's damage: the paw swing comes from the druid's level
   and attack power. Attack power in a form = the caster form's (live, already
-  2 per strength) + 1 per agility in Cat Form (warcraft.wiki.gg "Cat Form",
+  2 per strength) + 1 per agility in Cat Form (reference "Cat Form",
   Classic) + the weapon's "attack power in Cat, Bear and Dire Bear form"
   (feralAp) + the form's flat attack power (above). Armor in Bear Form: see
   BEAR_ARMOR below (item armor only, Forever client data).
@@ -40,15 +40,15 @@ local C, Model = ns.SpecCommon, ns.Model
 local Druid = {}
 ns.Druid = Druid
 
-local CAT_AP_PER_AGI = 1       -- warcraft.wiki.gg "Cat Form" (Classic)
+local CAT_AP_PER_AGI = 1       -- reference "Cat Form" (Classic)
 local PAW_DPS_PER_LEVEL = 1.0  -- assumption: base paw damage per second per level
 local CAT_SPEED, BEAR_SPEED = 1.0, 2.5  -- Classic form attack speeds
 -- Bear Form (5487 -> 1178, level 10) / Dire Bear Form (9634 -> 9635, level 40),
--- Forever client data (wago.tools build 70938): armor from ITEMS +180% / +360%
+-- Forever client data (client build 70938): armor from ITEMS +180% / +360%
 -- (agility's armor not), health +20 / +600 (flat).
 local BEAR_ARMOR, DIRE_BEAR_ARMOR, DIRE_BEAR_LEVEL = 1.8, 3.6, 40
 local BEAR_HP, DIRE_BEAR_HP = 20, 600
-local ARMOR_PER_AGI = 2  -- as Character.lua (warcraft.wiki.gg "Agility", Classic)
+local ARMOR_PER_AGI = 2  -- as Character.lua (reference "Agility", Classic)
 
 -- The snapshot as a form sees it: paw instead of the weapon, form attack power.
 -- In a form at the snapshot, the live attack power holds that form's part

@@ -38,8 +38,8 @@ ns.Locales.deDE = {
     langAuto     = "Automatisch (Spiel)",
     secAbout     = "Über",
     aboutText    = "Zeigt im Tooltip, was Entzaubern, Kürschnern, Bergbau und Kräuterkunde bringen: "
-        .. "Material, Menge, Chance und AH-Preis. Werte aus der cMaNGOS-Classic-Datenbank (GPL-3.0) "
-        .. "und dem Forever-Client (wago.tools); die AH-Preise holt das Addon bei jedem Besuch im "
+        .. "Material, Menge, Chance und AH-Preis. Werte aus den Classic-Spieldaten "
+        .. "und dem Forever-Client; die AH-Preise holt das Addon bei jedem Besuch im "
         .. "Auktionshaus selbst.",
     thanksTitle  = "Besonderer Dank",
     thanks       = "Ein besonderes Danke an Adam.",

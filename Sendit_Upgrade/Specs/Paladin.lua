@@ -23,15 +23,15 @@ local Model, C, Character = ns.Model, ns.SpecCommon, ns.Character
 -- Seal of Righteousness: holy damage per hit scales with weapon speed, so per
 -- second it is coef * spell damage, independent of speed. 0.108 (2H) / 0.092
 -- (1H) per second of weapon speed: most cited Classic figure (allakhazam
--- "spell coefficient (WoW)", warcraft.wiki.gg Talk:Seal of Righteousness).
+-- "spell coefficient (WoW)", reference talk page Seal of Righteousness).
 -- Sources disagree (per-hit 10%/12% also quoted): marked uncertain.
 local SOR_COEF = { twoHand = 0.108, oneHand = 0.092 }
 -- Consecration: periodic, duration / 15 = 8 / 15 over 8 s (SpellCoeffsForever formula).
 local CONSECRATION_PER_SEC = (8 / 15) / 8
 local RIGHTEOUS_FURY = 1.6   -- Classic: +60% threat from holy spells
 -- Seal of Command: client spell 20424 deals 70% weapon damage as Holy with a
--- spell power coefficient of 0.29 (wago.tools SpellEffect, build 70938); it
--- procs 7 times a minute (cMaNGOS spell_proc_event 20375, ppmRate 7), so per
+-- spell power coefficient of 0.29 (client SpellEffect, build 70938); it
+-- procs 7 times a minute (classic server data spell_proc_event 20375, ppmRate 7), so per
 -- second it is 7/60 procs of the landed swings, whatever the weapon speed -
 -- a slow weapon's bigger hit is what makes it better.
 local SOC = { spell = 20375, level = 20, ppm = 7, weapon = 0.70, coef = 0.29 }
@@ -40,14 +40,14 @@ local SOC = { spell = 20375, level = 20, ppm = 7, weapon = 0.70, coef = 0.29 }
 -- 20963-20966, one per Seal of Command rank, learned at 20/30/40/50/60):
 -- `base` is the average holy damage on a stunned target; the tooltip says half
 -- of it otherwise ($/2;20467s1). Spell power coefficient 0.429 (SpellEffect).
--- assumption: the coefficient applies in full (cMaNGOS halves the base only);
+-- assumption: the coefficient applies in full (classic server data halves the base only);
 -- it lands and crits like a spell of the paladin's melee crit (like the seal).
 -- Seal of Righteousness' judgement (below level 20) is not counted.
 local JOC = { cd = 10, coef = 0.429, ranks = {
     { level = 20, base = 97 }, { level = 30, base = 153 }, { level = 40, base = 214 },
     { level = 50, base = 274 }, { level = 60, base = 356 } } }
--- Vengeance (Forever, client spells 20049 / 20050, wago.tools build 70938):
--- 3 ranks of +1/2/3% (Forever trait data: TraitDefinitionEffectPoints, wago.tools build 70938; the spell's own
+-- Vengeance (Forever, client spells 20049 / 20050, client build 70938):
+-- 3 ranks of +1/2/3% (Forever trait data: TraitDefinitionEffectPoints, client build 70938; the spell's own
 -- 5 is not the talent's value); a non-periodic crit gives +3% physical and holy
 -- damage for 30 s, stacking 5 times (Classic: 5 ranks, one 8 s buff). Forever's
 -- trait tree (TraitCond.SpentAmountRequired 20) -> level 29; the old Talent

@@ -48,7 +48,7 @@ function Scanner:StripAddonPrefix(name)
     return name
 end
 
--- shortest other loaded addon prefixing the owner ("EllesmereUIActionBars" -> "EllesmereUI")
+-- shortest other loaded addon prefixing the owner ("SuiteUIActionBars" -> "SuiteUI")
 function Scanner:FamilyOf(owner)
     local lowner, family = owner:lower(), owner
     for _, a in ipairs(addonIndex) do  -- longest first: the last hit is the shortest

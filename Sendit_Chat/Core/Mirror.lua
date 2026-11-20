@@ -321,7 +321,7 @@ end
 
 ns.Listen("ADDON_LOADED", function(_, name)
     if name ~= addonName or not ns.acct or not ns.acct.enabled then return end
-    if C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("EllesmereUIChat") then return end
+    if C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded(ns.CONFLICT) then return end
     Mirror.HookAll()
 end)
 

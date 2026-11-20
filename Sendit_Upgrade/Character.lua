@@ -9,19 +9,19 @@
   damage only for that school; melee- / ranged-only hit and crit only for that attack.
   Druid forms: s.form "cat" | "bear" (GetShapeshiftFormID 1 Cat, 8 Dire Bear, 5 Bear); the live values
   hold the form's bonuses, Specs/Druid.lua takes them out. Druid agility gives no attack power outside
-  Cat Form (warcraft.wiki.gg "Attack power", Classic).
+  Cat Form (reference "Attack power", Classic).
 ]]
 local _, ns = ...
 
 local Character = {}
 ns.Character = Character
 
-local HP_PER_STA = 10     -- warcraft.wiki.gg "Attributes (pre-6.0)": 10 health per stamina
+local HP_PER_STA = 10     -- reference "Attributes (pre-6.0)": 10 health per stamina
 local MANA_PER_INT = 15   -- same page: 15 mana per intellect
 local ARMOR_PER_AGI = 2   -- same page: 2 armor per agility
 local DEF_PCT = 0.04      -- "Defense" (pre-6.0): each point = 0.04% miss/dodge/parry/block
 local STR_PER_BLOCK = 20  -- Classic: 1 block value per 20 strength (shield users)
--- Ranged attack power per agility, Classic (warcraft.wiki.gg "Attack power"):
+-- Ranged attack power per agility, Classic (reference "Attack power"):
 -- Hunters 2, Warriors and Rogues 1; others do not use ranged attack power.
 local RAP_PER_AGI = { HUNTER = 2, WARRIOR = 1, ROGUE = 1 }
 -- GetSpellBonusDamage / GetSpellCritChance school index (2 = holy ... 7 = arcane)
@@ -29,7 +29,7 @@ local SCHOOL_INDEX = { holy = 2, fire = 3, nature = 4, frost = 5, shadow = 6, ar
 Character.SCHOOL_INDEX = SCHOOL_INDEX
 local FORMS = { [1] = "cat", [5] = "bear", [8] = "bear" }  -- GetShapeshiftFormID
 
--- Agility per 1% melee crit at level 60, Classic (warcraft.wiki.gg "Critical
+-- Agility per 1% melee crit at level 60, Classic (reference "Critical
 -- strike"; vanilla-wow wiki). Same ratio gives dodge for these classes.
 local AGI_PER_CRIT_60 = {
     WARRIOR = 20, PALADIN = 20, HUNTER = 53, ROGUE = 29, DRUID = 20,
@@ -42,7 +42,7 @@ local INT_PER_SPELLCRIT_60 = {
 }
 
 -- Rogues and Hunters get dodge from agility at twice their crit rate
--- (warcraft.wiki.gg "Dodge", Classic: 14.5 / 26.5 agility per 1% at 60 vs
+-- (reference "Dodge", Classic: 14.5 / 26.5 agility per 1% at 60 vs
 -- 29 / 53 for crit); everyone else at the same rate.
 local DODGE_PER_CRIT = { ROGUE = 0.5, HUNTER = 0.5 }
 

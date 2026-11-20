@@ -1,5 +1,5 @@
 --[[
-  Hunter - standard builds of the three trees (warcraft.wiki.gg, Classic).
+  Hunter - standard builds of the three trees (Classic reference).
   Auto shot (ranged weapon, ranged attack power 2 per agility, ranged crit)
   with the vendor arrows of the level (Mobs.Ammo), plus shots on cooldown
   (client data: weapon damage + flat bonus; Arcane Shot flat arcane damage,
@@ -8,13 +8,13 @@
     MM  Aimed Shot and Multi-Shot; Mortal Shots (ranged crits 230%)
     SV  Multi-Shot; Lightning Reflexes (+15% agility)
   Careful Aim (Forever trait tree, 5/5, 5 points -> level 14): attack power
-    +100% of intellect (melee and ranged) - Marksmanship only (SimGear's
+    +100% of intellect (melee and ranged) - Marksmanship only (the reference sim's
     sims: MM intellect = 1.00 attack power, BM / SV = 0).
   Aimed Shot's cast pausing auto shots is left out (assumption).
   The pet: its damage does not grow with the hunter's gear in Classic, but it
   is part of what kills the mob, so it is added as a constant - without it a
-  better bow would read as twice the real gain. cMaNGOS Pet::InitStatsForLevel
-  (mangos-classic, Pet.cpp): hunter pet weapon damage per second = level *
+  better bow would read as twice the real gain. the classic server's pet stats
+  (Pet.cpp): hunter pet weapon damage per second = level *
   (0.75 + 1.125) / 2 / 2 = 0.46875 * level; attack power 2 per strength - 20
   (creature rule) with strength from pet_levelstats (entry 1); happy pet +25%
   (assumption: kept happy), hit table of a normal melee attacker.
@@ -23,13 +23,13 @@
 local _, ns = ...
 local C, Model = ns.SpecCommon, ns.Model
 
--- cMaNGOS classic-db pet_levelstats, creature_entry 1: strength by level
+-- classic server data pet_levelstats, creature_entry 1: strength by level
 local PET_STR = { { 10, 31 }, { 20, 45 }, { 30, 61 }, { 40, 78 }, { 50, 113 }, { 60, 136 } }
 local PET_DPS_PER_LEVEL = 0.46875
 local HAPPY = 1.25
 -- every tree: Multi-Shot and Arcane Shot on cooldown, Serpent Sting kept up
 local SHOTS = { "MULTI_SHOT", "ARCANE_SHOT", "SERPENT_STING" }
-local UNLEASHED_FURY = 1.15  -- 5/5 pet damage (Forever trait data: TraitDefinitionEffectPoints, wago.tools build 70938)
+local UNLEASHED_FURY = 1.15  -- 5/5 pet damage (Forever trait data: TraitDefinitionEffectPoints, client build 70938)
 
 local function PetStrength(level)
     if level <= PET_STR[1][1] then return PET_STR[1][2] * level / PET_STR[1][1] end

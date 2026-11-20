@@ -4,9 +4,10 @@
   ns.acct = account section (on / off, window layout), ns.Design() = the core's design,
   ns.char = per character (Sendit_ChatCharDB: conversations, history).
   ns.Listen(event, fn);  ns.OnChanged(fn) / ns.Changed();  ns.OnReady(fn) (once, chat active only)
-  Yields to EllesmereUI Chat: both would take over Blizzard's chat frames.
+  Yields to a chat addon that takes over Blizzard's chat frames too (ns.CONFLICT).
 ]]
 local addonName, ns = ...
+ns.CONFLICT = "EllesmereUIChat"
 local Sendit = Sendit
 
 ns.VERSION = C_AddOns and C_AddOns.GetAddOnMetadata(addonName, "Version") or "?"
@@ -78,7 +79,7 @@ ns.module = Sendit:RegisterModule({
         end
     end,
     status = function()
-        if ns.yielding then return "EllesmereUI" end
+        if ns.yielding then return "yielding" end
         return ns.active and "on" or "off"
     end,
 })
@@ -136,7 +137,7 @@ ns.Listen("PLAYER_LOGIN", function()
         ns.Print(ns.L.DISABLED)
         return
     end
-    if IsLoaded("EllesmereUIChat") then
+    if IsLoaded(ns.CONFLICT) then
         ns.yielding = true
         ns.Print(ns.L.YIELD_EUI)
         return

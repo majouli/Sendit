@@ -1,5 +1,5 @@
 --[[
-  Rogue - standard builds of the three trees (warcraft.wiki.gg, Classic). All
+  Rogue - standard builds of the three trees (Classic reference). All
   dual wield; the builder gets the energy the finishers leave (Common.Melee):
     ASSASSINATION  Sinister Strike (45 energy) with Lethality (Forever 2/2: crits 220%)
     COMBAT         Improved Sinister Strike (40 energy), Dual Wield

@@ -1,6 +1,7 @@
 --[[
   DungeonRow: one dungeon in the list - loading-screen thumbnail, name, level pill (green when it
-  fits), kind / size / bosses, and while the boost runs its best upgrade with a gold edge.
+  fits), kind / size / bosses, and while the boost runs its best upgrade with a gold edge - or,
+  without one, dimmed with "no upgrade".
   DungeonRow.Create(parent, onPick) -> row;  DungeonRow.Paint(row, d, width, selected)
 ]]
 local _, ns = ...
@@ -32,18 +33,21 @@ function Row.Create(parent, onPick)
     r.boost = T.Text(r, S.font.meta, "accent")
     r.boost:SetPoint("TOPLEFT", r.meta, "BOTTOMLEFT", 0, -3)
     r.boost:SetJustifyH("LEFT")
-    r:SetScript("OnClick", function(self) onPick(self.map) end)
+    r:SetScript("OnClick", function(self) onPick(self.id) end)
     return r
 end
 
 function Row.Paint(r, d, width, selected)
-    r.map = d.map
+    r.id = d.id
     r:SetWidth(width)
     T.Paint(r.bg, selected and S.surface.rowSelected or S.surface.row)
     ns.Art.Thumb(r.thumb, d)
+    local b = ns.Boost.Get(d.id)
+    local dim = ns.Boost.Active() and not b
+    r.thumb:SetDesaturated(dim)
     r.name:SetWidth(width - 110 - S.size.row)
     r.name:SetText(DB.Name(d))
-    T.Paint(r.name, selected and "accent" or "text")
+    T.Paint(r.name, selected and "accent" or dim and "textDim" or "text")
     local fit = DB.Fit(d, DB.Level())
     r.level:SetText(d.min > 0 and ns.L.levels:format(d.min, d.max) or ns.L.levelUnknown)
     T.Paint(r.level, S.FitRole(fit))
@@ -52,14 +56,16 @@ function Row.Paint(r, d, width, selected)
     parts[#parts + 1] = ns.L.bosses:format(#d.bosses)
     r.meta:SetText(table.concat(parts, "  ·  "))
     r.meta:SetWidth(width - 28 - S.size.row)
-    local b = ns.Boost.Get(d.map)
-    r.boost:SetShown(b ~= nil)
+    r.boost:SetShown(b ~= nil or dim)
     r.edge:SetShown(b ~= nil or selected)
     T.Paint(r.edge, "accent", b and 1 or 0.45)
     if b then
         local extra = b.count > 1 and ("  ·  " .. ns.L.upgrades:format(b.count)) or ""
         r.boost:SetText(S.Upgrade(b) .. extra)
-        r.boost:SetWidth(width - 28 - S.size.row)
+    elseif dim then
+        r.boost:SetText(ns.L.noUpgrade)
     end
+    T.Paint(r.boost, b and "accent" or "textMuted")
+    r.boost:SetWidth(width - 28 - S.size.row)
     r:Show()
 end

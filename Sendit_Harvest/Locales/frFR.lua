@@ -38,8 +38,8 @@ ns.Locales.frFR = {
     langAuto     = "Automatique (jeu)",
     secAbout     = "À propos",
     aboutText    = "Affiche dans l'infobulle ce que rapportent le désenchantement, le dépeçage, le minage "
-        .. "et l'herboristerie : composant, quantité, chance et prix de l'HV. Valeurs issues de la base "
-        .. "classique cMaNGOS (GPL-3.0) et du client Forever (wago.tools) ; l'addon relève lui-même "
+        .. "et l'herboristerie : composant, quantité, chance et prix de l'HV. Valeurs issues des données "
+        .. "classiques du jeu et du client Forever ; l'addon relève lui-même "
         .. "les prix à chaque visite de l'hôtel des ventes.",
     thanksTitle  = "Remerciements",
     thanks       = "Un merci tout particulier à Adam.",

@@ -40,10 +40,10 @@ local API_KEYS = {
     ITEM_MOD_ATTACK_POWER_SHORT = "ap", ITEM_MOD_RANGED_ATTACK_POWER_SHORT = "rap",
     ITEM_MOD_FERAL_ATTACK_POWER_SHORT = "feralAp",
     ITEM_MOD_SPELL_POWER_SHORT = "spellPower", ITEM_MOD_SPELLPOWER_SHORT = "spellPower",
-    -- Classic Era 1.15 names spell power without _SHORT (SimGear Forever Stats.lua,
+    -- Classic Era 1.15 names spell power without _SHORT (the reference sim Stats.lua,
     -- /dump in game 2026-10-28); counted only when the _SHORT key is not there too
     ITEM_MOD_SPELL_POWER = "spellPower",
-    -- one school's spell damage: in GetItemStats on Forever (SimGear Forever harvest,
+    -- one school's spell damage: in GetItemStats on Forever (the reference sim harvest,
     -- 2026-10-17: 52 fire, 80 frost, 24 arcane, 58 shadow items)
     ITEM_MOD_FIRE_DAMAGE_DONE_SHORT = "fireDmg", ITEM_MOD_FROST_DAMAGE_DONE_SHORT = "frostDmg",
     ITEM_MOD_ARCANE_DAMAGE_DONE_SHORT = "arcaneDmg", ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT = "shadowDmg",
@@ -65,7 +65,7 @@ local API_KEYS = {
 local SAME_AS = { ITEM_MOD_SPELL_POWER = "ITEM_MOD_SPELL_POWER_SHORT" }
 
 -- Forever stores Classic's "+1 %" stats as ratings (GetItemStats says 14 for 1 % crit);
--- rating per 1 % confirmed in game by SimGear Forever (Stats.RATING_PER_POINT, items 868 /
+-- rating per 1 % confirmed in game by the reference sim (Stats.RATING_PER_POINT, items 868 /
 -- 15056 / 12639, GetCombatRatingBonusForCombatRatingValue at level 22: no level scaling).
 -- The client's own conversion is asked first.
 local RATINGS = {
@@ -75,7 +75,7 @@ local RATINGS = {
     spellHit = { 10, "CR_HIT_SPELL" },
     dodge = { 12, "CR_DODGE" }, parry = { 15, "CR_PARRY" }, block = { 5, "CR_BLOCK" },
 }
--- One crit / hit rating counts for melee and spells on Forever (SimGear
+-- One crit / hit rating counts for melee and spells on Forever (the reference sim
 -- Forever Stats.EXPANDS; item 272457, a caster hood with "critical strike").
 local POOLED = { crit = "spellCrit", hit = "spellHit" }
 
@@ -102,7 +102,7 @@ for _, school in ipairs({ "holy", "fire", "nature", "frost", "shadow", "arcane" 
 end
 
 -- How often a damage proc fires: the item's own rate when the server data has
--- one (Data/ItemProcs.lua, generated from cMaNGOS), else about once per
+-- one (Data/ItemProcs.lua, generated from the classic server data), else about once per
 -- minute - assumption: Classic weapon procs mostly sit near 1 per minute, the
 -- tooltip does not say; shown as estimated.
 Stats.PROCS_PER_MINUTE = 1

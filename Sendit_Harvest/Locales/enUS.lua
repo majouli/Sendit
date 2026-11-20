@@ -38,8 +38,8 @@ ns.Locales.enUS = {
     langAuto     = "Automatic (game)",
     secAbout     = "About",
     aboutText    = "Shows in the tooltip what disenchanting, skinning, mining and herbalism yield: "
-        .. "material, amount, chance and AH price. Values from the cMaNGOS classic database (GPL-3.0) "
-        .. "and the Forever client (wago.tools); the addon fetches AH prices itself on every visit "
+        .. "material, amount, chance and AH price. Values from the classic game data "
+        .. "and the Forever client; the addon fetches AH prices itself on every visit "
         .. "to the auction house.",
     thanksTitle  = "Special thanks",
     thanks       = "Special thanks to Adam.",

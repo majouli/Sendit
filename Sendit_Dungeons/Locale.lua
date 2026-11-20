@@ -9,7 +9,7 @@ local keys = {
     "boost", "boostHelp", "boostNeedsUpgrade", "boostOff", "boostAt", "boostOn", "boostAgain", "stale",
     "boostRating", "boostCount", "boostCountOne", "boostEmpty", "upgrades", "chance", "detailVs", "decimal",
     "resize", "fitsYou", "aboveYou", "belowYou", "worldOnly",
-    "ahead", "aheadStandard", "aheadPlus", "aheadAll", "aheadHelp", "fromLevel", "worldBosses", "openWorld",
+    "ahead", "aheadStandard", "aheadPlus", "aheadAll", "aheadHelp", "fromLevel", "worldBosses", "openWorld", "noUpgrade", "rare",
 }
 local rows = {
     enUS = {
@@ -24,7 +24,7 @@ local rows = {
         "rating %d / %d …", "%d dungeons with at least %s %% upgrade", "%d dungeon with at least %s %% upgrade",
         "No dungeon you can enter drops an upgrade of at least %s %%.", "%d upgrades", "%s %% drop chance",
         "Your whole character's %s with this item instead of your worn one - the same number as Sendit Upgrade's item tooltip.",
-        ".", "Drag to resize", "your level", "above your level", "below your level", "No drops of its own - only world drops (random green items)", "Range", "Standard (your level)", "up to %d levels above", "All levels", "Standard: only dungeons you can enter and items you can wear now. A preview also shows higher dungeons and items: what they would give your character as it is today.", "from level %d", "World bosses", "Open world",
+        ".", "Drag to resize", "your level", "above your level", "below your level", "No drops of its own - only world drops (random green items)", "Range", "Standard (your level)", "up to %d levels above", "All levels", "Standard: only dungeons you can enter and items you can wear now. A preview also shows higher dungeons and items: what they would give your character as it is today.", "from level %d", "World bosses", "Open world", "No upgrade for you", "Rare",
     },
     deDE = {
         "Dungeons, Bosse, Beute", "Dungeon oder Boss…", "Dungeon-Browser",
@@ -38,7 +38,7 @@ local rows = {
         "bewerte %d / %d …", "%d Dungeons mit mindestens %s %% Upgrade", "%d Dungeon mit mindestens %s %% Upgrade",
         "Kein Dungeon, den du betreten kannst, bringt mindestens %s %% Upgrade.", "%d Upgrades", "%s %% Dropchance",
         "%s deines ganzen Charakters mit diesem Teil statt deinem getragenen - dieselbe Zahl wie im Item-Tooltip von Sendit Upgrade.",
-        ",", "Ziehen zum Ändern der Größe", "deine Stufe", "über deiner Stufe", "unter deiner Stufe", "Keine eigene Beute - nur Welt-Drops (zufällige grüne Items)", "Reichweite", "Standard (deine Stufe)", "bis %d Stufen über dir", "Alle Stufen", "Standard: nur Dungeons, die du betreten, und Items, die du tragen kannst. Die Vorschau zeigt auch höhere Dungeons und Items: was sie deinem Charakter so, wie er heute ist, bringen würden.", "ab Stufe %d", "Weltbosse", "Offene Welt",
+        ",", "Ziehen zum Ändern der Größe", "deine Stufe", "über deiner Stufe", "unter deiner Stufe", "Keine eigene Beute - nur Welt-Drops (zufällige grüne Items)", "Reichweite", "Standard (deine Stufe)", "bis %d Stufen über dir", "Alle Stufen", "Standard: nur Dungeons, die du betreten, und Items, die du tragen kannst. Die Vorschau zeigt auch höhere Dungeons und Items: was sie deinem Charakter so, wie er heute ist, bringen würden.", "ab Stufe %d", "Weltbosse", "Offene Welt", "Kein Upgrade für dich", "Selten",
     },
     frFR = {
         "Donjons, boss, butin", "Donjon ou boss…", "Navigateur de donjons",
@@ -52,7 +52,7 @@ local rows = {
         "évaluation %d / %d …", "%d donjons avec au moins %s %% d'amélioration", "%d donjon avec au moins %s %% d'amélioration",
         "Aucun donjon accessible n'apporte au moins %s %%.", "%d améliorations", "%s %% de chance",
         "%s de tout votre personnage avec cet objet au lieu de celui porté - le même nombre que l'infobulle de Sendit Upgrade.",
-        ",", "Glisser pour redimensionner", "votre niveau", "au-dessus de votre niveau", "sous votre niveau", "Pas de butin propre - seulement des objets mondiaux (verts aléatoires)", "Portée", "Standard (votre niveau)", "jusqu'à %d niveaux au-dessus", "Tous les niveaux", "Standard : seulement les donjons accessibles et les objets portables maintenant. L'aperçu montre aussi les donjons et objets plus élevés : ce qu'ils apporteraient à votre personnage tel qu'il est aujourd'hui.", "dès le niveau %d", "Boss mondiaux", "Monde ouvert",
+        ",", "Glisser pour redimensionner", "votre niveau", "au-dessus de votre niveau", "sous votre niveau", "Pas de butin propre - seulement des objets mondiaux (verts aléatoires)", "Portée", "Standard (votre niveau)", "jusqu'à %d niveaux au-dessus", "Tous les niveaux", "Standard : seulement les donjons accessibles et les objets portables maintenant. L'aperçu montre aussi les donjons et objets plus élevés : ce qu'ils apporteraient à votre personnage tel qu'il est aujourd'hui.", "dès le niveau %d", "Boss mondiaux", "Monde ouvert", "Aucune amélioration pour vous", "Rare",
     },
     esES = {
         "Mazmorras, jefes, botín", "Mazmorra o jefe…", "Explorador de mazmorras",
@@ -66,7 +66,7 @@ local rows = {
         "evaluando %d / %d …", "%d mazmorras con al menos %s %% de mejora", "%d mazmorra con al menos %s %% de mejora",
         "Ninguna mazmorra accesible mejora al menos un %s %%.", "%d mejoras", "%s %% de probabilidad",
         "%s de todo tu personaje con este objeto en lugar del actual: el mismo número que la descripción de Sendit Upgrade.",
-        ",", "Arrastra para cambiar el tamaño", "tu nivel", "por encima de tu nivel", "por debajo de tu nivel", "Sin botín propio - solo objetos del mundo (verdes aleatorios)", "Alcance", "Estándar (tu nivel)", "hasta %d niveles por encima", "Todos los niveles", "Estándar: solo mazmorras a las que puedes entrar y objetos que puedes llevar ahora. La vista previa muestra también mazmorras y objetos superiores: lo que darían a tu personaje tal como es hoy.", "desde nivel %d", "Jefes del mundo", "Mundo abierto",
+        ",", "Arrastra para cambiar el tamaño", "tu nivel", "por encima de tu nivel", "por debajo de tu nivel", "Sin botín propio - solo objetos del mundo (verdes aleatorios)", "Alcance", "Estándar (tu nivel)", "hasta %d niveles por encima", "Todos los niveles", "Estándar: solo mazmorras a las que puedes entrar y objetos que puedes llevar ahora. La vista previa muestra también mazmorras y objetos superiores: lo que darían a tu personaje tal como es hoy.", "desde nivel %d", "Jefes del mundo", "Mundo abierto", "Ninguna mejora para ti", "Raro",
     },
     ruRU = {
         "Подземелья, боссы, добыча", "Подземелье или босс…", "Обзор подземелий",
@@ -80,7 +80,7 @@ local rows = {
         "оценка %d / %d …", "%d подземелий с улучшением не менее %s %%", "%d подземелье с улучшением не менее %s %%",
         "Нет доступного подземелья с улучшением не менее %s %%.", "Улучшений: %d", "Шанс %s %%",
         "%s всего персонажа с этим предметом вместо надетого - то же число, что в подсказке Sendit Upgrade.",
-        ",", "Потяните, чтобы изменить размер", "ваш уровень", "выше вашего уровня", "ниже вашего уровня", "Своей добычи нет - только мировые предметы (случайные зелёные)", "Охват", "Стандарт (ваш уровень)", "до %d ур. выше вас", "Все уровни", "Стандарт: только доступные подземелья и предметы, которые можно надеть сейчас. Предпросмотр показывает и более высокие: что они дали бы персонажу таким, какой он сегодня.", "с %d ур.", "Мировые боссы", "Открытый мир",
+        ",", "Потяните, чтобы изменить размер", "ваш уровень", "выше вашего уровня", "ниже вашего уровня", "Своей добычи нет - только мировые предметы (случайные зелёные)", "Охват", "Стандарт (ваш уровень)", "до %d ур. выше вас", "Все уровни", "Стандарт: только доступные подземелья и предметы, которые можно надеть сейчас. Предпросмотр показывает и более высокие: что они дали бы персонажу таким, какой он сегодня.", "с %d ур.", "Мировые боссы", "Открытый мир", "Нет улучшений для вас", "Редкий",
     },
 }
 local tables = {}

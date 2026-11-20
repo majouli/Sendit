@@ -1,5 +1,5 @@
 --[[
-  Mage and Warlock - standard builds of the three trees (warcraft.wiki.gg,
+  Mage and Warlock - standard builds of the three trees (Classic reference,
   Classic); spells and their ranks from the client data (Spells.lua).
     MAGE ARCANE       Arcane Missiles; Arcane Mind (Forever: one rank, +10%
                       intellect and +100% critical strike damage bonus of

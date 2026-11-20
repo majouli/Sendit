@@ -25,10 +25,10 @@ end
 
 local function Num(v) return (("%.1f"):format(v):gsub("%.", L.decimal or ".")) end
 
--- the current target's level difference, else the fullest bucket
+-- this character's bucket for the target's level difference, else its fullest
 local function PickBucket()
-    local m = ns.db and ns.db.measure
-    if not m or not m.buckets then return nil end
+    local m = ns.Measure.Char()
+    if not m then return nil end
     local level, mine = UnitLevel("target"), UnitLevel("player")
     if type(level) == "number" and level > 0 and not (issecretvalue and (issecretvalue(level) or issecretvalue(mine))) then
         local d = level - mine
