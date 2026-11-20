@@ -1,6 +1,6 @@
 --[[
   LootIcon: one boss drop - icon in a quality frame, drop chance below, item tooltip; counts glow
-  gold while the boost runs. Uncached items show a placeholder and are requested.
+  gold and breathe slowly while the boost runs. Uncached items show a placeholder and are requested.
   LootIcon.Create(parent) -> button;  button:Set(itemID, chance);  LootIcon.WIDTH / HEIGHT
 ]]
 local _, ns = ...
@@ -8,6 +8,7 @@ local T, S = Sendit.Theme, ns.Style
 local Icon = {}
 ns.LootIcon = Icon
 Icon.WIDTH, Icon.HEIGHT = S.size.icon, S.size.icon + S.size.chance + 2
+local PULSE = 0.9  -- seconds per half breath of an upgrade's glow
 local requested = {}
 
 local function Read(fn, ...)
@@ -39,12 +40,22 @@ end
 function Icon.Create(parent)
     local b = CreateFrame("Button", nil, parent)
     b:SetSize(Icon.WIDTH, Icon.HEIGHT)
+    -- the glow sits on its own frame: its frame alpha pulses (a painted texture keeps its alpha)
+    b.glow = CreateFrame("Frame", nil, b)
+    b.glow:SetSize(S.size.icon + 6, S.size.icon + 6)
+    b.glow:SetPoint("TOP", 0, 3)
+    T.Fill(b.glow, "accent", "BACKGROUND", nil, 0.55):SetAllPoints()
+    b.pulse = b.glow:CreateAnimationGroup()
+    b.pulse:SetLooping("BOUNCE")
+    local fade = b.pulse:CreateAnimation("Alpha")
+    fade:SetFromAlpha(1)
+    fade:SetToAlpha(0.25)
+    fade:SetDuration(PULSE)
+    fade:SetSmoothing("IN_OUT")
     local box = CreateFrame("Frame", nil, b)
     box:SetSize(S.size.icon, S.size.icon)
     box:SetPoint("TOP")
-    b.glow = T.Fill(box, "accent", "BACKGROUND", nil, 0.35)
-    b.glow:SetPoint("TOPLEFT", -3, 3)
-    b.glow:SetPoint("BOTTOMRIGHT", 3, -3)
+    box:SetFrameLevel(b.glow:GetFrameLevel() + 1)
     b.icon = box:CreateTexture(nil, "ARTWORK")
     b.icon:SetPoint("TOPLEFT", 1, -1)
     b.icon:SetPoint("BOTTOMRIGHT", -1, 1)
@@ -79,6 +90,8 @@ function Icon.Create(parent)
         end
         local upgrade = ns.Boost.Item(itemID) ~= nil
         self.glow:SetShown(upgrade)
+        if upgrade and not self.pulse:IsPlaying() then self.pulse:Play()
+        elseif not upgrade then self.pulse:Stop() end
         self.chance:SetText(Chance(chance))
         T.Paint(self.chance, upgrade and "accent" or "textMuted")
         self:Show()

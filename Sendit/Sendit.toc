@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Sendit
 ## Notes: Core of the Sendit suite: one window, one design and shared profiles for every Sendit module.
-## Version: 0.17.4
+## Version: 0.18.0
 ## X-License: GPL-3.0
 ## IconTexture: Interface\AddOns\Sendit\Media\Icon
 ## AddonCompartmentFunc: Sendit_OnAddonCompartmentClick
@@ -15,11 +15,13 @@ Core\Profiles.lua
 Core\ErrorLog.lua
 Core\Suite.lua
 Core\ItemRatings.lua
+Core\GearSlots.lua
 UI\Fonts.lua
 UI\Theme.lua
 UI\Ornaments.lua
 UI\Widgets.lua
 UI\Chip.lua
+UI\BoostDialog.lua
 UI\Layout.lua
 UI\Options.lua
 UI\Search.lua

@@ -6,6 +6,7 @@
   Boost.Available() / Start() / Stop() / Active() / Stale()
   Boost.Min() / SetMin(pct)      account: boostMin
   Boost.Ahead() / SetAhead(n)    account: boostAhead
+  Boost.Slot(key) / SetSlot(key, on)   account: boostSlots (Sendit.GearSlots groups, a filter)
   Boost.Get(id) -> { pct, label, secondaryPct, secondaryLabel, itemID, boss, count, gate } | nil
   Boost.Item(itemID) -> the rating when it counts
   Boost.Progress() -> rated, total, running, missing;  Boost.Report() -> lines (/sd boost)
@@ -105,10 +106,19 @@ local function InRange(itemID)
     return r
 end
 
+function Boost.Slot(key) return Sendit.GearSlots.On(ns.module.db, key) end
+
+function Boost.SetSlot(key, on)
+    Sendit.GearSlots.Set(ns.module.db, key, on)
+    Boost.Invalidate()
+end
+
+local function Wanted(equipLoc) return Sendit.GearSlots.Wanted(ns.module.db, equipLoc) end
+
 function Boost.Item(itemID)
     if not active then return nil end
     local r = InRange(itemID)
-    if r and r.pct >= Boost.Min() then return r end
+    if r and r.pct >= Boost.Min() and Wanted(r.equipLoc) then return r end
     return nil
 end
 

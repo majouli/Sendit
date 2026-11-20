@@ -4,10 +4,10 @@
   ns.acct = account section (on / off, window layout), ns.Design() = the core's design,
   ns.char = per character (Sendit_ChatCharDB: conversations, history).
   ns.Listen(event, fn);  ns.OnChanged(fn) / ns.Changed();  ns.OnReady(fn) (once, chat active only)
-  Yields to a chat addon that takes over Blizzard's chat frames too (ns.CONFLICT).
+  Another addon with the chat (Conflict.Find): Sendit Chat stays off and asks to take over
+  (TakeoverDialog) unless the player chose to keep that addon (acct.keepOther).
 ]]
 local addonName, ns = ...
-ns.CONFLICT = "EllesmereUIChat"
 local Sendit = Sendit
 
 ns.VERSION = C_AddOns and C_AddOns.GetAddOnMetadata(addonName, "Version") or "?"
@@ -137,9 +137,17 @@ ns.Listen("PLAYER_LOGIN", function()
         ns.Print(ns.L.DISABLED)
         return
     end
-    if IsLoaded(ns.CONFLICT) then
-        ns.yielding = true
-        ns.Print(ns.L.YIELD_EUI)
+    ns.Conflict.OnFound(function(other)  -- an addon took the chat after the start
+        if ns.active and ns.acct.keepOther ~= other then ns.TakeoverDialog.Show(other) end
+    end)
+    local other = ns.Conflict.Find()
+    if other then
+        ns.yielding = other
+        if ns.acct.keepOther == other then
+            ns.Print(ns.L.YIELD:format(ns.Conflict.Title(other)))
+        else
+            ns.TakeoverDialog.Show(other)
+        end
         return
     end
     ns.active = true

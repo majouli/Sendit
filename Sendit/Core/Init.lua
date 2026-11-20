@@ -12,7 +12,7 @@
     Sendit.OnReady(fn) / OnProfile(fn) / OnModuleSwitch(fn(addon, on))
     Sendit.OnSettingsChanged(fn) / SettingsChanged()
     Sendit.Provide(name, api) / Service(name) -> api | nil (nil: module off or missing)
-    Sendit.Locale, Theme, Widgets, Options, Profiles, ItemRatings
+    Sendit.Locale, Theme, Widgets, Options, Profiles, ItemRatings, GearSlots, BoostDialog
     Sendit:AddQuickToggle (minimap menu) / Sendit:AddLauncher (app bar)
   Everything else on `Sendit` is internal. Registration works before and after ADDON_LOADED.
 ]]

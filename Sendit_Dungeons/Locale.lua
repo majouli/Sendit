@@ -6,10 +6,10 @@ local keys = {
     "subtitle", "search", "page", "pageDesc", "open", "empty", "pick",
     "levels", "levelUnknown", "players", "raid", "dungeon", "bosses", "lootUnknown",
     "filterAll", "filterFits", "filterDungeons", "filterRaids",
-    "boost", "boostHelp", "boostNeedsUpgrade", "boostOff", "boostAt", "boostOn", "boostAgain", "stale",
+    "boost", "boostHelp", "boostNeedsUpgrade", "boostOn", "boostAgain", "stale",
     "boostRating", "boostCount", "boostCountOne", "boostEmpty", "upgrades", "chance", "detailVs", "decimal",
     "resize", "fitsYou", "aboveYou", "belowYou", "worldOnly",
-    "ahead", "aheadStandard", "aheadPlus", "aheadAll", "aheadHelp", "fromLevel", "worldBosses", "openWorld", "noUpgrade", "rare",
+    "aheadAll", "fromLevel", "worldBosses", "openWorld", "noUpgrade", "rare",
 }
 local rows = {
     enUS = {
@@ -20,11 +20,11 @@ local rows = {
         "Loot unknown - no data for this boss yet (Forever's own boss or changed)",
         "All", "For my level", "Dungeons", "Raids",
         "Gear boost", "Dungeons whose bosses drop an item that makes your character stronger (Sendit Upgrade, %s), the biggest gain first - the same number as Upgrade's item tooltip.",
-        "Needs Sendit: Upgrade (switched on).", "Off", "at least %s %%", "Boost ≥ %s %%", "Rate again", "stale",
+        "Needs Sendit: Upgrade (switched on).", "Boost ≥ %s %%", "Rate again", "stale",
         "rating %d / %d …", "%d dungeons with at least %s %% upgrade", "%d dungeon with at least %s %% upgrade",
         "No dungeon you can enter drops an upgrade of at least %s %%.", "%d upgrades", "%s %% drop chance",
         "Your whole character's %s with this item instead of your worn one - the same number as Sendit Upgrade's item tooltip.",
-        ".", "Drag to resize", "your level", "above your level", "below your level", "No drops of its own - only world drops (random green items)", "Range", "Standard (your level)", "up to %d levels above", "All levels", "Standard: only dungeons you can enter and items you can wear now. A preview also shows higher dungeons and items: what they would give your character as it is today.", "from level %d", "World bosses", "Open world", "No upgrade for you", "Rare",
+        ".", "Drag to resize", "your level", "above your level", "below your level", "No drops of its own - only world drops (random green items)", "All levels", "from level %d", "World bosses", "Open world", "No upgrade for you", "Rare",
     },
     deDE = {
         "Dungeons, Bosse, Beute", "Dungeon oder Boss…", "Dungeon-Browser",
@@ -34,11 +34,11 @@ local rows = {
         "Beute unbekannt - für diesen Boss gibt es noch keine Daten (Forever-eigener oder geänderter Boss)",
         "Alle", "Für meine Stufe", "Dungeons", "Schlachtzüge",
         "Gear-Boost", "Dungeons, deren Bosse ein Teil fallen lassen, das deinen Charakter stärker macht (Sendit Upgrade, %s), größter Gewinn zuerst - dieselbe Zahl wie im Item-Tooltip von Upgrade.",
-        "Benötigt Sendit: Upgrade (eingeschaltet).", "Aus", "mindestens %s %%", "Boost ≥ %s %%", "Neu bewerten", "veraltet",
+        "Benötigt Sendit: Upgrade (eingeschaltet).", "Boost ≥ %s %%", "Neu bewerten", "veraltet",
         "bewerte %d / %d …", "%d Dungeons mit mindestens %s %% Upgrade", "%d Dungeon mit mindestens %s %% Upgrade",
         "Kein Dungeon, den du betreten kannst, bringt mindestens %s %% Upgrade.", "%d Upgrades", "%s %% Dropchance",
         "%s deines ganzen Charakters mit diesem Teil statt deinem getragenen - dieselbe Zahl wie im Item-Tooltip von Sendit Upgrade.",
-        ",", "Ziehen zum Ändern der Größe", "deine Stufe", "über deiner Stufe", "unter deiner Stufe", "Keine eigene Beute - nur Welt-Drops (zufällige grüne Items)", "Reichweite", "Standard (deine Stufe)", "bis %d Stufen über dir", "Alle Stufen", "Standard: nur Dungeons, die du betreten, und Items, die du tragen kannst. Die Vorschau zeigt auch höhere Dungeons und Items: was sie deinem Charakter so, wie er heute ist, bringen würden.", "ab Stufe %d", "Weltbosse", "Offene Welt", "Kein Upgrade für dich", "Selten",
+        ",", "Ziehen zum Ändern der Größe", "deine Stufe", "über deiner Stufe", "unter deiner Stufe", "Keine eigene Beute - nur Welt-Drops (zufällige grüne Items)", "Alle Stufen", "ab Stufe %d", "Weltbosse", "Offene Welt", "Kein Upgrade für dich", "Selten",
     },
     frFR = {
         "Donjons, boss, butin", "Donjon ou boss…", "Navigateur de donjons",
@@ -48,11 +48,11 @@ local rows = {
         "Butin inconnu - pas encore de données pour ce boss (boss propre à Forever ou modifié)",
         "Tous", "Pour mon niveau", "Donjons", "Raids",
         "Boost d'équipement", "Donjons dont un boss lâche un objet qui rend votre personnage plus fort (Sendit Upgrade, %s), le plus grand gain d'abord - le même nombre que l'infobulle d'Upgrade.",
-        "Nécessite Sendit : Upgrade (activé).", "Arrêt", "au moins %s %%", "Boost ≥ %s %%", "Réévaluer", "obsolète",
+        "Nécessite Sendit : Upgrade (activé).", "Boost ≥ %s %%", "Réévaluer", "obsolète",
         "évaluation %d / %d …", "%d donjons avec au moins %s %% d'amélioration", "%d donjon avec au moins %s %% d'amélioration",
         "Aucun donjon accessible n'apporte au moins %s %%.", "%d améliorations", "%s %% de chance",
         "%s de tout votre personnage avec cet objet au lieu de celui porté - le même nombre que l'infobulle de Sendit Upgrade.",
-        ",", "Glisser pour redimensionner", "votre niveau", "au-dessus de votre niveau", "sous votre niveau", "Pas de butin propre - seulement des objets mondiaux (verts aléatoires)", "Portée", "Standard (votre niveau)", "jusqu'à %d niveaux au-dessus", "Tous les niveaux", "Standard : seulement les donjons accessibles et les objets portables maintenant. L'aperçu montre aussi les donjons et objets plus élevés : ce qu'ils apporteraient à votre personnage tel qu'il est aujourd'hui.", "dès le niveau %d", "Boss mondiaux", "Monde ouvert", "Aucune amélioration pour vous", "Rare",
+        ",", "Glisser pour redimensionner", "votre niveau", "au-dessus de votre niveau", "sous votre niveau", "Pas de butin propre - seulement des objets mondiaux (verts aléatoires)", "Tous les niveaux", "dès le niveau %d", "Boss mondiaux", "Monde ouvert", "Aucune amélioration pour vous", "Rare",
     },
     esES = {
         "Mazmorras, jefes, botín", "Mazmorra o jefe…", "Explorador de mazmorras",
@@ -62,11 +62,11 @@ local rows = {
         "Botín desconocido - aún no hay datos de este jefe (jefe propio de Forever o cambiado)",
         "Todas", "Para mi nivel", "Mazmorras", "Bandas",
         "Impulso de equipo", "Mazmorras cuyos jefes sueltan un objeto que hace más fuerte a tu personaje (Sendit Upgrade, %s), la mayor mejora primero - el mismo número que la descripción de Upgrade.",
-        "Requiere Sendit: Upgrade (activado).", "Apagado", "al menos %s %%", "Impulso ≥ %s %%", "Evaluar de nuevo", "desactualizado",
+        "Requiere Sendit: Upgrade (activado).", "Impulso ≥ %s %%", "Evaluar de nuevo", "desactualizado",
         "evaluando %d / %d …", "%d mazmorras con al menos %s %% de mejora", "%d mazmorra con al menos %s %% de mejora",
         "Ninguna mazmorra accesible mejora al menos un %s %%.", "%d mejoras", "%s %% de probabilidad",
         "%s de todo tu personaje con este objeto en lugar del actual: el mismo número que la descripción de Sendit Upgrade.",
-        ",", "Arrastra para cambiar el tamaño", "tu nivel", "por encima de tu nivel", "por debajo de tu nivel", "Sin botín propio - solo objetos del mundo (verdes aleatorios)", "Alcance", "Estándar (tu nivel)", "hasta %d niveles por encima", "Todos los niveles", "Estándar: solo mazmorras a las que puedes entrar y objetos que puedes llevar ahora. La vista previa muestra también mazmorras y objetos superiores: lo que darían a tu personaje tal como es hoy.", "desde nivel %d", "Jefes del mundo", "Mundo abierto", "Ninguna mejora para ti", "Raro",
+        ",", "Arrastra para cambiar el tamaño", "tu nivel", "por encima de tu nivel", "por debajo de tu nivel", "Sin botín propio - solo objetos del mundo (verdes aleatorios)", "Todos los niveles", "desde nivel %d", "Jefes del mundo", "Mundo abierto", "Ninguna mejora para ti", "Raro",
     },
     ruRU = {
         "Подземелья, боссы, добыча", "Подземелье или босс…", "Обзор подземелий",
@@ -76,16 +76,41 @@ local rows = {
         "Добыча неизвестна - данных по этому боссу пока нет (собственный или изменённый босс Forever)",
         "Все", "Для моего уровня", "Подземелья", "Рейды",
         "Улучшение снаряжения", "Подземелья, боссы которых роняют предмет, делающий персонажа сильнее (Sendit Upgrade, %s), лучшие сверху - то же число, что в подсказке Upgrade.",
-        "Нужен Sendit: Upgrade (включён).", "Выкл.", "не менее %s %%", "Улучшение ≥ %s %%", "Пересчитать", "устарело",
+        "Нужен Sendit: Upgrade (включён).", "Улучшение ≥ %s %%", "Пересчитать", "устарело",
         "оценка %d / %d …", "%d подземелий с улучшением не менее %s %%", "%d подземелье с улучшением не менее %s %%",
         "Нет доступного подземелья с улучшением не менее %s %%.", "Улучшений: %d", "Шанс %s %%",
         "%s всего персонажа с этим предметом вместо надетого - то же число, что в подсказке Sendit Upgrade.",
-        ",", "Потяните, чтобы изменить размер", "ваш уровень", "выше вашего уровня", "ниже вашего уровня", "Своей добычи нет - только мировые предметы (случайные зелёные)", "Охват", "Стандарт (ваш уровень)", "до %d ур. выше вас", "Все уровни", "Стандарт: только доступные подземелья и предметы, которые можно надеть сейчас. Предпросмотр показывает и более высокие: что они дали бы персонажу таким, какой он сегодня.", "с %d ур.", "Мировые боссы", "Открытый мир", "Нет улучшений для вас", "Редкий",
+        ",", "Потяните, чтобы изменить размер", "ваш уровень", "выше вашего уровня", "ниже вашего уровня", "Своей добычи нет - только мировые предметы (случайные зелёные)", "Все уровни", "с %d ур.", "Мировые боссы", "Открытый мир", "Нет улучшений для вас", "Редкий",
     },
+}
+local dialogKeys = { "boostFor", "boostMinLabel", "boostMinHint", "boostAhead", "boostSlots", "slotsAll", "slotsNone",
+    "boostGo", "boostEnd", "boostCancel", "slotWeapon", "slotOffhand", "slotRanged" }
+local dialog = {
+    enUS = { "Rated by Sendit Upgrade for: %s", "Your character at least this much stronger",
+        "The same number as Sendit Upgrade's item tooltip. One armour piece gives 0,5-2 %, a weapon more. Decimals allowed (0,5).",
+        "Preview: also dungeons and items up to this many levels above you", "Slots", "All", "None",
+        "Boost", "End boost", "Cancel", "Weapon", "Off hand / shield", "Ranged" },
+    deDE = { "Bewertet von Sendit Upgrade für: %s", "Dein Charakter mindestens so viel stärker",
+        "Dieselbe Zahl wie im Item-Tooltip von Sendit Upgrade. Ein Rüstungsteil bringt 0,5-2 %, eine Waffe mehr. Dezimalwerte erlaubt (0,5).",
+        "Vorschau: auch Dungeons und Items bis so viele Level über dir", "Plätze", "Alle", "Keine",
+        "Boost", "Boost beenden", "Abbrechen", "Waffe", "Nebenhand / Schild", "Distanz" },
+    frFR = { "Évalué par Sendit Upgrade pour : %s", "Votre personnage au moins autant plus fort",
+        "Le même nombre que l'infobulle de Sendit Upgrade. Une armure donne 0,5-2 %, une arme plus. Décimales permises (0,5).",
+        "Aperçu : aussi les donjons et objets jusqu'à autant de niveaux au-dessus de vous", "Emplacements", "Tous", "Aucun",
+        "Boost", "Arrêter le boost", "Annuler", "Arme", "Main gauche / bouclier", "Distance" },
+    esES = { "Evaluado por Sendit Upgrade para: %s", "Tu personaje al menos esto más fuerte",
+        "El mismo número que la descripción de Sendit Upgrade. Una armadura da 0,5-2 %, un arma más. Se permiten decimales (0,5).",
+        "Vista previa: también mazmorras y objetos hasta tantos niveles por encima de ti", "Ranuras", "Todas", "Ninguna",
+        "Impulsar", "Terminar", "Cancelar", "Arma", "Mano izquierda / escudo", "A distancia" },
+    ruRU = { "Оценка Sendit Upgrade для: %s", "Персонаж минимум насколько сильнее",
+        "То же число, что в подсказке Sendit Upgrade. Броня даёт 0,5-2 %, оружие больше. Можно дробные (0,5).",
+        "Предпросмотр: также подземелья и предметы до стольких уровней выше вас", "Ячейки", "Все", "Ни одной",
+        "Запуск", "Завершить", "Отмена", "Оружие", "Левая рука / щит", "Дальний бой" },
 }
 local tables = {}
 for code, values in pairs(rows) do
     tables[code] = {}
     for i, key in ipairs(keys) do tables[code][key] = values[i] end
+    for i, key in ipairs(dialogKeys) do tables[code][key] = dialog[code][i] end
 end
 ns.L = Sendit.Locale.New(tables)

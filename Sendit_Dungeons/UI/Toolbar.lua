@@ -1,5 +1,6 @@
 --[[
-  Toolbar: the browser's header - emblem, name, search, the Filter / Range / Boost chips, close.
+  Toolbar: the browser's header - emblem, name, search, the Filter and Boost chips, close. Boost opens
+  the suite's boost dialog (Sendit.BoostDialog: threshold, preview levels, slots).
   Toolbar.Create(frame, on)   on = { search(text), refilter(), restart() }
   Toolbar.Update(frame);  Toolbar.Filter() -> the list filter key
 ]]
@@ -8,8 +9,8 @@ local L, S = ns.L, ns.Style
 local T, W = Sendit.Theme, Sendit.Widgets
 local Toolbar = {}
 ns.Toolbar = Toolbar
-local THRESHOLDS = { 0.5, 1, 2, 3, 5 }
-local AHEAD = { 0, 3, 5, 10, 60 }  -- levels above yours; 60 = every level
+local AHEAD = { { 0, "0" }, { 3, "+3" }, { 5, "+5" }, { 10, "+10" },  -- levels above yours; 60 = every level
+    { 60, function() return L.aheadAll end } }
 
 function Toolbar.Filter() return ns.module.db and ns.module.db.filter or "all" end
 
@@ -22,12 +23,6 @@ local function FilterLabel()
     return L.filterAll
 end
 
-local function AheadLabel(n)
-    if n == 0 then return L.aheadStandard end
-    if n >= 60 then return L.aheadAll end
-    return L.aheadPlus:format(n)
-end
-
 local function Tip(chip, title, text)
     chip:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
@@ -38,35 +33,21 @@ local function Tip(chip, title, text)
     chip:SetScript("OnLeave", function() GameTooltip:Hide() end)
 end
 
-local function BoostMenu(anchor, on)
+local cfg
+local function BoostDialog(anchor, on)
     GameTooltip:Hide()
-    local active = ns.Boost.Active()
-    local options = {}
-    for _, v in ipairs(THRESHOLDS) do options[#options + 1] = { v, L.boostAt:format(S.Threshold(v)) } end
-    if active then
-        table.insert(options, 1, { "again", L.boostAgain })
-        options[#options + 1] = { "off", L.boostOff }
-    end
-    W.ShowMenu(anchor, options, active and ns.Boost.Min() or "off", function(key)
-        if key == "off" then
+    cfg = cfg or { L = L, boost = ns.Boost,
+        ahead = AHEAD,
+        onChange = function() on.refilter() end,
+        onStart = function()
+            ns.Boost.Start()
+            on.restart()
+        end,
+        onEnd = function()
             ns.Boost.Stop()
             on.refilter()
-            return
-        end
-        if key ~= "again" then ns.Boost.SetMin(key) end
-        if key == "again" or not ns.Boost.Active() or ns.Boost.Stale() then ns.Boost.Start() end
-        on.restart()
-    end)
-end
-
-local function AheadMenu(anchor, on)
-    GameTooltip:Hide()
-    local options = {}
-    for _, n in ipairs(AHEAD) do options[#options + 1] = { n, AheadLabel(n) } end
-    W.ShowMenu(anchor, options, ns.Boost.Ahead(), function(n)
-        ns.Boost.SetAhead(n)
-        on.refilter()
-    end)
+        end }
+    Sendit.BoostDialog.Toggle(anchor, cfg)
 end
 
 function Toolbar.Create(frame, on)
@@ -90,9 +71,8 @@ function Toolbar.Create(frame, on)
             on.refilter()
         end)
     end)
-    frame.ahead = W.Chip(frame, function(self) AheadMenu(self, on) end)
-    Tip(frame.ahead, L.ahead, function() return L.aheadHelp end)
-    frame.boost = W.Chip(frame, function(self) if ns.Boost.Available() then BoostMenu(self, on) end end)
+    frame.boost = W.Chip(frame, function(self) BoostDialog(self, on) end)
+    frame:HookScript("OnHide", function() Sendit.BoostDialog.Hide() end)
     Tip(frame.boost, L.boost, function()
         local svc = Sendit.Service("upgrade")
         return svc and L.boostHelp:format(svc.Spec() or "?") or L.boostNeedsUpgrade
@@ -102,7 +82,7 @@ function Toolbar.Create(frame, on)
     line:SetPoint("TOPRIGHT", 0, -S.size.header)
     line:SetHeight(1)
     -- the drag area must not cover the controls
-    for _, control in ipairs({ frame.search, frame.filter, frame.ahead, frame.boost, frame.close }) do
+    for _, control in ipairs({ frame.search, frame.filter, frame.boost, frame.close }) do
         control:SetFrameLevel(frame.drag:GetFrameLevel() + 2)
     end
 end
@@ -113,5 +93,4 @@ function Toolbar.Update(frame)
     local label = boosting and L.boostOn:format(S.Threshold()) or L.boost
     if boosting and ns.Boost.Stale() then label = label .. " (" .. L.stale .. ")" end
     frame.boost:SetLabel(label, boosting)
-    frame.ahead:SetLabel(L.ahead .. ": " .. AheadLabel(ns.Boost.Ahead()), ns.Boost.Ahead() > 0)
 end

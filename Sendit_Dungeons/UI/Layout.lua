@@ -20,21 +20,19 @@ end
 
 local function Controls(f, m, w)
     local pad, gap = S.space.pad, 8
-    local chips = f.filter:GetWidth() + gap + f.ahead:GetWidth() + gap + f.boost:GetWidth()
-    for _, c in ipairs({ f.search, f.filter, f.ahead, f.boost }) do c:ClearAllPoints() end
+    local chips = f.filter:GetWidth() + gap + f.boost:GetWidth()
+    for _, c in ipairs({ f.search, f.filter, f.boost }) do c:ClearAllPoints() end
     if m.toolbar then
         f.search:SetWidth(math.max(140, w - 2 * pad - chips - gap))
         f.search:SetPoint("TOPLEFT", pad, -(S.size.header + 4))
         f.filter:SetPoint("LEFT", f.search, "RIGHT", gap, 0)
-        f.ahead:SetPoint("LEFT", f.filter, "RIGHT", gap, 0)
-        f.boost:SetPoint("LEFT", f.ahead, "RIGHT", gap, 0)
+        f.boost:SetPoint("LEFT", f.filter, "RIGHT", gap, 0)
         return
     end
     local room = w - pad - f.close:GetWidth() - 8 - chips - gap - f.titleWidth - 2 * pad
     f.search:SetWidth(math.max(140, math.min(S.size.search, room)))
     f.boost:SetPoint("RIGHT", f.close, "LEFT", -8, 0)
-    f.ahead:SetPoint("RIGHT", f.boost, "LEFT", -gap, 0)
-    f.filter:SetPoint("RIGHT", f.ahead, "LEFT", -gap, 0)
+    f.filter:SetPoint("RIGHT", f.boost, "LEFT", -gap, 0)
     f.search:SetPoint("RIGHT", f.filter, "LEFT", -gap, 0)
 end
 

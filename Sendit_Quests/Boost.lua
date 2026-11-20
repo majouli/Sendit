@@ -8,7 +8,7 @@
   Boost.Min() / SetMin(pct)       account: boostMin (decimals allowed)
   Boost.Ahead() / SetAhead(n)     account: boostAhead;   Boost.NeedsLevel(q) -> level | nil
   Boost.Locked() / SetLocked(on)  account: boostLocked (also locked chain steps)
-  Boost.SLOTS, Slot(key) / SetSlot(key, on) / SlotLabel(group)   account: boostSlots (a filter)
+  Boost.Slot(key) / SetSlot(key, on)   account: boostSlots (Sendit.GearSlots groups, a filter)
   Boost.Get(id) -> { pct, slotPct, secondaryPct, secondaryLabel, itemID, label, equipLoc } | nil
   Boost.Progress() -> rated, total, running, missing;  Boost.Report() -> lines (/sq boost)
 ]]
@@ -137,42 +137,14 @@ function Boost.Stop()
     Ratings.Stop()
 end
 
-Boost.SLOTS = {
-    { key = "head", locs = { "INVTYPE_HEAD" } }, { key = "neck", locs = { "INVTYPE_NECK" } },
-    { key = "shoulder", locs = { "INVTYPE_SHOULDER" } }, { key = "back", locs = { "INVTYPE_CLOAK" } },
-    { key = "chest", locs = { "INVTYPE_CHEST", "INVTYPE_ROBE" } }, { key = "wrist", locs = { "INVTYPE_WRIST" } },
-    { key = "hands", locs = { "INVTYPE_HAND" } }, { key = "waist", locs = { "INVTYPE_WAIST" } },
-    { key = "legs", locs = { "INVTYPE_LEGS" } }, { key = "feet", locs = { "INVTYPE_FEET" } },
-    { key = "finger", locs = { "INVTYPE_FINGER" } }, { key = "trinket", locs = { "INVTYPE_TRINKET" } },
-    { key = "weapon", locs = { "INVTYPE_WEAPON", "INVTYPE_2HWEAPON", "INVTYPE_WEAPONMAINHAND" }, own = "slotWeapon" },
-    { key = "offhand", locs = { "INVTYPE_WEAPONOFFHAND", "INVTYPE_SHIELD", "INVTYPE_HOLDABLE" }, own = "slotOffhand" },
-    { key = "ranged", locs = { "INVTYPE_RANGED", "INVTYPE_RANGEDRIGHT", "INVTYPE_THROWN", "INVTYPE_RELIC" }, own = "slotRanged" },
-}
-local groupOf = {}
-for _, g in ipairs(Boost.SLOTS) do for _, loc in ipairs(g.locs) do groupOf[loc] = g.key end end
-
-function Boost.SlotLabel(g)
-    if g.own then return ns.L[g.own] end
-    local name = _G[g.locs[1]]
-    return type(name) == "string" and name or g.key
-end
-
-function Boost.Slot(key)
-    local slots = ns.module.db and ns.module.db.boostSlots
-    return not (slots and slots[key] == false)
-end
+function Boost.Slot(key) return Sendit.GearSlots.On(ns.module.db, key) end
 
 function Boost.SetSlot(key, on)
-    if not ns.module.db then return end
-    ns.module.db.boostSlots = ns.module.db.boostSlots or {}
-    ns.module.db.boostSlots[key] = on and true or false
+    Sendit.GearSlots.Set(ns.module.db, key, on)
     Boost.Invalidate()
 end
 
-local function Wanted(equipLoc)
-    local key = equipLoc and groupOf[equipLoc]
-    return key == nil or Boost.Slot(key)
-end
+local function Wanted(equipLoc) return Sendit.GearSlots.Wanted(ns.module.db, equipLoc) end
 
 -- answers are kept until an input changes: the list sorts thousands of quests
 local memo = {}
@@ -242,7 +214,7 @@ function Boost.Report()
         quests, scan.guaranteed + scan.choice, scan.guaranteed, scan.choice, total)
     Add("items: %d answered, %d never sent by the server%s", rated, missing, running and " - still rating" or "")
     local off = {}
-    for _, g in ipairs(Boost.SLOTS) do if not Boost.Slot(g.key) then off[#off + 1] = g.key end end
+    for _, g in ipairs(Sendit.GearSlots.GROUPS) do if not Boost.Slot(g.key) then off[#off + 1] = g.key end end
     if #off > 0 then Add("slots switched off: %s", table.concat(off, ", ")) end
     local counts, below, slotOff, shown = {}, {}, {}, {}
     for itemID, id in pairs(questOf) do

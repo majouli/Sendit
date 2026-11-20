@@ -9,14 +9,14 @@ SLASH_SENDITCHAT1 = "/chat"
 SlashCmdList.SENDITCHAT = function(msg)
     local cmd = strtrim(msg or ""):lower()
     if cmd == "off" or cmd == "on" then
-        if ns.acct then ns.acct.enabled = cmd == "on" end
+        if ns.acct then ns.acct.enabled, ns.acct.keepOther = cmd == "on", nil end
         ns.Print(cmd == "on" and L.TURNED_ON or L.TURNED_OFF)
     elseif cmd == "settings" then
         ns.OpenSettings()
     elseif cmd == "help" or cmd == "?" then
         ns.Print(L.HELP)
     elseif not ns.active then
-        ns.Print(ns.yielding and L.YIELD_EUI or L.DISABLED)
+        ns.Print(ns.yielding and L.YIELD:format(ns.Conflict.Title(ns.yielding)) or L.DISABLED)
     elseif cmd == "probe" then
         ns.Probe.Run()
     elseif cmd == "trace" then
