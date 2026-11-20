@@ -150,12 +150,12 @@ ns.dungeons = {
         { enc = 0, npc = 3976, display = 2042, known = true, loot = { 7726, 40, 7723, 22.5, 7724, 22.5, 10330, 15 } },
     } },
     { id = 3039, map = 3039, min = 40, max = 47, raid = false, players = 0, art = 7963780, bosses = {
-        { enc = 3450, npc = 258966, display = 0, known = false, loot = { 274995, 31, 274996, 38, 274997, 31 } },
-        { enc = 3452, npc = 258972, display = 0, known = false, loot = { 274998, 38, 274999, 38, 275000, 25 } },
-        { enc = 3453, npc = 259281, display = 0, known = false, loot = { 275001, 41, 275002, 31, 275003, 28 } },
-        { enc = 3449, npc = 258964, display = 0, known = false, loot = { 275004, 38, 275005, 14, 275006, 38 } },
-        { enc = 3451, npc = 258968, display = 0, known = false, loot = { 275007, 32, 275008, 27, 275009, 27, 275010, 9.1, 287007, 0, 287008, 0, 287009, 0, 287010, 0, 287011, 0, 287012, 0, 287013, 0, 287014, 0, 287015, 0, 287016, 0 } },
-        { enc = 0, npc = 264773, name = "Bossman Toof", display = 0, known = false, loot = { 286428, 33, 286429, 34, 286430, 33 } },
+        { enc = 3450, npc = 258966, display = 0, known = true, loot = { 274995, 31, 274996, 38, 274997, 31 } },
+        { enc = 3452, npc = 258972, display = 0, known = true, loot = { 274998, 38, 274999, 38, 275000, 25 } },
+        { enc = 3453, npc = 259281, display = 0, known = true, loot = { 275001, 41, 275002, 31, 275003, 28 } },
+        { enc = 3449, npc = 258964, display = 0, known = true, loot = { 275004, 38, 275005, 14, 275006, 38 } },
+        { enc = 3451, npc = 258968, display = 0, known = true, loot = { 275007, 32, 275008, 27, 275009, 27, 275010, 9.1, 287007, 0, 287008, 0, 287009, 0, 287010, 0, 287011, 0, 287012, 0, 287013, 0, 287014, 0, 287015, 0, 287016, 0 } },
+        { enc = 0, npc = 264773, name = "Bossman Toof", display = 0, known = true, loot = { 286428, 33, 286429, 34, 286430, 33 } },
         { enc = 0, npc = 262716, name = "Kroog", display = 0, known = false, loot = { 279857, 0, 279863, 0 } },
     } },
     { id = 70, map = 70, min = 41, max = 51, raid = false, players = 10, art = 131876, bosses = {
