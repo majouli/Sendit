@@ -7,7 +7,7 @@
                class mask Shaman) - an off-hand weapon counts when one is worn.
                Flurry (5/5: +30% attack speed for 3 swings after a crit),
                Windfury Weapon on the main hand,
-               Stormstrike (150% weapon damage, 6 s) and Earth Shock on
+               Stormstrike (100% weapon damage, 8 s) and Earth Shock on
                cooldown; Mental Dexterity (3/3, 5 points -> level 14: attack
                power +150% of intellect) and Mental Quickness (2/2, 20 points
                -> level 29: spell damage +30% of intellect) - Forever's trait
