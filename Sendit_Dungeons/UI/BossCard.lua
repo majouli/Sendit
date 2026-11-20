@@ -55,17 +55,19 @@ function Card.Create(parent)
         self.number:SetText(("%02d"):format(index) .. (boss.rare and ("  ·  " .. ns.L.rare) or ""))
         self.name:SetText(DB.BossName(boss))
         local loot = DB.Loot(boss)
-        -- while boosting: upgrades first, the biggest gain leading; the rest keeps its order
+        -- boost rated: upgrades first, the biggest gain leading; the rest keeps its order (not while
+        -- items are still rated: icons would jump with every batch)
+        local sort = ns.Boost.Active() and not select(3, ns.Boost.Progress())
         local gain = {}
         for i, drop in ipairs(loot) do
             local r = ns.Boost.Item(drop[1])
             gain[drop] = r and r.pct or -1
             drop.order = i
         end
-        table.sort(loot, function(a, b)
+        if sort then table.sort(loot, function(a, b)
             if gain[a] ~= gain[b] then return gain[a] > gain[b] end
             return a.order < b.order
-        end)
+        end) end
         local perRow = math.max(1, math.floor((width - 2 * S.space.card + S.size.iconGap) / (ns.LootIcon.WIDTH + S.size.iconGap)))
         local best
         for i, drop in ipairs(loot) do

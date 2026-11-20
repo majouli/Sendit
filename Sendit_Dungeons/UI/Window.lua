@@ -13,6 +13,7 @@ local results, rowPool, cards = {}, {}, {}
 local boosted = 0
 local ROW = S.size.row + S.size.rowGap
 local BANNER = 150
+local THROTTLE = 1  -- seconds between repaints while the boost rates items
 function Window:Pick(id)
     picked = id
     if frame then frame.detailScroll:SetVerticalScroll(0) end
@@ -47,7 +48,8 @@ local function Detail()
     frame.detailEmpty:SetShown(d == nil)
     frame.detailEmpty:SetText(#results == 0 and "" or L.pick)
     frame.detailTitle:SetText(d and DB.Name(d) or "")
-    for _, c in ipairs(cards) do c:Hide() end
+    -- only cards beyond this dungeon's bosses hide: hiding a shown one reloads its model (flicker)
+    for i, c in ipairs(cards) do if not d or i > #d.bosses then c:Hide() end end
     local art = ns.Art.Screen(frame.banner, d, frame.metrics.right, BANNER)
     frame.bannerFade:SetShown(art)
     if art then
@@ -129,8 +131,17 @@ function Window:Search(text, keep)
     self:Refresh()
 end
 
+-- while items are rated, at most one repaint per THROTTLE seconds (every batch repainting flickered)
+local waiting = false
 function Window:BoostChanged()
-    if frame and frame:IsShown() then self:Search(query, true) end
+    if not frame or not frame:IsShown() then return end
+    if not select(3, ns.Boost.Progress()) then self:Search(query, true) return end
+    if waiting then return end
+    waiting = true
+    C_Timer.After(THROTTLE, function()
+        waiting = false
+        if frame:IsShown() then Window:Search(query, true) end
+    end)
 end
 
 local function ListPane()

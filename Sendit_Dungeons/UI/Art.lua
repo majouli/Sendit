@@ -1,7 +1,8 @@
 --[[
   Art: the client's own pictures.
   Art.Screen(texture, d, width, height)   loading screen band cropped to the size; false if none
-  Art.Portrait(texture, boss, model)      boss face from a model zoomed to the head (skull if unknown)
+  Art.Portrait(texture, boss, model)      boss face from a model zoomed to the head (skull if unknown);
+                                          a face already showing this boss is not set again
   Art.ShowModel(owner, boss) / HideModel() a slowly turning 3D view beside owner (one shared frame)
 ]]
 local _, ns = ...
@@ -58,9 +59,19 @@ function Art.Still(model)
     end)
 end
 
--- tex is masked round: never SetTexCoord on it (the client refuses).
+local Face
+-- tex is masked round: never SetTexCoord on it (the client refuses). A face already showing this boss
+-- is left alone: repaints while the boost rates came every second and re-zoomed the model (flicker).
 function Art.Portrait(tex, boss, model)
     local display = boss.display or 0
+    local key = display > 0 and ("d" .. display) or ("n" .. (boss.npc or 0))
+    if tex.senditFace == key and tex.senditShown ~= nil then return tex.senditShown end
+    tex.senditFace = key
+    tex.senditShown = Face(tex, boss, model, display)
+    return tex.senditShown
+end
+
+function Face(tex, boss, model, display)
     local fn = _G["SetPortraitTextureFromCreatureDisplayID"]
     if model then pcall(model.SetPortraitZoom, model, 1) end
     if display > 0 and type(fn) == "function" and pcall(fn, tex, display) then
