@@ -1,7 +1,8 @@
 --[[
   Widgets: the chat's controls in its look; texts may be a locale key or a function (read when shown).
   Text(v) / IconButton(parent, kind, tip, onClick) / Badge(parent) / Slider(...) / Switch(...) /
-  Button(...) / Input(parent, placeholder, size) / Grip(frame, onDone) / Menu(anchor, items) /
+  Button(...) / Input(parent, placeholder, size) / Grip(frame, onDone) /
+  Menu(items) (at the cursor; item = { text, fn [, checked] }) /
   Drag(handle, frame, canMove, onDone)
 ]]
 local _, ns = ...
@@ -297,7 +298,7 @@ local function BuildMenu()
     end)
 end
 
-function Widgets.Menu(anchor, items)
+function Widgets.Menu(items)
     if not menu then BuildMenu() end
     local width = 160
     for i, item in ipairs(items) do
@@ -309,6 +310,14 @@ function Widgets.Menu(anchor, items)
             b.hl:SetAllPoints()
             b.text = T.Text(b, 11, "text")
             b.text:SetPoint("LEFT", 10, 0)
+            b.box = CreateFrame("Frame", nil, b)
+            b.box:SetSize(12, 12)
+            b.box:SetPoint("RIGHT", -10, 0)
+            T.Border(b.box, 1, "textMuted", 0.7)
+            b.check = b.box:CreateTexture(nil, "OVERLAY")
+            b.check:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
+            b.check:SetPoint("CENTER")
+            b.check:SetSize(16, 16)
             b:SetScript("OnEnter", function(self) T.Color(self.hl, "ink", 0.08) end)
             b:SetScript("OnLeave", function(self) T.Color(self.hl, "ink", 0) end)
             menu.items[i] = b
@@ -317,7 +326,9 @@ function Widgets.Menu(anchor, items)
         b:SetPoint("TOPLEFT", 1, -4 - (i - 1) * 22)
         b:SetPoint("TOPRIGHT", -1, -4 - (i - 1) * 22)
         b.text:SetText(item[1])
-        width = math.max(width, (b.text:GetStringWidth() or 0) + 24)
+        b.box:SetShown(item[3] ~= nil)
+        b.check:SetShown(item[3] == true)
+        width = math.max(width, (b.text:GetStringWidth() or 0) + (item[3] ~= nil and 46 or 24))
         b:SetScript("OnClick", function()
             menu:Hide()
             item[2]()
@@ -327,7 +338,9 @@ function Widgets.Menu(anchor, items)
     for i = #items + 1, #menu.items do menu.items[i]:Hide() end
     menu:SetSize(width, #items * 22 + 8)
     menu:ClearAllPoints()
-    menu:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -2)
+    local x, y = GetCursorPosition()
+    local scale = menu:GetEffectiveScale()
+    menu:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / scale + 2, y / scale - 2)
     menu:Show()
     return menu
 end

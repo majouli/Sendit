@@ -188,7 +188,7 @@ function Win:TabMenu(button)
         items[#items + 1] = { L.EDIT_TAB, function() ns.TabEditor.Open(index) end }
         items[#items + 1] = { L.DELETE_TAB, function() Windows.DeleteTab(index) end }
     end
-    Widgets.Menu(button, items)
+    Widgets.Menu(items)
 end
 
 function Win:NewTab()

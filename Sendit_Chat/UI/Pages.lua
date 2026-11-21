@@ -27,7 +27,7 @@ O:Register({
     title = "Chat",
     subtitle = Tx("PAGE_SUB"),
     resetKeys = { "fontSize", "bgAlpha", "border", "locked", "splitWhispers", "whisperAlert", "slashWhisper", "friendsPanel", "friendsCharClick", "lootStyle",
-                  "lootCards", "lootCardQuality", "keepHistory", "shortChannels", "mentions", "rollSummary" },
+                  "lootCards", "lootCardQuality", "keepHistory", "shortChannels", "mentions", "rollSummary", "rollArena" },
     build = O.SettingsPage(function(L, c)
         L:Section(Tx("SEC_WINDOWS"))
         local get, set = Bind("fontSize")
@@ -77,6 +77,8 @@ O:Register({
         L:Row(Tx("LOOT_STYLE"), Tx("LOOT_STYLE_DESC"), W.Switch(c, get, set))
         get, set = Bind("rollSummary")
         L:Row(Tx("ROLL_SUMMARY"), Tx("ROLL_SUMMARY_DESC"), W.Switch(c, get, set))
+        get, set = Bind("rollArena")
+        L:Row(Tx("ROLL_ARENA"), Tx("ROLL_ARENA_DESC"), W.Switch(c, get, set))
         get, set = Bind("lootCards")
         L:Row(Tx("LOOT_CARDS"), Tx("LOOT_CARDS_DESC"), W.Switch(c, get, set))
         get, set = Bind("lootCardQuality")

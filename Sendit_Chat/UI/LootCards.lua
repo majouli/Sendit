@@ -1,8 +1,9 @@
 --[[
   LootCards: a card glides in above the chat - for every loot roll (won gold, lost grey) and own loot of
   lootCardQuality or better (glowing quality frame, epic+ breathes). Up to MAX stack, HOLD s each;
-  tooltip, shift / ctrl click as Blizzard's, right click dismisses. Fed by CHAT_MSG_LOOT (not the
-  mirrored lines); secret lines skipped. Its own top-level frame, hidden while empty (Fade shows it).
+  tooltip, shift / ctrl click as Blizzard's, right or middle click dismisses. Fed by CHAT_MSG_LOOT (not the
+  mirrored lines); secret lines skipped. Its own top-level frame, hidden while empty (Fade shows it),
+  above the roll arena while that is shown.
 ]]
 local _, ns = ...
 local T, Loot = ns.Theme, ns.Loot
@@ -63,7 +64,7 @@ end
 local function NewCard()
     local c = CreateFrame("Button", nil, stack)
     c:SetSize(W, H)
-    c:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    c:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp")
     c.bg = T.Tex(c, "BACKGROUND", "bg", 0.94)
     c.bg:SetAllPoints()
     c.wash = c:CreateTexture(nil, "BACKGROUND", nil, 1)
@@ -133,7 +134,7 @@ local function NewCard()
     end)
     c:SetScript("OnLeave", function() GameTooltip:Hide() end)
     c:SetScript("OnClick", function(self, button)
-        if button == "RightButton" then
+        if button == "RightButton" or button == "MiddleButton" then
             self.token = nil
             Remove(self)
             return
@@ -204,16 +205,26 @@ function LootCards.Show(link, count, opts)
     return c
 end
 
--- on top of the whisper toasts, moving with them
+-- on top of the whisper toasts, moving with them; the roll arena sits between them and the cards
 function LootCards.Anchor()
     local main = ns.Windows.Main()
     if not stack or not main then return end
-    stack:ClearAllPoints()
     local toasts = ns.WhisperToasts and ns.WhisperToasts.Frame()
-    if toasts then
-        stack:SetPoint("BOTTOMLEFT", toasts, "TOPLEFT", 0, 0)
+    local function Base(f)
+        f:ClearAllPoints()
+        if toasts then
+            f:SetPoint("BOTTOMLEFT", toasts, "TOPLEFT", 0, 0)
+        else
+            f:SetPoint("BOTTOMLEFT", main.frame, "TOPLEFT", 0, 8)
+        end
+    end
+    local arena = ns.RollArena and ns.RollArena.Frame()
+    if arena then Base(arena) end
+    if arena and arena:IsShown() then
+        stack:ClearAllPoints()
+        stack:SetPoint("BOTTOMLEFT", arena, "TOPLEFT", 0, GAP)
     else
-        stack:SetPoint("BOTTOMLEFT", main.frame, "TOPLEFT", 0, 8)
+        Base(stack)
     end
 end
 

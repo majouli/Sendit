@@ -6,7 +6,7 @@
 local _, ns = ...
 ns.module = Sendit:RegisterModule({
     key = "graphics", title = "Graphics", addon = "Sendit_Graphics",
-    icon = "Interface\\Icons\\INV_Misc_Spyglass_03",
+    icon = "Interface\\AddOns\\Sendit_Graphics\\Media\\Icon",
     defaults = { normal = {}, raid = {} },
 })
 

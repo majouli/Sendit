@@ -13,7 +13,7 @@
 local _, ns = ...
 
 local HI, LO = "hi", "lo"
-local ICONS = "Interface\\Icons\\"
+local MEDIA = "Interface\\AddOns\\Sendit_Graphics\\Media\\"
 
 local function Range(cvar, lo, hi, step, raid, best, extra)
     local e = { cvar = cvar, kind = "range", lo = lo, hi = hi, step = step, raid = raid, best = best }
@@ -28,14 +28,14 @@ local function Switch(cvar, raid, best, extra)
 end
 
 ns.Catalog = {
-    { key = "ground", icon = ICONS .. "INV_Misc_Herb_07", entries = {
+    { key = "ground", icon = MEDIA .. "Ground", entries = {
         -- measured; guides: dense grass "can significantly reduce FPS", balanced presets use 64-128
         Range("groundEffectDensity", 16, 256, 8, true, HI, { menu = 48, cost = 128, src = "guide" }),
         -- measured; guides: performance presets 140-350, the cost grows with the distance
         Range("groundEffectDist", 40, 500, 10, true, HI, { menu = 320, cost = 350, src = "guide" }),
         Range("groundEffectFade", 0, 500, 10, true, HI),      -- engine: no limit; top = assumption
     } },
-    { key = "view", icon = ICONS .. "Spell_Nature_FarSight", entries = {
+    { key = "view", icon = MEDIA .. "ViewDistance", entries = {
         -- engine: no limit; guides call it the biggest cost (balanced preset 5000); above the menu's
         -- 10000 untested
         Range("farclip", 500, 20000, 100, true, HI, { menu = 10000, cost = 5000, src = "guide" }),
@@ -45,7 +45,7 @@ ns.Catalog = {
         Range("wmoLodDist", 100, 2000, 50, true, HI, { menu = 400, cost = 1000, src = "estimate" }),
         Range("wmoDoodadDist", 100, 5000, 100, false, HI, { cost = 3000, src = "estimate" }),
     } },
-    { key = "objects", icon = ICONS .. "INV_Crate_01", entries = {
+    { key = "objects", icon = MEDIA .. "Objects", entries = {
         Range("doodadLodScale", 25, 400, 5, true, HI, { menu = 150, cost = 250, src = "estimate" }),
         -- measured
         Range("lodObjectFadeScale", 50, 5000, 50, true, HI, { menu = 150, cost = 400, src = "estimate" }),
@@ -56,14 +56,14 @@ ns.Catalog = {
         Range("entityLodOffset", 0, 20, 1, false, HI, { cost = 15, src = "estimate" }),
         Switch("dynamicLod", false, 0, { cost = 0, src = "estimate" }),  -- off: no automatic detail cuts
     } },
-    { key = "shadows", icon = ICONS .. "Spell_Shadow_ShadowWordPain", entries = {
+    { key = "shadows", icon = MEDIA .. "Shadows", entries = {
         -- guides: shadows are the biggest strain; on FPS drops go back to 2048
         { cvar = "shadowTextureSize", kind = "choice", choices = { 1024, 2048, 4096 }, raid = true, best = HI,
           menu = 2048, cost = 4096, src = "guide" },
         Switch("shadowBlendCascades", true, 1),
         Range("entityShadowFadeScale", 0, 100, 5, true, HI, { menu = 50, cost = 75, src = "estimate" }),
     } },
-    { key = "extras", icon = ICONS .. "Spell_Frost_SummonWaterElemental", entries = {
+    { key = "extras", icon = MEDIA .. "Extras", entries = {
         Range("reflectionMode", 0, 4, 1, true, HI, { menu = 3, cost = 4, src = "estimate" }),  -- measured
         Range("SkyCloudLOD", 0, 3, 1, false, HI),             -- engine: no limit; top = assumption
         Switch("ResampleAlwaysSharpen", false),               -- guides: little GPU load

@@ -1,6 +1,6 @@
 --[[
-  Commands: /chat - messages list; settings, reset (window positions), probe, trace, ids (diagnostics,
-  English), off | on (after /reload).
+  Commands: /chat - messages list; settings, reset (window positions), rolltest (live rolls demo),
+  probe, trace, ids (diagnostics, English), off | on (after /reload).
 ]]
 local _, ns = ...
 local L = ns.L
@@ -17,6 +17,8 @@ SlashCmdList.SENDITCHAT = function(msg)
         ns.Print(L.HELP)
     elseif not ns.active then
         ns.Print(ns.yielding and L.YIELD:format(ns.Conflict.Title(ns.yielding)) or L.DISABLED)
+    elseif cmd == "rolltest" then
+        ns.RollSim.Run()
     elseif cmd == "probe" then
         ns.Probe.Run()
     elseif cmd == "trace" then

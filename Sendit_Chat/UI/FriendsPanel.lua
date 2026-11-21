@@ -93,7 +93,7 @@ local function NewRow()
     r.pin:SetPoint("TOPLEFT"); r.pin:SetPoint("BOTTOMLEFT"); r.pin:SetWidth(2)
     r:SetScript("OnClick", function(self, button)
         if not self.entry then return end
-        if button == "RightButton" then FriendsPanel.Menu(self, self.entry)
+        if button == "RightButton" then FriendsPanel.Menu(self.entry)
         else F.Open(self.entry, ns.db.friendsCharClick) end
     end)
     return r
@@ -161,9 +161,9 @@ local function Conversation(e)
     return ns.Whispers.Get("p:" .. (e.character or e.name):lower())
 end
 
-function FriendsPanel.Menu(anchor, e)
+function FriendsPanel.Menu(e)
     local items = {}
-    local function Add(text, fn) items[#items + 1] = { text, fn } end
+    local function Add(text, fn, checked) items[#items + 1] = { text, fn, checked } end
     local char = F.CharacterName(e)
     if e.bn then Add(L.FR_WHISPER_BN, function() F.Open(e, false) end) end
     if char and (not e.bn or e.inWoW) then
@@ -172,11 +172,11 @@ function FriendsPanel.Menu(anchor, e)
     elseif not e.bn then
         Add(L.FR_WHISPER_CHAR:format(e.name), function() F.Open(e, true) end)
     end
-    Add(F.Favorite(e) and L.FR_UNFAVORITE or L.FR_FAVORITE, function()
+    Add(L.FR_FAVORITE, function()
         F.Favorite(e, not F.Favorite(e))
         FriendsPanel.Refresh()
-    end)
-    Add(F.Watched(e) and L.FR_UNWATCH or L.FR_WATCH, function() F.Watched(e, not F.Watched(e)) end)
+    end, F.Favorite(e))
+    Add(L.FR_WATCH, function() F.Watched(e, not F.Watched(e)) end, F.Watched(e))
     Add(L.FR_NOTE, function()
         local dialog = StaticPopup_Show("SENDIT_FRIEND_NOTE", L.FR_NOTE_PROMPT:format(e.name), nil, e)
         if dialog then dialog.data = e end
@@ -191,7 +191,7 @@ function FriendsPanel.Menu(anchor, e)
         if not conv.archived then Add(L.FR_ARCHIVE, function() ns.Whispers.Archive(conv.key) end) end
     end
     Add(L.FR_BLIZZARD, function() F.Menu(e) end)
-    Widgets.Menu(anchor, items)
+    Widgets.Menu(items)
     return items
 end
 

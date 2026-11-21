@@ -1,7 +1,7 @@
 --[[
   MessengerList: the messenger's left column - "Name to whisper" field (NameComplete), tabs Chats |
   Archive, one row per partner (avatar, name, time, preview, unread badge; archive: archived / delete
-  dates). Left click shows, middle click archives / restores, right click menu (add friend, archive,
+  dates). Left click shows, middle click archives / restores, right click menu (add friend, pin, archive,
   delete). List.Build(parent, width) / Refresh() / View() / SetView(view) / ViewOf(conv) / First() / Holds(conv)
 ]]
 local _, ns = ...
@@ -74,9 +74,9 @@ local function AskDelete(c)
     StaticPopup_Show("SENDIT_DELETE_CHAT", c.name or "?", nil, c.key)
 end
 
-local function RowMenu(row, c)
+local function RowMenu(c)
     if c.archived then
-        Widgets.Menu(row, {
+        Widgets.Menu({
             { L.RESTORE_CHAT, function() W.Restore(c.key) end },
             { L.DELETE_FOREVER, function() AskDelete(c) end },
         })
@@ -86,8 +86,10 @@ local function RowMenu(row, c)
         if not c.bn and c.target and F and not F.IsFriend(c.target) then
             items[#items + 1] = { L.FR_ADD, function() F.Add(c.target) end }
         end
+        items[#items + 1] = { L.FR_FAVORITE, function() W.Favorite(c.key, not W.Favorite(c.key)) end, W.Favorite(c.key) }
         items[#items + 1] = { L.ARCHIVE_CHAT, function() W.Archive(c.key) end }
-        Widgets.Menu(row, items)
+        Widgets.Menu(items)
+        return items
     end
 end
 
@@ -97,7 +99,7 @@ local function OnRowClick(row, button)
     if button == "MiddleButton" then
         if c.archived then W.Restore(c.key) else W.Archive(c.key) end
     elseif button == "RightButton" then
-        RowMenu(row, c)
+        RowMenu(c)
     else
         ns.Messenger.Open(c, true)
     end
@@ -115,8 +117,10 @@ local function NewRow()
     r:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp")
     r.hl = T.Tex(r, "BACKGROUND", "ink", 0)
     r.hl:SetAllPoints()
-    r.sel = T.Tex(r, "BORDER", "accent", 1)
-    r.sel:SetPoint("TOPLEFT"); r.sel:SetPoint("BOTTOMLEFT"); r.sel:SetWidth(2)
+    -- pinned: the accent bar, as in the friends list; inset, the window's frame covers the edge
+    r.pin = T.Tex(r, "BORDER", "accent", 1)
+    T.Own(r.pin)
+    r.pin:SetPoint("TOPLEFT", 5, 0); r.pin:SetPoint("BOTTOMLEFT", 5, 0); r.pin:SetWidth(2)
     r.avatar = T.Avatar(r, 34)
     r.avatar:SetPoint("LEFT", 10, 0)
     r.name = T.Text(r, 12, "text")
@@ -148,6 +152,8 @@ local function FillRow(r, c, archive)
     local cr, cg, cb = T.ClassRGB(c.class)
     if c.bn then cr, cg, cb = T.RGB("bn") end
     r.name:SetTextColor(cr, cg, cb, 1)
+    r.pin:SetShown(c.favorite == true and not archive)
+    r.pin:SetVertexColor(T.RGB("accent"))
     if archive then
         r.time:SetText(TimeLabel(c.archived))
         r.preview:SetText(ArchiveNote(c))
@@ -160,7 +166,7 @@ local function FillRow(r, c, archive)
         r.badge:Set(unread)
         T.Color(r.preview, unread > 0 and "text" or "textDim")
     end
-    r.sel:SetShown(Highlight(r))
+    Highlight(r)
 end
 
 local function NewTab(key, index, width)
@@ -267,3 +273,4 @@ function List.Refresh()
 end
 
 List._Rows = function() return rows end
+List._RowMenu = RowMenu

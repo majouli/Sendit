@@ -3,6 +3,7 @@
   it (a line in two windows never counts twice). Results: won (gold, card), lost (red, card), others
   won, everyone passed - with the participants (first names, winner first, highest roll first, max 5).
   With rollSummary that is the only line per item (start, choices, rolls, receipt dropped).
+  Feeds the live duels (Duels); a result card waits until its duel has revealed the numbers.
   Rolls.Style(text) -> text | false (drop) | nil (no roll);  Rolls.RecentlyWon(link)
 ]]
 local _, ns = ...
@@ -24,6 +25,7 @@ local ICONS = {
     de = "Interface\\Buttons\\UI-GroupLoot-DE-Up",
     pass = "Interface\\Buttons\\UI-GroupLoot-Pass-Up",
 }
+Rolls.ICONS = ICONS
 
 -- global, roles, what, roll kind - the more specific template first
 local TEMPLATES = {
@@ -97,6 +99,7 @@ end
 local items = {}
 
 local function Key(link) return link:match("|H(item:[^|]+)|h") or link end
+Rolls.Key = Key
 
 local function Entry(link, create)
     local now = GetTime()
@@ -199,6 +202,27 @@ local function WinnerRoll(info, e)
     return nil
 end
 
+-- the result card; a live duel shows it once its numbers are revealed
+local function Card(link, opts)
+    local show = ns.LootCards and ns.db.lootCards and function() ns.LootCards.Show(link, nil, opts) end
+    if not ns.Duels.Final(link, opts.winner, show) and show then show() end
+end
+
+local function FeedDuel(info, e)
+    local D, link = ns.Duels, info.link
+    if info.what == "started" then
+        D.Start(link)
+    elseif info.what == "mine" then
+        D.Choice(link, nil, info.kind, true)
+    elseif info.what == "choice" then
+        D.Choice(link, info.who, info.kind, IsMe(info.who))
+    elseif info.what == "roll" then
+        D.Roll(link, info.who, info.kind, info.value, IsMe(info.who))
+    elseif info.what == "myroll" then
+        D.Roll(link, nil, e.mine, info.value, true)
+    end
+end
+
 function Rolls.OnEvent(_, text)
     local info = Rolls.Parse(text)
     if not info then return end
@@ -217,21 +241,24 @@ function Rolls.OnEvent(_, text)
     elseif info.what == "won" or info.what == "result" or info.what == "allpassed" then
         e.decided = GetTime()
     end
+    FeedDuel(info, e)
     if info.what == "won" then
         e.won = GetTime()
         local value, kind = info.value or e.myValue, info.kind or e.mine
-        if ns.LootCards and ns.db.lootCards then
-            ns.LootCards.Show(info.link, nil, {
-                state = "won", note = value and (KindName(kind) .. " " .. value) or nil,
-            })
-        end
-    elseif info.what == "result" and not IsMe(info.who) then
-        if e.mine and e.mine ~= "pass" and ns.LootCards and ns.db.lootCards then
+        Card(info.link, { state = "won", winner = true, note = value and (KindName(kind) .. " " .. value) or nil })
+    elseif info.what == "result" then
+        if IsMe(info.who) then
+            ns.Duels.Final(info.link, true)
+        elseif e.mine and e.mine ~= "pass" then
             local value = WinnerRoll(info, e)
             local note = L.LOST_TO:format(Rolls.First(info.who))
             if value and e.myValue then note = note .. "  ·  " .. value .. " : " .. e.myValue end
-            ns.LootCards.Show(info.link, nil, { state = "lost", note = note })
+            Card(info.link, { state = "lost", winner = info.who, note = note })
+        else
+            ns.Duels.Final(info.link, info.who)
         end
+    elseif info.what == "allpassed" then
+        ns.Duels.Final(info.link, nil)
     end
 end
 

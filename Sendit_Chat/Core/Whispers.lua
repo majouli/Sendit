@@ -1,7 +1,8 @@
 --[[
   Whispers: the messenger's data - one conversation per partner, per character (ns.char.convs).
-  conversation = { key, name, target, bn, class, realm, kname, unread, last, archived, msgs }
-  W.List() / Archived() / Archive(key) / Restore(key) (archived ones go after ARCHIVE_DAYS)
+  conversation = { key, name, target, bn, class, realm, kname, unread, last, archived, favorite, msgs }
+  W.List() (pinned first) / Archived() / Archive(key) / Restore(key) (archived ones go after ARCHIVE_DAYS)
+  W.Favorite(key [, on]) - pinned: listed first, so kept when old chats are trimmed
   W.Get(key) / Open(name) / Send(conv, text) -> ok, reason / Split(text, max) (never cuts a link)
   W.MarkRead(conv) / Delete(key) / OnChange(fn) / UnreadChats() / RealmOf(conv) / BNGame(conv)
   W.viewing = fn(key) set by the UI. Secret texts or senders (lockdown) are skipped.
@@ -32,10 +33,20 @@ function W.List()
     local list = {}
     for _, c in pairs(Convs()) do if not c.archived then list[#list + 1] = c end end
     table.sort(list, function(a, b)
+        if (a.favorite == true) ~= (b.favorite == true) then return a.favorite == true end
         if a.last ~= b.last then return (a.last or 0) > (b.last or 0) end
         return a.key < b.key
     end)
     return list
+end
+
+function W.Favorite(key, on)
+    local c = Convs()[key]
+    if not c then return false end
+    if on == nil then return c.favorite == true end
+    c.favorite = on or nil
+    Notify(c, nil, false)
+    return on
 end
 
 -- seconds until an archived conversation is deleted

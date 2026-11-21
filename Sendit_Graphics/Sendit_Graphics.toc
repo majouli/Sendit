@@ -1,9 +1,9 @@
 ## Interface: 16001
 ## Title: Sendit: Graphics
 ## Notes: Every graphics detail beyond the graphics menu, with sliders. Part of the Sendit suite.
-## Version: 0.19.1
+## Version: 0.20.0
 ## X-License: GPL-3.0
-## IconTexture: Interface\Icons\INV_Misc_Spyglass_03
+## IconTexture: Interface\AddOns\Sendit_Graphics\Media\Icon
 ## Dependencies: Sendit
 ## SavedVariables: SenditGraphicsDB
 

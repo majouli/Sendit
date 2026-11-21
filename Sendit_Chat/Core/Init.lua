@@ -29,6 +29,7 @@ ns.defaults = {  -- profile section
     shortChannels = true, -- "[1. General - Elwynn Forest]" -> "[1. General]"
     mentions = true,      -- your name in group/guild/public chat: gold, tab dot, sound
     rollSummary = true,   -- other players' roll choices/numbers dropped; the result sums them up
+    rollArena = true,     -- live rolls above the chat: choices, numbers revealed one by one, /roll (Duels)
 }
 
 ns.acctDefaults = {  -- account section
