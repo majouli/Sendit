@@ -1,6 +1,7 @@
 --[[
   Layout: a settings page as sections of rows (label and description left, control right), notes and
-  free blocks. Texts may be functions (resolved again on Refresh).
+  free blocks. Texts may be functions (resolved again on Refresh). Hovering a row with a description
+  shows it whole in a tooltip (the row cuts it to one line).
   W.Layout(content) -> Lay;  Lay:Section(title) / EndSection() / Row(label, desc, control, descGap)
   Lay:Note(text) / Place(frame, height) / Refresh() / Reveal(row);  Lay.entries (for the search)
 ]]
@@ -59,6 +60,16 @@ function Layout:Row(label, desc, control, descGap)
         row.label:SetPoint("TOPLEFT", 16, -10)
         row.desc:SetPoint("TOPLEFT", row.label, "BOTTOMLEFT", 0, -4)
         Text(self, row.desc, desc)
+        row:EnableMouse(true)
+        row:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_NONE")
+            GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 12, 0)
+            GameTooltip:SetText(Resolve(label) or "", T.Color("text"))
+            local r, g, b = T.Color("textDim")
+            GameTooltip:AddLine(Resolve(desc) or "", r, g, b, true)
+            GameTooltip:Show()
+        end)
+        row:SetScript("OnLeave", function() GameTooltip:Hide() end)
     else
         row.label:SetPoint("LEFT", 16, 0)
     end

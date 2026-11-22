@@ -5,6 +5,7 @@
   A player name opens our conversation; other links go to Blizzard's SetItemRef - except community
   links (clubTicket, clubFinder, community): run from addon code they taint Blizzard_Communities
   (ADDON_ACTION_FORBIDDEN). Censored messages: Core/Censored.lua. InsertLink is post-hooked only.
+  Shift-clicked addon links (kinds the client cannot send: "Invalid escape code") go in as plain text.
 ]]
 local _, ns = ...
 local Safe = ns.Safe
@@ -20,6 +21,21 @@ local TOOLTIP_TYPES = {
     item = true, spell = true, enchant = true, quest = true, achievement = true,
     currency = true, talent = true, instancelock = true, mount = true, unit = true,
 }
+
+-- link kinds the client sends; any other kind is an addon's own link
+local CHAT_LINKS = {
+    player = true, BNplayer = true, playerCommunity = true, channel = true, trade = true, journal = true,
+    battlepet = true, transmogappearance = true, transmogillusion = true, outfit = true, worldmap = true,
+    keystone = true, calendarEvent = true, dungeonScore = true,
+}
+for kind in pairs(TOOLTIP_TYPES) do CHAT_LINKS[kind] = true end
+
+-- the words a link shows, without colour, link and texture codes
+local function Visible(text)
+    return (text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|cn[^:]*:", ""):gsub("|r", "")
+        :gsub("|H.-|h", ""):gsub("|h", ""):gsub("|T.-|t", ""):gsub("|A.-|a", ""))
+end
+Links._Visible = Visible
 
 -- URLs
 local URL_COLOR = "|cff7cc4ff"
@@ -125,6 +141,8 @@ function Links.ShowURL(url)
     urlBox.eb:HighlightText()
 end
 
+local focusBox  -- our own input box with focus gets shift-clicked links
+
 local function NoModifier()
     return not (IsShiftKeyDown() or IsControlKeyDown() or IsAltKeyDown())
 end
@@ -151,6 +169,18 @@ function Links.Click(_, link, text, button)
     end
     local kind = plain and plain:match("^([^:]+)")
     if kind and COMMUNITY[kind] then return end
+    if kind and not CHAT_LINKS[kind] and IsModifiedClick("CHATLINK") then
+        local words = Visible(Safe.Str(text) or "")
+        if words == "" then return end
+        if focusBox and focusBox:HasFocus() then
+            focusBox:Insert(words)
+        else
+            local util = _G["ChatFrameUtil"]
+            local insert = (type(util) == "table" and util.InsertLink) or _G["ChatEdit_InsertLink"]
+            if insert then pcall(insert, words) end
+        end
+        return
+    end
     local SetItemRef = _G["SetItemRef"]
     if SetItemRef then pcall(SetItemRef, link, text, button, _G["DEFAULT_CHAT_FRAME"]) end
 end
@@ -184,7 +214,6 @@ function Links.Attach(frame)
     frame:SetScript("OnHyperlinkLeave", Links.Leave)
 end
 
-local focusBox
 function Links.SetFocusBox(box) focusBox = box end
 function Links.FocusBox() return focusBox end
 
