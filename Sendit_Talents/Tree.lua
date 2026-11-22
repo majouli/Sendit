@@ -4,7 +4,9 @@
   Tree.RankOf(configID) -> rankOf(nodeID)      current rank, staged points included
   Tree.Nodes(configID) -> { nodeID, ... }
   Tree.Names(configID) -> { [1..3] = tree name }
-  Tree.Talent(configID, nodeID) -> name, max rank, icon
+  Tree.Talent(configID, nodeID) -> name, max rank, icon, spellID
+  Tree.Effect(configID, nodeID, rank) -> what the talent does at that rank (client text) | nil;
+    nil for an English text on another client language (the server overrides some texts in English)
   Tree.Unspent(configID) -> unspent points | nil
   Tree.Open(configID) -> open(nodeID): false when Blizzard would refuse a point
 ]]
@@ -83,12 +85,16 @@ function Tree.Unspent(configID)
     return type(n) == "number" and n or nil
 end
 
+local function EntryID(info)
+    return info and (type(info.activeEntry) == "table" and Safe(info.activeEntry.entryID)
+        or type(info.entryIDs) == "table" and Safe(info.entryIDs[1]))
+end
+
 function Tree.Talent(configID, nodeID)
     local info = NodeInfo(configID, nodeID)
     local max = info and Safe(info.maxRanks)
     max = type(max) == "number" and max or nil
-    local entryID = info and (type(info.activeEntry) == "table" and Safe(info.activeEntry.entryID)
-        or type(info.entryIDs) == "table" and Safe(info.entryIDs[1]))
+    local entryID = EntryID(info)
     local entry = entryID and Call(C_Traits.GetEntryInfo, configID, entryID)
     local defID = type(entry) == "table" and Safe(entry.definitionID)
     local def = defID and Call(C_Traits.GetDefinitionInfo, defID)
@@ -99,5 +105,26 @@ function Tree.Talent(configID, nodeID)
         name = Call(C_Spell.GetSpellName, spellID)
     end
     if (not icon or icon == 0) and spellID and C_Spell then icon = Call(C_Spell.GetSpellTexture, spellID) end
-    return name, max, icon
+    return name, max, icon, spellID
+end
+
+local function English(text)
+    return text:find("%f[%a][Yy]ou%f[%A]") or text:find("%f[%a][Tt]he%f[%A]") or text:find("%f[%a][Yy]our%f[%A]")
+end
+
+function Tree.Effect(configID, nodeID, rank)
+    local entryID, text = EntryID(NodeInfo(configID, nodeID)), nil
+    if entryID and C_Traits.GetTraitDescription then
+        text = Safe(Call(C_Traits.GetTraitDescription, entryID, rank))
+    end
+    if type(text) ~= "string" or text == "" then
+        local _, _, _, spellID = Tree.Talent(configID, nodeID)
+        if spellID and C_Spell and C_Spell.GetSpellDescription then
+            text = Safe(Call(C_Spell.GetSpellDescription, spellID))
+        end
+    end
+    if type(text) ~= "string" or text == "" then return nil end
+    text = text:gsub("%s+", " ")
+    if GetLocale() ~= "enUS" and English(text) then return nil end
+    return text
 end

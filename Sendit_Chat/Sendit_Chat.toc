@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Sendit: Chat
 ## Notes: A calm, reliable chat: movable windows, detachable tabs, and whispers in one messenger window. Part of the Sendit suite.
-## Version: 0.20.0
+## Version: 0.20.1
 ## X-License: GPL-3.0
 ## IconTexture: Interface\AddOns\Sendit_Chat\Media\Icon
 ## Dependencies: Sendit

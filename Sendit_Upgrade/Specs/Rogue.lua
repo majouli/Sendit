@@ -20,6 +20,7 @@ end
 ns.Specs = ns.Specs or {}
 ns.Specs.ROGUE = {
     order = { "ASSASSINATION", "COMBAT", "SUBTLETY" },
+    trees = { "ASSASSINATION", "COMBAT", "SUBTLETY" },
     specs = {
         ASSASSINATION = {
             primary = C.Metric("damage", "DPS", C.Melee({ builder = function() return { key = "SINISTER_STRIKE" } end,

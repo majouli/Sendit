@@ -86,8 +86,14 @@ local function RowMenu(c)
         if not c.bn and c.target and F and not F.IsFriend(c.target) then
             items[#items + 1] = { L.FR_ADD, function() F.Add(c.target) end }
         end
+        if not c.bn and c.target and F then
+            items[#items + 1] = { L.FR_INVITE, function() F.InviteName(c.target) end }
+        end
         items[#items + 1] = { L.FR_FAVORITE, function() W.Favorite(c.key, not W.Favorite(c.key)) end, W.Favorite(c.key) }
+        items[#items + 1] = { L.FR_COPY, function() ns.CopyBox.Name(W.PlainName(c)) end }
         items[#items + 1] = { L.ARCHIVE_CHAT, function() W.Archive(c.key) end }
+        -- Blizzard's menu opened from addon code is tainted: its own copy entry is blocked
+        items[#items + 1] = { L.FR_BLIZZARD, function() ns.Conversation.PlayerMenu(c) end }
         Widgets.Menu(items)
         return items
     end
@@ -273,4 +279,4 @@ function List.Refresh()
 end
 
 List._Rows = function() return rows end
-List._RowMenu = RowMenu
+List.Menu = RowMenu

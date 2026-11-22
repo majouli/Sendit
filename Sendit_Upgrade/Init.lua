@@ -56,6 +56,7 @@ events:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
 events:RegisterEvent("PLAYER_LEVEL_UP")
 events:RegisterEvent("UNIT_STATS")
 events:RegisterEvent("SPELLS_CHANGED")
+events:RegisterEvent("TRAIT_CONFIG_UPDATED")
 events:SetScript("OnEvent", function(self, event, arg)
     if event == "ADDON_LOADED" then
         if arg ~= ADDON then return end

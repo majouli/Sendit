@@ -1,5 +1,5 @@
 --[[
-  Page: Upgrade's page - the rated spec (per character, auto = guessed from gear), the enemy level, and
+  Page: Upgrade's page - the rated spec (per character, auto = the tree with the most talent points, else guessed from gear), the enemy level, and
   the compare window. No profile settings (these belong to the character).
 ]]
 local _, ns = ...
@@ -44,6 +44,5 @@ O:Register({
                 ns.Window:Toggle()
             end))
         Lay:EndSection()
-        Lay:Note(Tx("pageNote"))
     end),
 })

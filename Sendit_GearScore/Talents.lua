@@ -1,7 +1,6 @@
 --[[
-  Talents: points per tree of the player or an inspected player. Forever: C_Traits, one trait tree per
-  class whose three node groups are the Classic trees. Points = the group's spent currency, else the
-  summed node ranks (inspected configs may lack currency). Inspected = config -1 after INSPECT_READY.
+  Talents: points per tree (core Sendit.TalentPoints) with tree names, plus the node layout of the
+  player or an inspected player. Inspected = config -1 after INSPECT_READY.
   Talents.Read(configID, class) -> { { name, points } x3 } | nil;  Own();  Inspected(class)
   Talents.Summary(trees) -> spec, "a/b/c". Everything pcall'd and secret-checked.
 ]]
@@ -17,87 +16,15 @@ local function Number(v)
     return type(v) == "number" and v or 0
 end
 
-local function TreeID(configID)
-    if not (C_Traits and C_Traits.GetConfigInfo) then return nil end
-    local config = Call(C_Traits.GetConfigInfo, configID)
-    return type(config) == "table" and type(config.treeIDs) == "table" and Safe(config.treeIDs[1]) or nil
-end
+local Points = Sendit.TalentPoints
 
-local function Groups(treeID)
-    local list = C_Traits.GetGroupDisplayInfoByTreeID and Call(C_Traits.GetGroupDisplayInfoByTreeID, treeID)
-    if type(list) ~= "table" then return nil end
-    local groups = {}
-    for _, g in ipairs(list) do
-        local id = type(g) == "table" and Safe(g.groupID)
-        if id then
-            groups[#groups + 1] = { id = id, name = Safe(g.displayName), icon = Safe(g.icon), order = Number(g.orderIndex), points = 0 }
-        end
-    end
-    table.sort(groups, function(a, b) return a.order < b.order end)
-    return #groups > 0 and groups or nil
-end
-
--- currency per group, matched by ID (answer order not documented)
-local function SpentByCurrency(configID, groups)
-    if not C_Traits.GetGroupCurrencyInfo then return 0 end
-    local ids, byID = {}, {}
-    for _, g in ipairs(groups) do ids[#ids + 1] = g.id; byID[g.id] = g end
-    local infos = Call(C_Traits.GetGroupCurrencyInfo, configID, ids)
-    local total = 0
-    for _, info in ipairs(type(infos) == "table" and infos or {}) do
-        local g = byID[Safe(info.traitNodeGroupID)]
-        local c = type(info.currencyInfos) == "table" and info.currencyInfos[1]
-        if g and type(c) == "table" then
-            g.points = Number(c.spent)
-            total = total + g.points
-        end
-    end
-    return total
-end
-
--- fallback: node ranks per group - purchased ranks, else the active rank
-local function SpentByNodes(configID, treeID, groups)
-    local ids = C_Traits.GetTreeNodes and Call(C_Traits.GetTreeNodes, treeID)
-    if type(ids) ~= "table" then return 0 end
-    local byID = {}
-    for _, g in ipairs(groups) do byID[g.id] = g end
-    local purchased, active = {}, {}
-    for _, nodeID in ipairs(ids) do
-        local info = Safe(nodeID) and Call(C_Traits.GetNodeInfo, configID, nodeID)
-        if type(info) == "table" and type(info.groupIDs) == "table" then
-            for _, gid in ipairs(info.groupIDs) do
-                local g = byID[Safe(gid)]
-                if g then
-                    purchased[g] = (purchased[g] or 0) + Number(info.ranksPurchased)
-                    active[g] = (active[g] or 0) + math.max(Number(info.activeRank), Number(info.currentRank))
-                end
-            end
-        end
-    end
-    local sumPurchased = 0
-    for _, v in pairs(purchased) do sumPurchased = sumPurchased + v end
-    local source = sumPurchased > 0 and purchased or active
-    local total = 0
-    for _, g in ipairs(groups) do
-        g.points = source[g] or 0
-        total = total + g.points
-    end
-    return total
-end
-
+-- the trees with the client's names, else ours
 function Talents.Read(configID, class)
-    if not configID then return nil end
-    local treeID = TreeID(configID)
-    if not treeID then return nil end
-    local groups = Groups(treeID)
-    if not groups then return nil end
-    if SpentByCurrency(configID, groups) == 0 then SpentByNodes(configID, treeID, groups) end
+    local trees = Points.Read(configID)
+    if not trees then return nil end
     local names = class and L.trees[class] or {}
-    local trees = {}
-    for i, g in ipairs(groups) do
-        local name = g.name
-        if type(name) ~= "string" or name == "" then name = names[i] or ("#" .. i) end
-        trees[i] = { name = name, points = g.points, icon = g.icon, groupID = g.id }
+    for i, t in ipairs(trees) do
+        if type(t.name) ~= "string" or t.name == "" then t.name = names[i] or ("#" .. i) end
     end
     return trees
 end
@@ -146,7 +73,7 @@ end
 function Talents.Layout(configID, class)
     local trees = Talents.Read(configID, class)
     if not trees then return nil end
-    local treeID = TreeID(configID)
+    local treeID = Points.TreeID(configID)
     local ids = treeID and C_Traits.GetTreeNodes and Call(C_Traits.GetTreeNodes, treeID)
     if type(ids) ~= "table" then return nil end
     local groupOf = {}
@@ -167,16 +94,7 @@ function Talents.Layout(configID, class)
 end
 
 function Talents.Own()
-    local configID
-    local si = C_SpecializationInfo
-    if si and si.GetActiveSpecGroup and si.GetCombatConfigIDForSpecGroup then
-        local group = Call(si.GetActiveSpecGroup)
-        configID = group and Call(si.GetCombatConfigIDForSpecGroup, group)
-    end
-    if not configID and C_ClassTalents and C_ClassTalents.GetActiveConfigID then
-        configID = Call(C_ClassTalents.GetActiveConfigID)
-    end
-    return Talents.Read(configID, ns.ClassOf("player"))
+    return Talents.Read(Points.OwnConfigID(), ns.ClassOf("player"))
 end
 
 function Talents.InspectConfigID()

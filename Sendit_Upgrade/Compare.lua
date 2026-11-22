@@ -67,6 +67,17 @@ local function ReadGear()
     return gear
 end
 
+-- the tree with the most talent points (classData.trees in client order); nil without points
+local function FromTalents(classData, gear, s)
+    local Points = Sendit.TalentPoints
+    local main = Points.Main(Points.Own())
+    local spec = main and classData.trees and classData.trees[main]
+    if type(spec) ~= "table" then return spec end
+    local guess = classData.Guess(gear, s)
+    for _, key in ipairs(spec) do if key == guess then return key end end
+    return spec[1]
+end
+
 function Compare.Context()
     local now = GetTime()
     if cached and cachedAt and now - cachedAt < 1 then return cached end
@@ -77,7 +88,7 @@ function Compare.Context()
     local classData = ns.Specs[s.class]
     if not classData then return nil, "unsupported" end
     if not InCombatLockdown() then ns.Calibrate.Sample(s) end
-    local auto = classData.Guess(gear, s)  -- s: the Druid's form decides first
+    local auto = FromTalents(classData, gear, s) or classData.Guess(gear, s)  -- s: the Druid's form decides first
     local key = (ns.charDB and ns.charDB.spec) or auto
     if not classData.specs[key] then key = auto end
     cached = { gear = gear, s = s, specKey = key, spec = classData.specs[key], auto = auto,

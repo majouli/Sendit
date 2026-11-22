@@ -20,6 +20,7 @@ local C = ns.SpecCommon
 ns.Specs = ns.Specs or {}
 ns.Specs.WARRIOR = {
     order = { "ARMS", "FURY", "PROT" },
+    trees = { "ARMS", "FURY", "PROT" },
     specs = {
         ARMS = {
             primary = C.Metric("damage", "DPS", C.Melee({ cds = { "MORTAL_STRIKE" }, abilityCrit = 2.2, deepWounds = 0.6,

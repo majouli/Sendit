@@ -64,8 +64,8 @@ local function UpdateHeader()
 end
 Conversation.UpdateHeader = UpdateHeader
 
-function Conversation.PlayerMenu()
-    local c = current
+function Conversation.PlayerMenu(c)
+    c = c or current
     if not c then return end
     local link
     if c.bn then
@@ -241,7 +241,9 @@ function Conversation.Build(parent)
     line:SetPoint("BOTTOMLEFT"); line:SetPoint("BOTTOMRIGHT"); line:SetHeight(1)
     header:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     header:SetScript("OnClick", function(_, button)
-        if button == "RightButton" then Conversation.PlayerMenu() else Conversation.Activate() end
+        if button == "RightButton" then
+            if current then ns.MessengerList.Menu(current) end
+        else Conversation.Activate() end
     end)
     pane.header = header
 

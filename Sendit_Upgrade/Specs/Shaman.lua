@@ -46,6 +46,7 @@ local Enhance = C.FromIntellect(function(s) return enhanceMelee(s) + WindfuryDps
 ns.Specs = ns.Specs or {}
 ns.Specs.SHAMAN = {
     order = { "ELEMENTAL", "ENHANCE", "RESTO" },
+    trees = { "ELEMENTAL", "ENHANCE", "RESTO" },
     specs = {
         ELEMENTAL = { primary = C.Metric("damage", "DPS", C.Caster({ filler = { "LIGHTNING_BOLT" }, critBonus = 1.0,
                                                                          castDelta = { LIGHTNING_BOLT = -0.5 } })),

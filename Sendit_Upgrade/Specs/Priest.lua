@@ -21,6 +21,7 @@ local BIG = { "LESSER_HEAL", "HEAL", "GREATER_HEAL" }
 ns.Specs = ns.Specs or {}
 ns.Specs.PRIEST = {
     order = { "DISC", "HOLY", "SHADOW" },
+    trees = { "DISC", "HOLY", "SHADOW" },
     specs = {
         DISC = {
             primary = C.Metric("healing", "HPS", C.Healer({ big = BIG, fast = { "FLASH_HEAL" }, shield = "POWER_WORD_SHIELD" })),

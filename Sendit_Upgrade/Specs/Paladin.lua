@@ -14,8 +14,8 @@
           (+10% armor from items)
   Each metric returns a number; Compare.lua turns differences into percent.
   Building blocks: Specs/Common.lua; heals: client spell data (Spells.lua).
-  Guess(gear) picks a spec from the equipped gear (talent APIs are missing on
-  this client): two-hander -> Ret; shield with healing gear -> Holy; shield -> Prot.
+  Guess(gear) picks a spec from the equipped gear while no talent points are spent:
+  two-hander -> Ret; shield with healing gear -> Holy; shield -> Prot.
 ]]
 local _, ns = ...
 local Model, C, Character = ns.Model, ns.SpecCommon, ns.Character
@@ -135,6 +135,7 @@ end)
 ns.Specs = ns.Specs or {}
 ns.Specs.PALADIN = {
     order = { "RET", "HOLY", "PROT" },
+    trees = { "HOLY", "PROT", "RET" },
     specs = {
         RET  = { primary = DAMAGE, secondary = SURVIVAL },
         HOLY = { primary = HEALING, secondary = SURVIVAL, mana = true, statMult = { int = 1.1 } },

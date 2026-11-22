@@ -1,6 +1,7 @@
 --[[
   CopyBox: a tab's or conversation's text as plain lines, selected for Ctrl+A / Ctrl+C; Escape closes it.
   Named without "chat" (Fade's chat peek leaves it alone).  CopyBox.Show(lines)
+  CopyBox.Name(text): a small field at the cursor, closed by Ctrl+C (addons may not write the clipboard).
 ]]
 local _, ns = ...
 local T, Widgets, Links = ns.Theme, ns.Widgets, ns.Links
@@ -47,4 +48,43 @@ function CopyBox.Show(lines)
     box.eb:SetText(table.concat(out, "\n"))
     box.eb:SetFocus()
     box.eb:HighlightText()
+end
+
+local mini
+
+local function BuildMini()
+    mini = T.Panel(UIParent, "TOOLTIP", "SenditCopyName")
+    mini:SetClampedToScreen(true)
+    T.Decorate(mini, "panel")
+    local eb = CreateFrame("EditBox", nil, mini)
+    eb:SetAutoFocus(false)
+    T.SetFont(eb, 12, true)
+    eb:SetPoint("TOPLEFT", 10, -6)
+    eb:SetPoint("BOTTOMRIGHT", -10, 6)
+    eb:SetScript("OnEscapePressed", function() mini:Hide() end)
+    eb:SetScript("OnEditFocusLost", function() mini:Hide() end)
+    eb:SetScript("OnTextChanged", function(self, user)
+        if user then self:SetText(mini.text) self:HighlightText() end
+    end)
+    eb:SetScript("OnKeyDown", function(_, key)
+        if key == "C" and IsControlKeyDown() then C_Timer.After(0, function() mini:Hide() end) end
+    end)
+    mini.eb = eb
+    mini.measure = T.Text(mini, 12, "text")
+    mini.measure:Hide()
+end
+
+function CopyBox.Name(text)
+    if not mini then BuildMini() end
+    mini.text = text
+    mini.measure:SetText(text)
+    mini:SetSize(math.max(80, mini.measure:GetStringWidth() + 28), 28)
+    local x, y = GetCursorPosition()
+    local scale = mini:GetEffectiveScale()
+    mini:ClearAllPoints()
+    mini:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x / scale - 10, y / scale - 14)
+    mini:Show()
+    mini.eb:SetText(text)
+    mini.eb:SetFocus()
+    mini.eb:HighlightText()
 end

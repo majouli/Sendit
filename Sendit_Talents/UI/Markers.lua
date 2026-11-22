@@ -60,11 +60,17 @@ local function New(overlay)
     m.badge.text = T.Text(m.badge, "caption", "onAccent")
     m.badge.text:SetPoint("CENTER", 0, 0)
     m.badge.text:SetJustifyH("CENTER")
+    -- a pill that grows to the left, away from the rank badge
     m.order = CreateFrame("Frame", nil, m)
     m.order:SetSize(BADGE, BADGE)
-    m.order:SetPoint("TOPLEFT", -4, 4)
-    m.order.ground = T.Circle(m.order, "success", BADGE, "OVERLAY")
-    m.order.ground:SetPoint("CENTER")
+    m.order:SetPoint("TOPRIGHT", m, "TOPLEFT", BADGE - 4, 4)
+    local left = T.Circle(m.order, "success", BADGE, "OVERLAY")
+    left:SetPoint("LEFT")
+    local right = T.Circle(m.order, "success", BADGE, "OVERLAY")
+    right:SetPoint("RIGHT")
+    local mid = T.Fill(m.order, "success", "OVERLAY")
+    mid:SetPoint("TOPLEFT", left, "TOP")
+    mid:SetPoint("BOTTOMRIGHT", right, "BOTTOM")
     m.order.text = T.Text(m.order, "caption", "onAccent")
     m.order.text:SetPoint("CENTER", 0, 0)
     m.levels = CreateFrame("Frame", nil, m)
@@ -88,15 +94,31 @@ function Markers.Clear()
     Markers.Highlight(nil)
 end
 
+-- {1,2,3,5} -> "1-3,5"
+local function Runs(list)
+    local out, i = {}, 1
+    while i <= #list do
+        local j = i
+        while list[j + 1] == list[j] + 1 do j = j + 1 end
+        out[#out + 1] = j > i and (list[i] .. "-" .. list[j]) or tostring(list[i])
+        i = j + 1
+    end
+    return table.concat(out, ",")
+end
+Markers._Runs = Runs
+
 function Markers.Draw(overlay, buttonOf, plan, nodes, rankOf, ready)
     Markers.Clear()
     current.overlay, current.buttonOf = overlay, buttonOf
     local nextNode = plan.next and plan.next.node
     local order = {}
     if ready and #plan.picks > 1 then
+        local picks = {}
         for i, step in ipairs(plan.picks) do
-            order[step.node] = order[step.node] and (order[step.node] .. "·" .. i) or tostring(i)
+            picks[step.node] = picks[step.node] or {}
+            table.insert(picks[step.node], i)
         end
+        for node, list in pairs(picks) do order[node] = Runs(list) end
     end
     for _, node in ipairs(nodes) do
         local target, rank = plan.target[node], rankOf(node)
@@ -120,7 +142,7 @@ function Markers.Draw(overlay, buttonOf, plan, nodes, rankOf, ready)
             m.levels:SetShown(target ~= nil and plan.levels ~= nil)
             m.order:SetShown(order[node] ~= nil)
             m.order.text:SetText(order[node] or "")
-            m.order:SetWidth(math.max(BADGE, m.order.text:GetStringWidth() + 6))
+            m.order:SetWidth(math.max(BADGE, m.order.text:GetStringWidth() + 8))
             m.glow:SetShown(node == nextNode)
             m.glow:SetAlpha(1)
             if node == nextNode and ready then m.pulse:Play() end

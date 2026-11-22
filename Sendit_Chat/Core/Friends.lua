@@ -174,7 +174,10 @@ function Friends.Open(e, viaCharacter)
 end
 
 function Friends.Invite(e)
-    local name = Friends.CharacterName(e)
+    Friends.InviteName(Friends.CharacterName(e))
+end
+
+function Friends.InviteName(name)
     if not name then return end
     local party = _G["C_PartyInfo"]
     local invite = (party and party.InviteUnit) or _G["InviteUnit"]

@@ -32,6 +32,7 @@ local function Dps(o) return C.Metric("damage", "DPS", C.Caster(o)) end
 ns.Specs = ns.Specs or {}
 ns.Specs.MAGE = {
     order = { "ARCANE", "FIRE", "FROST" },
+    trees = { "ARCANE", "FIRE", "FROST" },
     specs = {
         ARCANE = { primary = Dps({ filler = { "ARCANE_MISSILES" }, critBonus = 1.0 }), secondary = C.SURVIVAL, mana = true,
                    statMult = { int = 1.1 } },
@@ -45,6 +46,7 @@ ns.Specs.MAGE = {
 
 ns.Specs.WARLOCK = {
     order = { "AFFLICTION", "DEMONOLOGY", "DESTRUCTION" },
+    trees = { "AFFLICTION", "DEMONOLOGY", "DESTRUCTION" },
     specs = {
         AFFLICTION = {
             primary = Dps({ dots = { "CORRUPTION", "CURSE_OF_AGONY" }, filler = { "SHADOW_BOLT" },

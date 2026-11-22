@@ -56,6 +56,7 @@ ns.HunterPetDps = PetDps
 ns.Specs = ns.Specs or {}
 ns.Specs.HUNTER = {
     order = { "BM", "MM", "SV" },
+    trees = { "BM", "MM", "SV" },
     specs = {
         BM = { primary = C.Metric("damage", "DPS", WithPet(C.Ranged({ shots = SHOTS }), UNLEASHED_FURY)),
                secondary = C.SURVIVAL },

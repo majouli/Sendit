@@ -111,6 +111,7 @@ end
 ns.Specs = ns.Specs or {}
 ns.Specs.DRUID = {
     order = { "BALANCE", "CAT", "BEAR", "RESTO" },
+    trees = { "BALANCE", { "CAT", "BEAR" }, "RESTO" },  -- Feral: Guess picks cat or bear
     specs = {
         BALANCE = { primary = C.Metric("damage", "DPS", C.Caster({ filler = { "WRATH", "STARFIRE" }, critBonus = 1.0,
                                                                        critHaste = { pct = 0.10, dur = 3 },

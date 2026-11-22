@@ -1,13 +1,14 @@
 --[[
   Picker: route choice and next-point line at the talent window's bottom left (ends before
-  Blizzard's "Apply changes"), plus the docked timeline. Route names come from the client.
+  Blizzard's "Apply changes"), plus the docked timeline. Build panel: one column per tree (form),
+  leveling first, then dungeons & raids, then PvP; names, uses and tooltips from RouteText.
   Picker.Create(overlay, dock, get, set) -> picker;  picker:Update(state)
   state = { class, configID, route, plan, rankOf, reached, ready }
 ]]
 local _, ns = ...
 local L = ns.L
-local T, W = Sendit.Theme, Sendit.Widgets
-local Route, Tree, Timeline = ns.Route, ns.Tree, ns.Timeline
+local T = Sendit.Theme
+local Route, Tree, Timeline, RouteText, RouteMenu = ns.Route, ns.Tree, ns.Timeline, ns.RouteText, ns.RouteMenu
 
 local Picker = {}
 ns.Picker = Picker
@@ -15,11 +16,42 @@ ns.Picker = Picker
 local APPLY_HALF = 112  -- half of Blizzard's "Apply changes" button + a gap
 local BAR_Y = 16  -- level with "Apply changes"
 
-local function RouteName(route, names)
-    local name = names[route.tree] or ("#" .. route.tree)
-    local form = route.form and C_Spell and ns.Call(C_Spell.GetSpellName, route.form)
-    return form and (name .. " · " .. form) or name
+local USES = { level = 1, group = 2, pvp = 3 }
+
+-- talent(nodeID, rank) -> client name, what it does at that rank
+local function Namer(configID)
+    return function(node, rank)
+        return (Tree.Talent(configID, node)), rank and Tree.Effect(configID, node, rank)
+    end
 end
+
+-- one column per tree (and druid form), purposes in play order, the guide's plain build first
+local function Columns(routes, names, talentName)
+    local list, text = {}, {}
+    for _, route in ipairs(routes) do
+        list[#list + 1] = route
+        text[route] = RouteText.Name(route, names)
+    end
+    table.sort(list, function(a, b)
+        if a.tree ~= b.tree then return a.tree < b.tree end
+        if (a.form or 0) ~= (b.form or 0) then return (a.form or 0) < (b.form or 0) end
+        if a.use ~= b.use then return USES[a.use] < USES[b.use] end
+        if (a.variant == nil) ~= (b.variant == nil) then return a.variant == nil end
+        return text[a] < text[b]
+    end)
+    local columns, column = { off = { "off", L.off } }, nil
+    for _, route in ipairs(list) do
+        local section = RouteText.Section(route, names)
+        if not column or column[1] ~= section then
+            column = { section }
+            columns[#columns + 1] = column
+        end
+        column[#column + 1] = { route.key, text[route], use = RouteText.Use(route), points = RouteText.Points(route),
+            main = route.tree, label = section .. " · " .. text[route], tip = RouteText.Tip(route, names, talentName) }
+    end
+    return columns
+end
+Picker._Columns = Columns
 
 function Picker.Create(overlay, dock, get, set)
     local p = CreateFrame("Frame", nil, overlay)
@@ -29,14 +61,8 @@ function Picker.Create(overlay, dock, get, set)
     p.label:SetPoint("TOPLEFT", 0, 0)
     p.label:SetText(L.route)
     local state = {}
-    p.dropdown = W.Dropdown(p, 260, function()
-        local names = Tree.Names(state.configID)
-        local options = {}
-        for _, route in ipairs(Route.ForClass(state.class)) do
-            options[#options + 1] = { route.key, RouteName(route, names) }
-        end
-        options[#options + 1] = { "off", L.off }
-        return options
+    p.dropdown = RouteMenu.Create(p, 260, function()
+        return Columns(Route.ForClass(state.class), Tree.Names(state.configID), Namer(state.configID))
     end, get, set)
     p.dropdown:SetPoint("TOPLEFT", p.label, "BOTTOMLEFT", 0, -3)
     p.status = T.Text(p, "label", "text")
@@ -70,7 +96,7 @@ function Picker.Create(overlay, dock, get, set)
             end
             T.Paint(self.status, s.ready and "accent" or "textDim")
         end
-        self.timeline:Update({ configID = s.configID, routeName = RouteName(s.route, Tree.Names(s.configID)),
+        self.timeline:Update({ configID = s.configID, routeName = RouteText.Title(s.route, Tree.Names(s.configID)),
             steps = s.plan.steps, next = step })
     end
     return p

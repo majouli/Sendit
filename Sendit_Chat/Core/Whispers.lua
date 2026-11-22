@@ -113,6 +113,16 @@ local function PlayerKey(full)
     return "p:" .. (name .. "-" .. realm):lower()
 end
 
+-- the name to type for a whisper: a BattleTag, a name, or Name-Realm off the own realm
+function W.PlainName(conv)
+    local full = conv.target or conv.name or "?"
+    if conv.bn then return full end
+    local name, realm = full:match("^([^%-]+)%-?(.*)$")
+    local own = Safe.Str(Safe.Call(_G["GetNormalizedRealmName"])) or ""
+    if not name or realm == "" or realm == own then return name or full end
+    return full
+end
+
 local function ClassOf(guid)
     guid = Safe.Str(guid)
     local fn = _G["GetPlayerInfoByGUID"]
