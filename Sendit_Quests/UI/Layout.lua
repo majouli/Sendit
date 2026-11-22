@@ -21,10 +21,11 @@ end
 
 local function Controls(f, m, w)
     local pad, gap = S.space.pad, 8
-    local chips = f.group:GetWidth() + gap + f.status:GetWidth() + gap + f.boost:GetWidth()
+    local chips = f.group:GetWidth() + gap + f.status:GetWidth() + gap + f.faction:GetWidth() + gap + f.boost:GetWidth()
     f.search:ClearAllPoints()
     f.group:ClearAllPoints()
     f.status:ClearAllPoints()
+    f.faction:ClearAllPoints()
     f.boost:ClearAllPoints()
     if m.toolbar then
         local y = -(S.size.header + 4)
@@ -35,13 +36,15 @@ local function Controls(f, m, w)
         local room = w - pad - f.close:GetWidth() - 8 - chips - gap - f.titleWidth - 2 * pad
         f.search:SetWidth(math.max(140, math.min(S.size.search, room)))
         f.boost:SetPoint("RIGHT", f.close, "LEFT", -8, 0)
-        f.status:SetPoint("RIGHT", f.boost, "LEFT", -gap, 0)
+        f.faction:SetPoint("RIGHT", f.boost, "LEFT", -gap, 0)
+        f.status:SetPoint("RIGHT", f.faction, "LEFT", -gap, 0)
         f.group:SetPoint("RIGHT", f.status, "LEFT", -gap, 0)
         f.search:SetPoint("RIGHT", f.group, "LEFT", -gap, 0)
         return
     end
     f.status:SetPoint("LEFT", f.group, "RIGHT", gap, 0)
-    f.boost:SetPoint("LEFT", f.status, "RIGHT", gap, 0)
+    f.faction:SetPoint("LEFT", f.status, "RIGHT", gap, 0)
+    f.boost:SetPoint("LEFT", f.faction, "RIGHT", gap, 0)
 end
 
 function Layout.Apply(f)

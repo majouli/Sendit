@@ -297,8 +297,20 @@ local menu = {
         "Цепочка отслеживается: шагов %d - метка показывает следующий", "Место следующих шагов неизвестно",
         "Прекратить отслеживание", "Шаги", "Предпросмотр: также задания до стольких уровней выше вашего", "с уровня %d" },
 }
+local factionTexts = {  -- used where the client lacks FACTION_ALLIANCE / FACTION_HORDE
+    enUS = { "Alliance", "Horde", "Both factions" }, deDE = { "Allianz", "Horde", "Beide Fraktionen" },
+    frFR = { "Alliance", "Horde", "Les deux factions" }, esES = { "Alianza", "Horda", "Ambas facciones" },
+    ruRU = { "Альянс", "Орда", "Обе фракции" },
+}
+local instanceKinds = {  -- instance places in the place filter
+    enUS = { "Dungeon", "Raid" }, deDE = { "Dungeon", "Raid" }, frFR = { "Donjon", "Raid" },
+    esES = { "Mazmorra", "Banda" }, ruRU = { "Подземелье", "Рейд" },
+}
 for code, values in pairs(rows) do
     tables[code] = {}
+    tables[code].dungeon, tables[code].raid = instanceKinds[code][1], instanceKinds[code][2]
+    local f = factionTexts[code]
+    tables[code].alliance, tables[code].horde, tables[code].bothFactions = f[1], f[2], f[3]
     for i, key in ipairs(menuKeys) do tables[code][key] = menu[code][i] end
     for i, key in ipairs(trackKeys) do tables[code][key] = track[code][i] end
     for i, key in ipairs(boostKeys) do tables[code][key] = boost[code][i] end

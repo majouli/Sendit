@@ -5,6 +5,9 @@
   objectives, place and linked names (Data/Search_<locale>.lua).
   Chains: edges from prerequisite to dependent (Kahn order, cycles flagged, missing quests kept);
   exclusive / group siblings are no edges. Only the suite language's texts stay loaded.
+  Groups: the filter's places, categories and instances (dungeon / raid: Data/Groups.lua groupKinds);
+  an instance also lists the quests whose objectives are inside it (questInstances).
+  DB.Faction(id) -> "alliance" | "horde" | nil (both): from the race mask's low word.
 ]]
 local _, ns = ...
 local DB = {}
@@ -53,8 +56,10 @@ end
 function DB.Groups()
     local seen, list = {}, {}
     for id in pairs(ns.quests) do seen[DB.GroupKey(id)] = true end
+    for _, key in pairs(ns.questInstances or {}) do seen[key] = true end
     for key in pairs(seen) do
-        local kind = key:match("^area:") and ns.L.place or ns.L.category
+        local instance = ns.groupKinds and ns.groupKinds[key]
+        local kind = instance and ns.L[instance] or key:match("^area:") and ns.L.place or ns.L.category
         list[#list + 1] = { key, kind .. ": " .. DB.GroupName(key) }
     end
     table.sort(list, function(a, b) return a[2] < b[2] end)
@@ -115,7 +120,28 @@ local function Matches(key, terms)
 end
 DB.Matches = function(key, query) return Matches(key, Terms(Fold(query))) end
 
-function DB.Search(query, group, status)
+local WORD = 4294967296  -- the masks carry flags above bit 31: only the low word counts
+local ALLIANCE, HORDE = 1 + 4 + 8 + 64, 2 + 16 + 32 + 128  -- race bits (Human Dwarf NightElf Gnome / Orc Undead Tauren Troll)
+
+local function Any(mask, races)
+    for bit = 0, 7 do
+        if math.floor(races / 2 ^ bit) % 2 == 1 and math.floor(mask / 2 ^ bit) % 2 == 1 then return true end
+    end
+    return false
+end
+
+function DB.Faction(id)
+    local q = ns.quests[id]
+    local mask = q and type(q.requiredRaces) == "number" and q.requiredRaces % WORD or 0
+    if mask == 0 then return nil end
+    local a, h = Any(mask, ALLIANCE), Any(mask, HORDE)
+    if a and not h then return "alliance" end
+    if h and not a then return "horde" end
+    return nil
+end
+
+-- faction: "alliance" | "horde" hides the other faction's quests; nil / "all" shows both
+function DB.Search(query, group, status, faction)
     query = Fold(strtrim(query or ""))
     local id, out = tonumber(query), {}
     local terms = Terms(query)
@@ -123,10 +149,13 @@ function DB.Search(query, group, status)
     for key, quest in pairs(ns.quests) do
         local groupKey = DB.GroupKey(key)
         local inGroup = not group or group == "all" or groupKey == group
+            or (ns.questInstances and ns.questInstances[key] == group)
         local state = status and status ~= "all" and ns.Progress.State(key)
         local inState = not state or state == status or
             (status == "unfinished" and (state == "pending" or state == "active"))
-        if inGroup and inState and (query == "" or Matches(key, terms)) then
+        local side = faction and faction ~= "all" and DB.Faction(key)
+        local inFaction = not side or side == faction
+        if inGroup and inState and inFaction and (query == "" or Matches(key, terms)) then
             out[#out + 1] = key
         end
     end

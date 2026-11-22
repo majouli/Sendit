@@ -1,6 +1,7 @@
 --[[
   Window: the quest journal - list left (search, place and progress filters, virtual rows), the picked
-  quest's chain right (progress bar, timeline, chain rewards). root = quest picked in the list, open =
+  quest's chain right (progress bar, timeline, chain rewards). Faction filter starts on the player's own
+  faction (the other one stays pickable). root = quest picked in the list, open =
   step opened in the timeline. Filters narrow the list, never the chain. Right click: the quest menu
   (follow the chain, map pins); feedback shows a few seconds by the chain title.
   Window:Open(text) / OpenQuest(id) / Search(text, keep) / Filter(group, status) / Menu(id) / Follow(id)
@@ -14,6 +15,7 @@ ns.Window = Window
 local frame, root, open, query
 local autoRoot = false  -- the shown chain was picked for the player (first result), not by a click
 local group, status = "all", "all"
+local faction  -- nil until the window opens: then the player's own faction
 local results, chain = {}, {}
 local rowPool = {}
 local ROW = S.size.row + S.size.rowGap
@@ -21,6 +23,18 @@ local ROW = S.size.row + S.size.rowGap
 local function StatusOptions()
     return { { "all", L.allProgress }, { "unfinished", L.unfinished }, { "active", L.active },
         { "done", L.done }, { "unknown", L.unknown } }
+end
+
+local function OwnFaction()
+    local ok, side = pcall(UnitFactionGroup, "player")
+    if not ok or type(side) ~= "string" or (issecretvalue and issecretvalue(side)) then return "all" end
+    side = side:lower()
+    return (side == "alliance" or side == "horde") and side or "all"
+end
+
+local function FactionOptions()
+    return { { "alliance", _G["FACTION_ALLIANCE"] or L.alliance }, { "horde", _G["FACTION_HORDE"] or L.horde },
+        { "all", L.bothFactions } }
 end
 
 local function Pick(id)
@@ -91,6 +105,9 @@ function Window:Refresh()
     frame.group:Refresh()
     for _, o in ipairs(StatusOptions()) do
         if o[1] == status then frame.status:SetLabel(o[2], status ~= "all") end
+    end
+    for _, o in ipairs(FactionOptions()) do
+        if o[1] == faction then frame.faction:SetLabel(o[2], faction ~= OwnFaction()) end
     end
     Window:BoostHeader()
     ns.Layout.Apply(frame)
@@ -173,7 +190,8 @@ end
 
 function Window:Search(text, keep)
     query = text or ""
-    results = DB.Search(query, group, status)
+    faction = faction or OwnFaction()
+    results = DB.Search(query, group, status, faction)
     if ns.Boost.Active() then results = Boosted(results) end
     if not (keep and root and #chain > 0) or (autoRoot and results[1] ~= root) then
         local id = (query ~= "" or group ~= "all" or ns.Boost.Active()) and results[1] or nil
@@ -240,6 +258,12 @@ local function Header()
     frame.status = Sendit.Widgets.Chip(frame, function(self)
         W.ShowMenu(self, StatusOptions(), status, function(key) Window:Filter(nil, key) end)
     end)
+    frame.faction = Sendit.Widgets.Chip(frame, function(self)
+        W.ShowMenu(self, FactionOptions(), faction, function(key)
+            faction = key
+            Window:Search(query)
+        end)
+    end)
     frame.boost = Sendit.Widgets.Chip(frame, function(self)
         GameTooltip:Hide()
         ns.BoostDialog.Toggle(self, StartBoost, EndBoost)
@@ -257,7 +281,7 @@ local function Header()
     line:SetPoint("TOPRIGHT", 0, -S.size.header)
     line:SetHeight(1)
     -- the drag area must not cover the header controls
-    for _, control in ipairs({ frame.search, frame.group, frame.status, frame.boost, frame.close }) do
+    for _, control in ipairs({ frame.search, frame.group, frame.status, frame.faction, frame.boost, frame.close }) do
         control:SetFrameLevel(frame.drag:GetFrameLevel() + 2)
     end
 end
