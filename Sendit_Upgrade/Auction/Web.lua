@@ -2,8 +2,11 @@
   Web: auction data from the optional Sendit_AuctionData addon, written by the Sendit auction data app
   (Sendit_Upgrade/Web, built as SenditAuctions.exe) from the Battle.net API (renewed hourly by the server).
   SenditAuctionData = { at = unix time, house = name, auctions = n, items = "id:suffix:bonuses:buyout:count"
-  lines } (bonuses = sorted bonus ids "b1.b2" or empty; cheapest buyout in copper and the number of
-  auctions per variant; one string because a Lua 5.1 chunk holds at most 2^18 constants).
+  lines } (bonuses = sorted bonus ids "b1.b2" or empty; cheapest buyout per unit in copper - a stack's over
+  its size - and the number of auctions per variant; one string because a Lua 5.1 chunk holds at most 2^18
+  constants).
+  The app adds interval (the server's renewal cadence, s) and every (its own look, s): Web.Timing() ->
+  interval, every (an hour and 5 minutes for older files).
   Web.At() -> at, auctions | nil;  Web.Candidates() -> scan candidates (gear the character can wear),
   keyed like Scan.Key of the real link
 ]]
@@ -29,6 +32,11 @@ local function Link(id, suffix, bonuses)
     if bonuses == "" then return ("item:%d::::::%d"):format(id, suffix) end
     local ids, dots = bonuses:gsub("%.", ":")
     return ("item:%d::::::%d::::::%d:%s"):format(id, suffix, dots + 1, ids)
+end
+
+function Web.Timing()
+    local d = Data()
+    return d and tonumber(d.interval) or 3600, d and tonumber(d.every) or 300
 end
 
 function Web.Candidates()

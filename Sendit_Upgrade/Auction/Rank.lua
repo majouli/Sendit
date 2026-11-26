@@ -124,12 +124,14 @@ local function Top() return select(2, Filter.Range()) end
 -- level filter) | "done"
 local function Rate(c)
     local known = cache[c.key]
-    if known == nil then
+    if not c.name then  -- also for a saved rating: the row needs the name, the filters quality and level
         if not MayLoad(c) then return "later" end
         local name, _, quality, _, reqLevel = C_Item.GetItemInfo(c.link)
-        if not quality then return "wait" end
+        if not name then return "wait" end
         c.quality, c.reqLevel, c.name = quality, reqLevel, name
-        if (reqLevel or 0) > Top() then return "deferred" end
+    end
+    if known == nil then
+        if (c.reqLevel or 0) > Top() then return "deferred" end
         local ok, r = pcall(ns.Compare.Evaluate, c.link)
         -- the character is not readable for a moment (gear loading, sheet secret): later, never "no upgrade"
         if ok and r and r.item and (r.status == "loading" or r.status == "nodata") then return "later" end
@@ -138,9 +140,6 @@ local function Rate(c)
             and r.primary.pct > 0
         known = gain and { pct = r.primary.pct, unit = r.primary.label, gate = r.levelGate } or false
         cache[c.key] = known
-    elseif not c.name then  -- a new copy of a rated variant
-        local name, _, quality, _, reqLevel = C_Item.GetItemInfo(c.link)
-        if quality then c.quality, c.reqLevel, c.name = quality, reqLevel, name end
     end
     if known then
         c.pct, c.unit, c.gate = known.pct, known.unit, known.gate

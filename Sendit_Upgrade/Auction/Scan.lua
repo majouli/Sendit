@@ -16,9 +16,10 @@
   - the full read is shared by every addon once per COOLDOWN: any full read the client gets (also
     another addon's) starts it; until it ends the client's last answer is read again, else the kept
     scan is taken, and only without either it ends "throttled".
+  Every row with a buyout also gives its unit price to Auction/Prices.lua (all items, not only gear).
 ]]
 local _, ns = ...
-local Slots, Filter, Web = Sendit.GearSlots, ns.AuctionFilter, ns.AuctionWeb
+local Slots, Filter, Web, Prices = Sendit.GearSlots, ns.AuctionFilter, ns.AuctionWeb, ns.AuctionPrices
 local Scan = {}
 ns.AuctionScan = Scan
 
@@ -34,6 +35,7 @@ local state = { phase = "idle", done = 0, total = 0, auctions = 0, candidates = 
 local generation, onChange, byKey, me = 0, nil, {}, nil
 local requested, requestSecond, requestCount = {}, 0, 0
 local pending, arrivedAt, itemsFrom = {}, 0, 0
+local pricedRows = {}  -- rows read again in phase "items" give their price once
 
 local function Changed() if onChange then onChange() end end
 
@@ -100,12 +102,17 @@ end
 
 -- "ok" | "skip" | "later" (the client has not got the item's data yet)
 local function Row(i)
-    local ok, _, icon, _, quality, usable, _, _, _, _, buyout, _, _, _, owner, _, _, itemID, hasAll =
+    local ok, _, icon, count, quality, usable, _, _, _, _, buyout, _, _, _, owner, _, _, itemID, hasAll =
         pcall(AH.GetReplicateItemInfo, i)
     if not ok or not Plain(itemID) or type(itemID) ~= "number" then return "skip" end
     if not Plain(buyout) or type(buyout) ~= "number" or buyout <= 0 then return "skip" end
-    if Plain(usable) and usable == false then return "skip" end
     if me and Plain(owner) and owner == me then return "skip" end
+    local n = Plain(count) and type(count) == "number" and count > 0 and count or 1
+    if not pricedRows[i] then
+        pricedRows[i] = true
+        Prices.Add(itemID, math.floor(buyout / n + 0.5), n)
+    end
+    if Plain(usable) and usable == false then return "skip" end
     local _, _, _, equipLoc = C_Item.GetItemInfoInstant(itemID)
     if not Slots.Group(equipLoc) then return "skip" end
     if Plain(hasAll) and hasAll == false then
@@ -139,7 +146,12 @@ local function Finish(phase)
     state.phase = phase
     generation = generation + 1
     pending = {}
-    if phase == "done" then Keep() end
+    if phase == "done" then
+        Keep()
+        Prices.Finish(state.at)
+    else
+        Prices.Drop()
+    end
     Changed()
 end
 
@@ -232,7 +244,8 @@ function Scan.Start(fn)
     if not Scan.Available() then return false end
     generation = generation + 1
     local gen = generation
-    byKey, requested, pending = {}, {}, {}
+    byKey, requested, pending, pricedRows = {}, {}, {}, {}
+    Prices.Begin()
     state = { phase = "loading", done = 0, total = 0, open = 0, auctions = 0, candidates = {}, missing = 0, at = time() }
     if Scan.WaitMinutes() > 0 then
         if (AH.GetNumReplicateItems() or 0) > 0 then

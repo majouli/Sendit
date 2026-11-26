@@ -6,13 +6,17 @@
   Opened from its button in the core's auction dock (closes with the auction house) or from the
   launcher / "/upgrade ah". Resizable, size kept in Sendit_UpgradeDB.auctionWindow; it sits above the
   suite's other windows (DIALOG strata) and shares its place beside the auction house with the other
-  dock windows. Repaints at most every REPAINT s.
+  dock windows. Repaints at most every REPAINT s. Once the first web stand newer than the shown data is due
+  (the web data's stand + the server's cadence, + the app's look; Web.Timing) newer data is most likely on
+  disk - also when the shown data is an own scan - the light turns yellow and "Reload" shows beside it;
+  before that its tooltip names the time. Web data already two renewals old when the game read it: the app
+  is not fetching, nothing is offered.
 ]]
 local _, ns = ...
 local AL = ns.AL
 local T, W, Slots = Sendit.Theme, Sendit.Widgets, Sendit.GearSlots
 local Filter, Scan, Rank, Buy, Row = ns.AuctionFilter, ns.AuctionScan, ns.AuctionRank, ns.AuctionBuy, ns.AuctionRow
-local Live, Sidebar = ns.AuctionLive, ns.AuctionSidebar
+local Live, Sidebar, Web = ns.AuctionLive, ns.AuctionSidebar, ns.AuctionWeb
 local Window = {}
 ns.AuctionWindow = Window
 
@@ -68,14 +72,33 @@ local function Status()
     return text, fraction
 end
 
+local loadedAt = time()  -- the game read the web data now (login or /reload)
+
+-- when the app has most likely written web data newer than the shown data (the game cannot see the file,
+-- only reload it): the next renewal after the shown stand, counted from the web data's stand
+local function NextDue(src)
+    local webAt = Web.At()
+    if not (src and src.at and webAt) then return nil end
+    local interval, every = Web.Timing()
+    if interval <= 0 or webAt + 2 * interval + every < loadedAt then return nil end
+    return webAt + interval * (math.max(0, math.floor((src.at - webAt) / interval)) + 1) + every
+end
+
+local function NewerLikely(src)
+    local due = NextDue(src)
+    return due ~= nil and time() > due
+end
+
 local function PaintFresh()
     local src = Live.Source()
     local role, text = "danger", AL.freshNone
     if src then
         local age = time() - (src.at or 0)
         role = age <= FRESH and "success" or age <= STALE and "warning" or "danger"
+        if NewerLikely(src) and role == "success" then role = "warning" end
         text = AL.freshAt:format(date("%H:%M", src.at), Age(src.at))
     end
+    frame.reload:SetShown(NewerLikely(src) == true)
     T.Paint(frame.dot, role)
     frame.fresh:SetText(text)
     frame.freshHit:SetWidth(frame.fresh:GetStringWidth() + 20)
@@ -90,6 +113,11 @@ local function FreshTooltip(self)
     else
         GameTooltip:AddLine((src.web and AL.freshWeb or AL.freshScan):format(Big(src.auctions or 0)), 1, 0.82, 0, true)
         GameTooltip:AddLine(src.web and AL.freshWebHelp or AL.freshScanHelp, 0.8, 0.8, 0.8, true)
+        if NewerLikely(src) then
+            GameTooltip:AddLine(AL.freshReload, 1, 0.82, 0, true)
+        elseif NextDue(src) then
+            GameTooltip:AddLine(AL.freshNext:format(date("%H:%M", NextDue(src))), 0.8, 0.8, 0.8, true)
+        end
     end
     GameTooltip:Show()
 end
@@ -229,7 +257,7 @@ Window.Layout = Layout
 local function Header()
     local drag = CreateFrame("Frame", nil, frame)
     drag:SetPoint("TOPLEFT")
-    drag:SetPoint("TOPRIGHT", -360, 0)
+    drag:SetPoint("TOPRIGHT", -470, 0)
     drag:SetHeight(HEADER)
     W.Movable(frame, drag)
     local icon = frame:CreateTexture(nil, "ARTWORK")
@@ -262,6 +290,12 @@ local function Header()
     frame.dot:SetPoint("LEFT", 2, 0)
     frame.fresh = T.Text(frame.freshHit, "small", "textDim")
     frame.fresh:SetPoint("LEFT", frame.dot, "RIGHT", 7, 0)
+    frame.reload = W.Button(frame, AL.reload, function() ReloadUI() end)
+    frame.reload:SetHeight(24)
+    frame.reload:SetPoint("RIGHT", frame.freshHit, "LEFT", -8, 0)
+    frame.reload:HookScript("OnEnter", FreshTooltip)
+    frame.reload:HookScript("OnLeave", function() GameTooltip:Hide() end)
+    frame.reload:Hide()
     local rule = T.Fill(frame, "divider", "ARTWORK")
     rule:SetHeight(1)
     rule:SetPoint("TOPLEFT", 0, -HEADER)

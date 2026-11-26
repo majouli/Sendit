@@ -42,7 +42,9 @@ end
 
 function V.MatPrice(id)
     local p = ns.Prices.Get(id)
-    return p and p.p or nil
+    if p then return p.p end
+    local market = Sendit.Service("auctionPrices")
+    return market and (market.Get(id)) or nil
 end
 
 function V.OfYield(yield)

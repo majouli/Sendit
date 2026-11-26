@@ -6,7 +6,9 @@ Nothing here asks or prints.
 
 Config %APPDATA%/Sendit/auctions.json (this PC only): client_id, client_secret, region, wow (game folder),
 house {id, name}, token {value, expires} (the API token, valid about a day), modified {house, at} (the
-Last-Modified of the written data), last_run {at, ok, text}.
+Last-Modified of the written data), last_run {at, ok, text}, cadence (seconds between the server's last
+renewals, at most CADENCE_KEEP: the data addon gets their median as "interval" and EVERY as "every", so the
+game can tell when newer data is waiting on disk - it reads files only at login or /reload).
 The server renews the data about hourly; fetch() asks only for something newer than the written data
 (If-Modified-Since -> 304), so looking every few minutes costs next to nothing.
 The house is found by matching the newest in-game scan (Sendit_Upgrade's SavedVariables) once.
@@ -30,6 +32,9 @@ TASK = "Sendit auction data"
 EVERY = 5  # minutes between two looks of the background task
 MIN_MATCH = 0.05  # share of the in-game scan a house must hold to be taken
 LOG_LINES = 200
+CADENCE_KEEP = 6
+CADENCE_RANGE = (600, 6 * 3600)  # a renewal gap outside it is a missed hour or a restart, not the cadence
+DEFAULT_INTERVAL = 3600
 CLIENTS_URL = "https://develop.battle.net/access/clients"
 
 
@@ -146,6 +151,14 @@ def buyout(a):
     return int(a.get("buyout") or 0)
 
 
+def unit_price(a):
+    """copper per item: a stack's buyout over its size, or the unit price of a commodity"""
+    if a.get("unit_price"):
+        return int(a["unit_price"])
+    total = buyout(a)
+    return round(total / max(1, int(a.get("quantity") or 1))) if total > 0 else 0
+
+
 def is_wow(path):
     return bool(path) and (Path(path) / "Interface" / "AddOns").is_dir() and (Path(path) / "WTF").is_dir()
 
@@ -223,11 +236,17 @@ def match_house(api, ruleset, wow):
     return best
 
 
-def lua_data(rows, house, at):
+def interval_of(cfg):
+    """the server's renewal cadence: the median of the gaps seen, else an hour"""
+    gaps = sorted(cfg.get("cadence") or [])
+    return gaps[len(gaps) // 2] if gaps else DEFAULT_INTERVAL
+
+
+def lua_data(rows, house, at, interval=DEFAULT_INTERVAL, every=EVERY * 60):
     best = {}
     for a in rows:
         item, suffix, bonuses = item_key(a)
-        price = buyout(a)
+        price = unit_price(a)
         if not item or price <= 0:
             continue
         cur = best.get((item, suffix, bonuses))
@@ -235,7 +254,7 @@ def lua_data(rows, house, at):
     # one string, not a table: a Lua 5.1 chunk holds at most 2^18 constants
     items = "\n".join(f"{i}:{s}:{b}:{p}:{c}" for (i, s, b), (p, c) in sorted(best.items()))
     head = (f"SenditAuctionData = {{ at = {at}, house = {json.dumps(house, ensure_ascii=False)}, "
-            f"auctions = {len(rows)}, items = [[\n")
+            f"auctions = {len(rows)}, interval = {int(interval)}, every = {int(every)}, items = [[\n")
     return head + items + "\n]] }\n", len(best)
 
 
@@ -287,7 +306,10 @@ def fetch(cfg, house=None):
         return {"new": False, "house": house}
     modified = headers.get("Last-Modified")
     at = calendar.timegm(time.strptime(modified, "%a, %d %b %Y %H:%M:%S GMT")) if modified else int(time.time())
-    text, items = lua_data(rows, house["name"], at)
+    previous = last.get("time") if last.get("house") == house["id"] else None
+    if previous and CADENCE_RANGE[0] <= at - previous <= CADENCE_RANGE[1]:
+        cfg["cadence"] = ((cfg.get("cadence") or []) + [at - previous])[-CADENCE_KEEP:]
+    text, items = lua_data(rows, house["name"], at, interval_of(cfg))
     fresh = write_addon(wow, text)
     cfg["modified"] = {"house": house["id"], "at": modified, "time": at, "auctions": len(rows)}
     return {"new": True, "house": house, "auctions": len(rows), "items": items, "at": at, "fresh": fresh}

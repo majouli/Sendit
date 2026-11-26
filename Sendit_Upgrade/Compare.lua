@@ -199,13 +199,52 @@ local function Usability(item, level)
     return unusable, gate
 end
 
-function Compare.Evaluate(link)
+local OFF_HAND = { INVTYPE_SHIELD = true, INVTYPE_HOLDABLE = true, INVTYPE_WEAPONOFFHAND = true }
+local MAIN_HAND = { INVTYPE_WEAPON = true, INVTYPE_WEAPONMAINHAND = true, INVTYPE_2HWEAPON = true }
+
+local function ForSpec(ctx, specKey)
+    if not specKey or specKey == ctx.specKey then return ctx end
+    local spec = ctx.classData.specs[specKey]
+    if not spec then return nil end
+    return setmetatable({ specKey = specKey, spec = spec }, { __index = ctx })
+end
+
+-- What a weapon, shield or off-hand item adds for a spec with both hands empty: a second spec's weapons
+-- (a shield and a one-hander for a tank) cannot be weighed against the worn two-hander. Higher is better,
+-- comparable between items of one kind. -> gain | nil, status ("loading", "unusable", "noCompare", ...)
+function Compare.WeaponScore(link, specKey)
+    local item = ns.Stats.Read(link)
+    if not item then return nil, "loading" end
+    local slot = MAIN_HAND[item.equipLoc] and 16 or OFF_HAND[item.equipLoc] and 17 or nil
+    if not slot then return nil, "noCompare" end
+    local ctx, reason = Compare.Context()
+    if not ctx then return nil, reason end
+    ctx = ForSpec(ctx, specKey)
+    if not ctx then return nil, "noCompare" end
+    if Usability(item, ctx.s.level) then return nil, "unusable" end
+    local bare = {}
+    AddStats(bare, ctx.gear[16], -1)
+    AddStats(bare, ctx.gear[17], -1)
+    local before = ctx.spec.primary.fn(ns.Character.Apply(ctx.s, Scaled(ctx, bare), { main = false, off = false }))
+    local with = {}
+    for k, v in pairs(bare) do with[k] = v end
+    AddStats(with, item, 1)
+    local weapons = { main = false, off = false }
+    if slot == 16 then weapons.main = item.weapon or false else weapons.off = item.weapon or false end
+    local after = ctx.spec.primary.fn(ns.Character.Apply(ctx.s, Scaled(ctx, with), weapons))
+    return after - before
+end
+
+-- specKey (optional): rate for another spec of the class (a second spec) instead of the rated one
+function Compare.Evaluate(link, specKey)
     local item = ns.Stats.Read(link)
     if not item then return { status = "loading" } end
     local slots = Compare.SlotsFor(item)
     if not slots then return nil end
     local ctx, reason = Compare.Context()
     if not ctx then return { status = reason, item = item } end
+    ctx = ForSpec(ctx, specKey)
+    if not ctx then return { status = "noCompare", item = item } end
 
     for _, slot in ipairs(slots) do
         if ctx.gear[slot] and ctx.gear[slot].link == link then

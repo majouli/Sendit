@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Sendit: Harvest
 ## Notes: Shows what disenchanting, skinning, mining and herbalism yield, with AH prices. Part of the Sendit suite.
-## Version: 0.24.0
+## Version: 0.25.0
 ## IconTexture: Interface\AddOns\Sendit_Harvest\Media\Icon
 ## Category: Professions
 ## X-License: GPL-3.0
@@ -42,6 +42,7 @@ Dribbler\OfferRow.lua
 Dribbler\Summary.lua
 Dribbler\Tab.lua
 Dribbler\Window.lua
+Core\Service.lua
 
 UI\Tooltip.lua
 UI\Pages.lua
