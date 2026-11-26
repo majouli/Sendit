@@ -241,6 +241,14 @@ function Model.SpiritRegen(s)
     return math.max(0, r[1] + (s.spi or 0) / r[2]) / 2
 end
 
+-- Base mana (what costs in % of base mana are taken of): the sheet's mana less what intellect gives -
+-- the first 20 intellect 1 mana each, every further point 15 (reference "Attributes (pre-6.0)").
+function Model.BaseMana(s)
+    local int = s.int or 0
+    local fromInt = int <= 20 and int or 20 + (int - 20) * 15
+    return math.max(0, (s.mana or 0) - fromInt)
+end
+
 -- Output per second of the cycle, from output and mana per second of casting;
 -- healing: the fight lasts HEAL_FIGHT instead of until the mob is dead.
 function Model.Sustained(s, rate, manaPerSec, healing)

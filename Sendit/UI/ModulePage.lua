@@ -45,8 +45,8 @@ end
 
 function ModulePage.Switch(button, name)
     if not name then return nil end
-    local s = W.Switch(button, Get(name), Set(name))
-    s:SetPoint("RIGHT", button, "RIGHT", -14, 0)
+    local s = W.Switch(button, Get(name), Set(name), true)
+    s:SetPoint("RIGHT", button, "RIGHT", -16, 0)
     s:SetFrameLevel(button:GetFrameLevel() + 2)
     s:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")

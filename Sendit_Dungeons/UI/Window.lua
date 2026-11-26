@@ -254,6 +254,7 @@ function Window:IsShown() return frame ~= nil and frame:IsShown() end
 Sendit.OnSettingsChanged(function() if frame then Window:Refresh() end end)
 
 Sendit:AddLauncher({
+    module = ns.module,
     key = "dungeons", order = 40, icon = "Interface\\AddOns\\Sendit_Dungeons\\Media\\Icon", title = "Dungeons",
     toggle = function() if Window:IsShown() then Window:Hide() else Window:Open() end end,
     shown = function() return Window:IsShown() end,

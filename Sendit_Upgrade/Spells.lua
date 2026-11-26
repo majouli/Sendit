@@ -12,7 +12,7 @@
   tell (marked `assumed`).
 
   Contract: Spells.Get(key, level) -> spell or nil
-    spell = { key, id, rank, school, cost, power ("mana" | "rage" | "energy"),
+    spell = { key, id, rank, school, cost, costPct (% of base mana), power ("mana" | "rage" | "energy"),
               time (seconds of the cast, at least a global cooldown), cd, dur,
               direct = { min, max, avg, coef }   can crit
               dot    = { total, coef }           all ticks; damage ticks crit (Model.Cast)
@@ -70,7 +70,7 @@ function Spells.Get(key, level)
     local steps = math.max(math.min(level, r.max), r.level) - r.level
     local function At(base, perLevel) return base + perLevel * steps end
     local out = {
-        key = key, id = r.id, rank = r.rank, school = spell.school, cost = r.cost, power = r.power,
+        key = key, id = r.id, rank = r.rank, school = spell.school, cost = r.cost, costPct = r.costPct, power = r.power,
         time = math.max(r.time, GCD), cd = r.cd, dur = r.dur, dummy = r.dummy, assumed = assumed,
     }
     if r.direct then

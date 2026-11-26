@@ -6,7 +6,9 @@
           known, Seal of Righteousness; Holy Strike (Forever: holy weapon strike,
           client data) and Judgement of Command (Forever: keeps the seal)
           on cooldown; Vengeance (Forever: up to 5 stacks of
-          +3% physical and holy damage after crits, from level 29)
+          +3% physical and holy damage after crits, from level 29). Damage over the
+          leveling cycle (Model.Sustained): the seal kept up, Judgement and Holy Strike on
+          cooldown cost mana - intellect and spirit shorten the drinking
     HOLY  primary healing (HPS over the leveling cycle, Model.Sustained), secondary survival;
           Divine Intellect (+10% intellect), Illumination (5/5, Forever: a
           critical heal gives 50% of its mana back - crit saves mana)
@@ -112,12 +114,28 @@ local function VengeanceFactor(s, landed, command)
     return 1 + VENGEANCE.perStack * VengeanceStacks(events * crit * VENGEANCE.duration)
 end
 
+-- Mana per second of the rotation above (client spell data): the seal recast when it runs out
+-- (30 s), Judgement (6% of base mana) on its cooldown with Seal of Command, Holy Strike on its
+-- cooldown. Seal of Righteousness' judgement is not cast (not counted above either).
+local function ManaPerSec(s, command)
+    local mana = 0
+    local seal = ns.Spells.Get(command and "SEAL_OF_COMMAND" or "SEAL_OF_RIGHTEOUSNESS", s.level)
+    if seal and seal.dur > 0 then mana = mana + seal.cost / seal.dur end
+    local judgement = command and ns.Spells.Get("JUDGEMENT", s.level)
+    if judgement then mana = mana + Model.BaseMana(s) * (judgement.costPct or 0) / 100 / JOC.cd end
+    local strike = ns.Spells.Get("HOLY_STRIKE", s.level)
+    if strike and strike.cd > 0 then mana = mana + strike.cost / strike.cd end
+    return mana
+end
+ns.PaladinManaPerSec = ManaPerSec  -- tests
+
 local function Damage(s)
     local white, landed = Model.WhiteDps(s)
     local command = UsesCommand(s)
     local seal = command and (CommandDps(s, landed) + JudgementDps(s)) or SealDps(s, landed)
-    return (white + seal + C.OnCooldown(s, "HOLY_STRIKE")) * VengeanceFactor(s, landed, command)
+    local dps = (white + seal + C.OnCooldown(s, "HOLY_STRIKE")) * VengeanceFactor(s, landed, command)
         + (s.procDps or 0) * Model.SpellLanded(s)
+    return Model.Sustained(s, dps, ManaPerSec(s, command))
 end
 
 -- Champion of the Light (Forever trait tree, 5/5, 25 points -> level 34):

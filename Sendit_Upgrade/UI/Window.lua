@@ -367,6 +367,7 @@ function Window:IsShown()
 end
 
 Sendit:AddLauncher({
+    module = ns.module,
     key = "upgrade", order = 20, icon = "Interface\\AddOns\\Sendit_Upgrade\\Media\\Icon", title = "Upgrade",
     toggle = function() Window:Toggle() end,
     shown = function() return Window:IsShown() end,

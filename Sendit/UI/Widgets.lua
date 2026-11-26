@@ -24,19 +24,22 @@ local function ToggleSound()
     PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 end
 
-function W.Switch(parent, get, set)
+-- small: the slim switch of the sidebar's module rows
+function W.Switch(parent, get, set, small)
+    local w, h, knob = small and 24 or 36, small and 12 or 20, small and 8 or 14
+    local inset = (h - knob) / 2 + knob / 2
     local b = CreateFrame("Button", nil, parent)
-    b:SetSize(36, 20)
-    b.track = T.Pill(b, "toggle", 36, 20, "ARTWORK", 0)
+    b:SetSize(w, h)
+    b.track = T.Pill(b, "toggle", w, h, "ARTWORK", 0)
     b.track:SetPoint("LEFT", b, "LEFT", 0, 0)
-    b.knob = T.Circle(b, "text", 14, "ARTWORK", 2)
+    b.knob = T.Circle(b, "text", knob, "ARTWORK", 2)
 
     function b:Refresh()
         local on = get() and true or false
         self.track:Paint(on and "accent" or "toggle")
         T.Paint(self.knob, on and "onAccent" or "textDim")
         self.knob:ClearAllPoints()
-        self.knob:SetPoint("CENTER", self, on and "RIGHT" or "LEFT", on and -10 or 10, 0)
+        self.knob:SetPoint("CENTER", self, on and "RIGHT" or "LEFT", on and -inset or inset, 0)
     end
     b:SetScript("OnClick", function(self)
         set(not get())

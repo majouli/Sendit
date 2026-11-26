@@ -19,7 +19,7 @@ ns.AuctionWindow = Window
 local WIDTH, HEIGHT, MIN_W, MIN_H = 900, 640, 720, 460
 local PAD, HEADER, SIDE_W, LIST_HEAD, REPAINT = 18, 64, 232, 40, 0.2
 local FRESH, STALE = 75 * 60, 6 * 3600  -- data age for a green / yellow light (the server renews hourly)
-local ICON = "Interface\\AddOns\\Sendit_Upgrade\\Media\\Icon"
+local ICON = "Interface\\AddOns\\Sendit_Upgrade\\Media\\Scan"
 local HEAD_H, ROW_STEP = 30, Row.HEIGHT + 4
 local frame
 local rows, heads = {}, {}
@@ -59,6 +59,8 @@ local function Status()
     if running then
         local pct = math.floor(100 * rated / math.max(1, total))
         text, fraction = text .. "  ·  " .. AL.ratingBg:format(pct), rated / math.max(1, total)
+        local eta = Rank.Stats().eta
+        if eta and eta >= 60 then text = text .. "  ·  " .. AL.ratingLeft:format(math.ceil(eta / 60)) end
     elseif missing > 0 then
         text = text .. "  ·  " .. AL.missing:format(missing)
     end
@@ -152,11 +154,18 @@ local function LayoutSidebar()
     frame.side.content:SetHeight(h)
 end
 
+local lastSpec  -- the spec last read: a context still loading keeps it (no flicker, the button stays)
+
 -- status, data light, scan button and list: what the background work changes
 local function Repaint()
     if not frame or not frame:IsShown() then return end
-    local ok, ctx = pcall(ns.Compare.Context)
+    local ok, ctx, reason = pcall(ns.Compare.Context)
     local spec = ok and ctx and ns.L.specs[ctx.specKey]
+    if spec then
+        lastSpec = spec
+    elseif ok and (reason == "loading" or reason == "nodata") then
+        spec = lastSpec
+    end
     frame.sub:SetText(spec and AL.forSpec:format(spec) or AL.noUpgrade)
     PaintFresh()
     local text, fraction = Status()
@@ -367,7 +376,22 @@ function Window.Shown() return frame ~= nil and frame:IsShown() end
 Buy.OnChange(Soon)
 Rank.OnChange(Soon)
 Live.OnChange(Soon)
-ns.commands.ah = Window.Toggle
+-- /gc ah stats: what the background rating is doing (diagnostic output, English)
+local function PrintStats()
+    local s, src = Rank.Stats(), Live.Source()
+    ns.Print(("upgrade scan: %d of %d done (%.0f%%), %d above the level top put aside, %d not loaded, %d queued, "
+        .. "%d kept from the last session; %.1f items/s for %.0f s%s")
+        :format(s.rated, s.total, 100 * s.rated / math.max(1, s.total), s.deferred, s.missing, s.queued, s.kept,
+            s.perSecond, s.seconds, s.eta and (", about %.0f min left"):format(s.eta / 60) or ""))
+    ns.Print(("item loads asked: %d, held back by the %d/s limit: %d; upgrades shown: %d; data: %s from %s")
+        :format(s.loads, s.limit, s.throttled, Rank.Count(), src and (src.web and "web" or "scan") or "none",
+            src and src.at and date("%H:%M", src.at) or "-"))
+end
+
+ns.commands.ah = function(rest)
+    if rest == "stats" then return PrintStats() end
+    Window.Toggle()
+end
 
 Sendit.AuctionDock.Add({
     name = "SenditUpgradeAuctionTab", order = 20, icon = ICON, onClick = Window.Toggle,
@@ -378,7 +402,8 @@ Sendit.AuctionDock.Add({
 })
 
 Sendit:AddLauncher({
-    key = "upgradeAuction", order = 21, icon = "Interface\\Icons\\INV_Misc_Coin_02",
+    module = ns.module,
+    key = "upgradeAuction", order = 21, icon = ICON,
     title = function() return AL.title end,
     toggle = Window.Toggle,
     shown = Window.Shown,

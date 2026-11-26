@@ -4,6 +4,8 @@
   shows it whole in a tooltip (the row cuts it to one line).
   W.Layout(content) -> Lay;  Lay:Section(title) / EndSection() / Row(label, desc, control, descGap)
   Lay:Note(text) / Place(frame, height) / Refresh() / Reveal(row);  Lay.entries (for the search)
+  Lay:Sections() -> { { title, top, panel } } (the sidebar lists them) / ScrollToSection(i) (scrolls as far as
+  the page goes, the section flashes and stays the marked one until Unpin) / SectionAt() -> i / Unpin()
 ]]
 local _, ns = ...
 
@@ -17,7 +19,7 @@ Layout.__index = Layout
 local Resolve = ns.Locale.Resolve
 
 function W.Layout(content)
-    return setmetatable({ content = content, y = 0, controls = {}, texts = {}, entries = {} }, Layout)
+    return setmetatable({ content = content, y = 0, controls = {}, texts = {}, entries = {}, sections = {} }, Layout)
 end
 
 local function Text(layout, fs, text, upper)
@@ -27,6 +29,8 @@ local function Text(layout, fs, text, upper)
 end
 
 function Layout:Section(title)
+    local section = { title = title, top = self.y }
+    self.sections[#self.sections + 1] = section
     local h = T.Text(self.content, "heading", "textMuted")
     h:SetPoint("TOPLEFT", 0, -self.y)
     Text(self, h, title, true)
@@ -37,6 +41,7 @@ function Layout:Section(title)
     T.Fill(panel, "panel", "BACKGROUND"):SetAllPoints()
     T.Border(panel, "border")
     panel.heading = h
+    section.panel = panel
     self.panel, self.panelRows = panel, 0
     self.section = title
     return panel
@@ -80,6 +85,7 @@ function Layout:Row(label, desc, control, descGap)
     row.desc:SetPoint("RIGHT", control, "LEFT", -(descGap or 24), 0)
 
     row.top = self.y + self.panelRows * SIZE.row  -- offset in the content (Reveal)
+    row.section = #self.sections
     self.panelRows = self.panelRows + 1
     panel:SetHeight(self.panelRows * SIZE.row)
     self.controls[#self.controls + 1] = control
@@ -116,25 +122,20 @@ end
 -- the search's jump target: scroll near the top, then a fading wash
 local FLASH_HOLD, FLASH_FADE = 0.5, 1.2
 
-function Layout:Reveal(row)
-    local sf = self.content:GetParent()
-    if sf and sf.SetVerticalScroll then
-        local max = math.max(0, self.content:GetHeight() - (sf:GetHeight() or 0))
-        sf:SetVerticalScroll(math.min(max, math.max(0, (row.top or 0) - 40)))
-    end
-    if not row.flash then
-        row.flash = CreateFrame("Frame", nil, row)
-        row.flash:SetAllPoints()
-        T.Fill(row.flash, "accent", "BACKGROUND", 1, 0.18):SetAllPoints()
-        local fade = row.flash:CreateAnimationGroup()
+local function Flash(target)
+    if not target.flash then
+        target.flash = CreateFrame("Frame", nil, target)
+        target.flash:SetAllPoints()
+        T.Fill(target.flash, "accent", "BACKGROUND", 1, 0.18):SetAllPoints()
+        local fade = target.flash:CreateAnimationGroup()
         local a = fade:CreateAnimation("Alpha")
         a:SetFromAlpha(1)
         a:SetToAlpha(0)
         a:SetDuration(FLASH_FADE)
         a:SetStartDelay(FLASH_HOLD)
-        row.flash.fade = fade
+        target.flash.fade = fade
     end
-    local flash = row.flash
+    local flash = target.flash
     local token = {}
     flash.token = token
     flash.fade:Stop()
@@ -143,6 +144,49 @@ function Layout:Reveal(row)
     C_Timer.After(FLASH_HOLD + FLASH_FADE, function()
         if flash.token == token then flash:Hide() end
     end)
+end
+
+function Layout:Reveal(row)
+    local sf = self.content:GetParent()
+    if sf and sf.SetVerticalScroll then
+        local max = math.max(0, self.content:GetHeight() - (sf:GetHeight() or 0))
+        sf:SetVerticalScroll(math.min(max, math.max(0, (row.top or 0) - 40)))
+    end
+    self.pinned = row.section ~= 0 and row.section or nil  -- the sidebar marks the row's section
+    Flash(row)
+end
+
+function Layout:Sections() return self.sections end
+
+local function Scroller(self)
+    local sf = self.content:GetParent()
+    return sf and sf.SetVerticalScroll and sf or nil
+end
+
+function Layout:ScrollToSection(i)
+    local sf, s = Scroller(self), self.sections[i]
+    if not (sf and s) then return end
+    local max = math.max(0, self.content:GetHeight() - (sf:GetHeight() or 0))
+    sf:SetVerticalScroll(math.min(max, s.top))
+    self.pinned = i  -- a short page cannot scroll every section to the top
+    if s.panel then Flash(s.panel) end
+end
+
+function Layout:Unpin() self.pinned = nil end
+
+-- the section at the top of the view; the last one once the page is scrolled to its end
+function Layout:SectionAt()
+    local sf = Scroller(self)
+    if not sf or #self.sections == 0 then return nil end
+    if self.pinned then return self.pinned end
+    local offset = sf:GetVerticalScroll() or 0
+    local max = math.max(0, self.content:GetHeight() - (sf:GetHeight() or 0))
+    if max > 0 and offset >= max - 1 then return #self.sections end
+    local at = 1
+    for i, s in ipairs(self.sections) do
+        if s.top <= offset + 24 then at = i end
+    end
+    return at
 end
 
 function Layout:Refresh()

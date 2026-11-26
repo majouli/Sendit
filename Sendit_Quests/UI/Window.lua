@@ -458,6 +458,7 @@ Sendit.OnSettingsChanged(function()
 end)
 
 Sendit:AddLauncher({
+    module = ns.module,
     key = "quests", order = 30, icon = "Interface\\AddOns\\Sendit_Quests\\Media\\Icon", title = "Quests",
     toggle = function() if Window:IsShown() then Window:Hide() else Window:Open() end end,
     shown = function() return Window:IsShown() end,

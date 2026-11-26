@@ -148,23 +148,25 @@ function Theme.NoShadow(fs)
     fs:SetShadowColor(0, 0, 0, 0)
 end
 
-local function ApplyGradient(tex, top, bottom)
+local function ApplyGradient(tex, top, bottom, topAlpha, bottomAlpha)
     local r1, g1, b1, a1 = Theme.Color(bottom)
     local r2, g2, b2, a2 = Theme.Color(top)
+    a1, a2 = a1 * (bottomAlpha or 1), a2 * (topAlpha or 1)
     tex:SetVertexColor(1, 1, 1, 1)
     local ok = CreateColor and pcall(tex.SetGradient, tex, "VERTICAL",
         CreateColor(r1, g1, b1, a1), CreateColor(r2, g2, b2, a2))
     if not ok then tex:SetVertexColor(r2, g2, b2, a2) end
 end
 
-function Theme.Gradient(tex, top, bottom)
-    gradients[tex] = { top, bottom }
-    ApplyGradient(tex, top, bottom)
+-- topAlpha / bottomAlpha scale each end (0 = transparent: a fade over content)
+function Theme.Gradient(tex, top, bottom, topAlpha, bottomAlpha)
+    gradients[tex] = { top, bottom, topAlpha, bottomAlpha }
+    ApplyGradient(tex, top, bottom, topAlpha, bottomAlpha)
 end
 
 local function RepaintAll()
     for obj, role in pairs(painted) do Apply(obj, role) end
-    for tex, g in pairs(gradients) do ApplyGradient(tex, g[1], g[2]) end
+    for tex, g in pairs(gradients) do ApplyGradient(tex, g[1], g[2], g[3], g[4]) end
 end
 
 function Theme.PaletteKey()

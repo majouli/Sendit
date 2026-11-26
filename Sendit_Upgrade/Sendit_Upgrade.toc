@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Sendit: Upgrade
 ## Notes: Compares items by recalculating your character: how much better an item really is. Part of the Sendit suite.
-## Version: 0.23.0
+## Version: 0.24.0
 ## X-License: GPL-3.0
 ## IconTexture: Interface\AddOns\Sendit_Upgrade\Media\Icon
 ## Dependencies: Sendit
@@ -55,3 +55,7 @@ Auction\Chips.lua
 Auction\Sidebar.lua
 Auction\Window.lua
 Measure.lua
+Marks\Verdict.lua
+Marks\Arrow.lua
+Marks\Blizzard.lua
+Marks\BagAddons.lua

@@ -5,6 +5,6 @@
 local _, ns = ...
 ns.module = Sendit:RegisterModule({
     key = "xp", title = "Experience", addon = "Sendit_XP",
-    icon = "Interface\\Icons\\Spell_Holy_HolyBolt",
+    icon = "Interface\\AddOns\\Sendit_XP\\Media\\Icon",
     defaults = { height = -40, size = 1 },
 })

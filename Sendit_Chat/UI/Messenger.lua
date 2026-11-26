@@ -349,6 +349,7 @@ ns.OnReady(function()
 end)
 
 Sendit:AddLauncher({
+    module = ns.module,
     key = "chat", order = 10, icon = "Interface\\AddOns\\Sendit_Chat\\Media\\Icon", title = function() return ns.L.MESSENGER end,
     toggle = function() if ns.active then Messenger.Toggle() end end,
     shown = Messenger.IsOpen,

@@ -1,5 +1,7 @@
 --[[
-  Options: the suite's settings window - sidebar (modules with their pages, Design, Profiles), header
+  Options: the suite's settings window - sidebar (brand, search, then the scrolling Nav: modules that
+  open into their pages or the sections of their one page - a second click folds them; a module without
+  a page opens its window; switched-off modules; the suite's own pages), header
   (title, profile picker), body (the page), footer (Defaults, status, Reload UI, Close).
   Sendit.Options:Register{ key, module, title, subtitle, resetKeys, onReset, build(frame) -> page,
                            core, hidden }   page:Refresh() is required
@@ -13,7 +15,8 @@ ns.Options = Options
 local T, W, L = ns.Theme, ns.Widgets, ns.L
 local Resolve = ns.Locale.Resolve
 local SIZE = T.SIZE
-local NAV_TOP, NAV_H, SUB_H = -120, 36, 28
+local Nav = ns.Nav
+local FOOT = 52  -- sidebar room below the list (version)
 
 local pages = {}
 local byKey = {}
@@ -76,125 +79,168 @@ local function Stars(parent, count)
     return stars
 end
 
-local function NavButton(parent, text, icon, sub, onClick)
-    local b = CreateFrame("Button", nil, parent)
-    b:SetSize(SIZE.sidebar, sub and SUB_H or NAV_H)
-    b.sel = T.Fill(b, sub and "hover" or "selected", "BACKGROUND")
-    b.sel:SetAllPoints()
-    b.bar = T.Fill(b, "accent", "ARTWORK")
-    b.bar:SetPoint("TOPLEFT")
-    b.bar:SetPoint("BOTTOMLEFT")
-    b.bar:SetWidth(2)
-    T.Fill(b, "hover", "HIGHLIGHT"):SetAllPoints()
-    local x = sub and 44 or 24
-    if icon then
-        b.icon = b:CreateTexture(nil, "ARTWORK")
-        b.icon:SetTexture(icon)
-        b.icon:SetSize(28, 28)
-        b.icon:SetPoint("LEFT", 18, 0)
-        x = 56
-    end
-    b.text = T.Text(b, sub and "label" or "body", "textDim")
-    b.text:SetPoint("LEFT", x, 0)
-    b.textSource = text
-    b.text:SetText(Resolve(text) or "")
-    function b:SetSelected(on, strong)
-        self.text:SetText(Resolve(self.textSource) or "")
-        self.sel:SetShown(on)
-        self.bar:SetShown(on and strong ~= false)
-        T.Paint(self.text, on and "text" or (self.dim and "textMuted" or "textDim"))
-        if self.icon then self.icon:SetDesaturated(self.dim == true) end
-        if self.switch then self.switch:Refresh() end
-    end
-    b:SetScript("OnClick", onClick)
-    return b
-end
-
+-- modules with their pages in page order; a module with a window (app bar launcher) but no page still
+-- gets its row
 local function Groups()
     local groups, core, byModule = {}, {}, {}
+    local function Group(m)
+        local g = byModule[m]
+        if not g then
+            g = { module = m, pages = {}, apps = {} }
+            byModule[m] = g
+            groups[#groups + 1] = g
+        end
+        return g
+    end
     for _, def in ipairs(pages) do
         if def.core then
             if not def.hidden then core[#core + 1] = def end  -- hidden: the search results
         else
-            local m = def.module
-            local g = byModule[m]
-            if not g then
-                g = { module = m, pages = {} }
-                byModule[m] = g
-                groups[#groups + 1] = g
-            end
+            local g = Group(def.module)
             g.pages[#g.pages + 1] = def
+        end
+    end
+    for _, def in ipairs(ns.AppBar.Launchers()) do
+        if def.module then
+            local g = Group(def.module)
+            g.apps[#g.apps + 1] = def
         end
     end
     return groups, core
 end
 
-local function LayoutNav()
-    local y = NAV_TOP
-    for _, g in ipairs(win.groups) do
-        local open = current and current.module == g.module and not current.core
-        g.button:ClearAllPoints()
-        g.button:SetPoint("TOPLEFT", 0, y)
-        g.button:SetSelected(open, #g.pages == 1)
-        y = y - NAV_H - 2
-        for _, def in ipairs(g.pages) do
-            local b = win.nav[def.key]
-            if b then
-                b:SetShown(open)
-                if open then
-                    b:ClearAllPoints()
-                    b:SetPoint("TOPLEFT", 0, y)
-                    b:SetSelected(def == current)
-                    y = y - SUB_H
-                end
-            end
+local function LauncherShown(def)
+    if not def.shown then return false end
+    local ok, on = pcall(def.shown)
+    return ok and on == true
+end
+
+local function OpenWindow(def)
+    def.toggle()
+    C_Timer.After(0.05, function()
+        if LauncherShown(def) then Options:Hide() end
+    end)
+end
+
+local function Entry(frame, height) return { frame = frame, height = height } end
+
+-- the section rows of a one-page module, made once its page exists (they come from its layout)
+local function SectionRows(g)
+    local def = g.pages[1]
+    if #g.pages ~= 1 or not (def and def.page and def.page.Sections) then return {} end
+    if not g.sectionRows then
+        g.sectionRows = {}
+        for i, sec in ipairs(def.page:Sections()) do
+            g.sectionRows[i] = Nav.Row(win.list.content, sec.title, nil, true, function()
+                if current ~= def then Options:ShowPage(def) end
+                def.page:ScrollToSection(i)
+                Options.SectionsMoved()
+            end)
         end
-        if open and #g.pages > 1 then y = y - 4 end
     end
-    -- modules switched off: dimmed, their switch brings them back
+    return g.sectionRows
+end
+
+local function Children(g)
+    local rows = {}
+    if #g.pages > 1 then
+        for _, def in ipairs(g.pages) do rows[#rows + 1] = win.nav[def.key] end
+    else
+        for _, r in ipairs(SectionRows(g)) do rows[#rows + 1] = r end
+    end
+    return rows
+end
+
+-- marks the section of the open page that is at the top of its view
+function Options.SectionsMoved()
+    if not (win and win:IsShown() and current and current.page and current.page.SectionAt) then return end
+    for _, g in ipairs(win.groups) do
+        if g.sectionRows and g.pages[1] == current then
+            local at = current.page:SectionAt()
+            for i, r in ipairs(g.sectionRows) do r:SetSelected(i == at) end
+        end
+    end
+end
+
+local function LayoutNav()
+    local entries, focus = {}, nil
+    if #win.groups > 0 then entries[#entries + 1] = Entry(win.caps.modules, Nav.CAPTION) end
+    for _, g in ipairs(win.groups) do
+        local here = current and current.module == g.module and not current.core
+        local open = here and not g.folded
+        local children = Children(g)
+        g.button:SetSelected(here, #children == 0)
+        -- a page not built yet is taken to have sections (they are known once it is built)
+        local unknown = #g.pages == 1 and not g.pages[1].page
+        g.button:SetOpen(open, #g.pages > 1 or #children > 0 or unknown)
+        entries[#entries + 1] = Entry(g.button, Nav.ROW)
+        if open then focus = g.button end
+        for _, r in ipairs(g.allChildren or {}) do r:Hide() end
+        g.allChildren = children
+        if open then
+            for _, r in ipairs(children) do
+                r:SetSelected(r.page ~= nil and r.page == current)
+                if r.page ~= nil and r.page == current then focus = r end
+                entries[#entries + 1] = Entry(r, Nav.SUB)
+            end
+            if #children > 0 then entries[#entries + 1] = Entry(win.gap, 6) end
+        end
+    end
+    if #win.off > 0 then entries[#entries + 1] = Entry(win.caps.off, Nav.CAPTION) end
     for _, o in ipairs(win.off) do
-        o.button:ClearAllPoints()
-        o.button:SetPoint("TOPLEFT", 0, y)
-        o.button:SetSelected(ns.ModulePage.Showing(o.name))
-        y = y - NAV_H - 2
+        local on = ns.ModulePage.Showing(o.name)
+        o.button:SetSelected(on)
+        if on then focus = o.button end
+        entries[#entries + 1] = Entry(o.button, Nav.ROW)
     end
-    y = y - 14
-    win.coreEdge:ClearAllPoints()
-    win.coreEdge:SetPoint("TOPLEFT", 24, y + 7)
-    win.coreEdge:SetShown(#win.groups > 0)
+    entries[#entries + 1] = Entry(win.caps.suite, Nav.CAPTION)
     for _, def in ipairs(win.core) do
         local b = win.nav[def.key]
-        b:ClearAllPoints()
-        b:SetPoint("TOPLEFT", 0, y)
         b:SetSelected(def == current)
-        y = y - NAV_H - 2
+        if def == current then focus = b end
+        entries[#entries + 1] = Entry(b, Nav.ROW)
     end
+    win.list:Place(entries, focus)
+    Options.SectionsMoved()
 end
 
 local function BuildNav()
     for _, b in pairs(win.nav or {}) do b:Hide() end
-    for _, g in ipairs(win.groups or {}) do g.button:Hide() end
+    for _, g in ipairs(win.groups or {}) do
+        g.button:Hide()
+        for _, r in ipairs(g.allChildren or {}) do r:Hide() end
+    end
     for _, o in ipairs(win.off or {}) do o.button:Hide() end
+    local parent = win.list.content
     win.nav = {}
     win.groups, win.core = Groups()
     for _, g in ipairs(win.groups) do
         local m = g.module
-        g.button = NavButton(win.side, m and m.title or "?", m and m.icon, false,
-            function() Options:ShowPage(g.pages[1]) end)
+        g.button = Nav.Row(parent, m and m.title or "?", m and m.icon, false, function()
+            if not g.pages[1] then return OpenWindow(g.apps[1]) end
+            if current and current.module == g.module and not current.core then
+                g.folded = not g.folded
+                return LayoutNav()
+            end
+            g.folded = nil
+            Options:ShowPage(g.pages[1])
+        end)
         g.button.switch = ns.ModulePage.Switch(g.button, ns.Suite.ModuleAddon(m))
         if #g.pages > 1 then
             for _, def in ipairs(g.pages) do
-                win.nav[def.key] = NavButton(win.side, def.title, nil, true, function() Options:ShowPage(def) end)
+                local b = Nav.Row(parent, def.title, nil, true, function() Options:ShowPage(def) end)
+                b.page = def
+                win.nav[def.key] = b
             end
         end
     end
     for _, def in ipairs(win.core) do
-        win.nav[def.key] = NavButton(win.side, def.title, nil, false, function() Options:ShowPage(def) end)
+        win.nav[def.key] = Nav.Row(parent, def.title, nil, false, function() Options:ShowPage(def) end)
     end
     win.off = {}
     for _, a in ipairs(ns.Suite.Addons()) do
         if not a.loaded then
-            local b = NavButton(win.side, a.title, a.icon, false, function() ns.ModulePage.Show(a.name) end)
+            local b = Nav.Row(parent, a.title, a.icon, false, function() ns.ModulePage.Show(a.name) end)
             b.dim = true
             b.switch = ns.ModulePage.Switch(b, a.name)
             win.off[#win.off + 1] = { button = b, name = a.name }
@@ -263,10 +309,19 @@ local function Build()
     local tagline = T.Text(side, "small", "textMuted")
     tagline:SetPoint("TOPLEFT", mark, "BOTTOMLEFT", 0, -6)
     win.tagline = tagline
-    if ns.Search then ns.Search.AttachBox(side, tagline) end
-
-    win.coreEdge = T.Fill(side, "divider", "BORDER")
-    win.coreEdge:SetSize(SIZE.sidebar - 48, 1)
+    local top = ns.Search and ns.Search.AttachBox(side, tagline) or tagline
+    win.list = Nav.Create(side, top, FOOT)
+    win.gap = CreateFrame("Frame", nil, win.list.content)
+    win.gap:SetSize(1, 1)
+    win.caps = {
+        modules = Nav.Caption(win.list.content, function() return L.NAV_MODULES end),
+        off = Nav.Caption(win.list.content, function() return L.NAV_OFF end),
+        suite = Nav.Caption(win.list.content, function() return L.NAV_SUITE end),
+    }
+    local footEdge = T.Fill(side, "divider", "BORDER")
+    footEdge:SetHeight(1)
+    footEdge:SetPoint("BOTTOMLEFT", 20, FOOT - 1)
+    footEdge:SetPoint("BOTTOMRIGHT", -20, FOOT - 1)
 
     local version = T.Text(side, "small", "textMuted")
     version:SetPoint("BOTTOMLEFT", 24, 22)
@@ -379,6 +434,7 @@ function Options:Refresh()
     end
     for _, b in pairs(win.nav) do b.text:SetText(Resolve(b.textSource) or "") end
     for _, g in ipairs(win.groups) do g.button.text:SetText(Resolve(g.button.textSource) or "") end
+    for _, c in pairs(win.caps) do c:Refresh() end
     local reload = ns.Suite.ReloadNeeded() and ("  -  " .. L.RELOAD_NEEDED) or ""
     win.status:SetText(L.STATUS:format(ns.Profiles:Active()) .. (status and ("  -  " .. status) or "") .. reload)
     for _, g in ipairs(win.groups) do if g.button.switch then g.button.switch:Refresh() end end
@@ -417,7 +473,12 @@ end
 
 function Options:Reveal(def, row)
     self:Show(def.key)
-    if row and def.page.Reveal then def.page:Reveal(row) end
+    if row and def.page.Reveal then
+        def.page:Reveal(row)
+    elseif def.page.Unpin then
+        def.page:Unpin()
+    end
+    Options.SectionsMoved()
 end
 
 function Options:Show(key)
@@ -458,6 +519,10 @@ function Options.SettingsPage(build)
         area.content:SetWidth(SIZE.width - SIZE.sidebar - SIZE.pad * 2)
         local layout = W.Layout(area.content)
         build(layout, area.content)
+        area:HookScript("OnMouseWheel", function()
+            layout:Unpin()
+            Options.SectionsMoved()
+        end)
         return layout
     end
 end

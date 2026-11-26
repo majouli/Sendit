@@ -1,7 +1,8 @@
 --[[
   Page: the Graphics page in the Sendit window - the head card (Hero), the group tiles (Tiles) and the
   picked group's card (Detail); head and tiles stay, only the card scrolls. Mode (World / Raid) and the picked group live here.
-  The search finds every CVar row; Reveal picks its group first.
+  The search finds every CVar row; Reveal picks its group first. Sections() = the groups (the Sendit
+  sidebar lists them), ScrollToSection(i) picks one, SectionAt() is the picked one.
 ]]
 local _, ns = ...
 local L = ns.L
@@ -63,6 +64,22 @@ local function Build(frame)
         detail:SetHeight(math.max(1, detail:Height()))
         note:SetText(L.note)
         content:SetHeight(detail:Height() + 10 + (note:GetStringHeight() or 14) + GAP)
+    end
+
+    function page:Sections()
+        local list = {}
+        for i, group in ipairs(ns.Catalog) do list[i] = { title = function() return L[group.key] end } end
+        return list
+    end
+
+    function page:ScrollToSection(i)
+        if ns.Catalog[i] then ctx.Pick(ns.Catalog[i].key) end
+    end
+
+    function page:SectionAt()
+        for i, group in ipairs(ns.Catalog) do
+            if group.key == self.picked then return i end
+        end
     end
 
     function page:Reveal(row)

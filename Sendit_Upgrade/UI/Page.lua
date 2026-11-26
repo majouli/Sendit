@@ -1,6 +1,7 @@
 --[[
   Page: Upgrade's page - the rated spec (per character, auto = the tree with the most talent points, else guessed from gear), the enemy level, and
-  the compare window. No profile settings (these belong to the character).
+  the compare window, the green upgrade arrows on items (account: Sendit_UpgradeDB.arrows, Marks/) and
+  the auction house's upgrade scan. No profile settings (these belong to the character).
 ]]
 local _, ns = ...
 local L = ns.L
@@ -42,6 +43,18 @@ O:Register({
             W.Button(c, L.pageOpen, function()
                 O:Hide()
                 ns.Window:Toggle()
+            end))
+        Lay:Row(Tx("pageArrows"), Tx("pageArrowsDesc"), W.Switch(c, function() return ns.db.arrows ~= false end,
+            function(on)
+                ns.db.arrows = not on and false or nil
+                ns.Verdict.Reset()
+            end))
+        Lay:EndSection()
+        Lay:Section(Tx("pageAuction"))
+        Lay:Row(Tx("pageScan"), Tx("pageScanDesc"),
+            W.Button(c, L.pageOpen, function()
+                O:Hide()
+                ns.AuctionWindow.Open()
             end))
         Lay:EndSection()
     end),

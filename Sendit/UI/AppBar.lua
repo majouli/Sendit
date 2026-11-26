@@ -1,7 +1,10 @@
 --[[
   AppBar: a movable launcher - a round handle slides a tray of module windows out and in (towards the
   wider side of the screen); drag moves it, right click opens the Sendit window. Only windows here.
-  Sendit:AddLauncher{ key, title (string | fn), icon, toggle(), shown() -> bool, order }
+  The tray is a grid: as many columns as fit beside the handle (at most MAX_COLS, rows balanced), more
+  rows grow away from the nearer screen edge, so it never runs off screen or over half of it.
+  Sendit:AddLauncher{ key, title (string | fn), icon, toggle(), shown() -> bool, order } (also listed in
+  the Sendit window's sidebar); AppBar.Launchers() / IsShown(def)
   Account: ns.db.appbar = { hide, open, point }. Motion: alpha + translation, off with animations.
 ]]
 local _, ns = ...
@@ -13,7 +16,7 @@ local L = ns.L
 local AppBar = {}
 ns.AppBar = AppBar
 
-local HANDLE, CELL, ICON, GAP, PAD, SPACE = 40, 40, 30, 2, 5, 6
+local HANDLE, CELL, ICON, GAP, PAD, SPACE, MAX_COLS = 40, 40, 30, 2, 5, 6, 6
 local SLIDE, DURATION, POLL = 20, 0.22, 0.3
 local CLICK_AFTER_DRAG = 0.2
 local DEFAULT_POINT = { "RIGHT", "RIGHT", -70, 120 }
@@ -31,6 +34,7 @@ function ns:AddLauncher(def)
         return a.key < b.key
     end)
     if ns.db then AppBar.Refresh() end
+    if ns.Options._Nav() then ns.Options:Rebuild() end
 end
 
 function AppBar.Launchers() return launchers end
@@ -46,6 +50,7 @@ local function IsShown(def)
     local ok, on = pcall(def.shown)
     return ok and on == true
 end
+AppBar.IsShown = IsShown
 
 local function Cell(i)
     local c = cells[i]
@@ -80,20 +85,33 @@ function AppBar.Paint()
     end
 end
 
+-- columns that fit beside the handle on the open side, rows balanced: 9 launchers -> 5 + 4
+local function Grid(n, right)
+    local screen = UIParent:GetWidth() or 0
+    local room = right and (screen - (handle:GetRight() or 0)) or (handle:GetLeft() or screen)
+    local fit = math.floor((room - SPACE - 2 * PAD + GAP) / (CELL + GAP))
+    local cols = math.max(1, math.min(n, MAX_COLS, fit))
+    local rows = math.ceil(n / cols)
+    return math.ceil(n / rows), rows
+end
+
 local function Place()
     local right = AppBar.OpensRight()
+    local n = #launchers
+    local cols, rows = Grid(math.max(1, n), right)
+    tray:SetSize(PAD * 2 + cols * CELL + (cols - 1) * GAP, PAD * 2 + rows * CELL + (rows - 1) * GAP)
+    local _, y = handle:GetCenter()
+    local up = rows > 1 and y ~= nil and y < (UIParent:GetHeight() or 0) / 2
+    local side, edge = right and "LEFT" or "RIGHT", rows == 1 and "" or (up and "BOTTOM" or "TOP")
     tray:ClearAllPoints()
-    if right then
-        tray:SetPoint("LEFT", handle, "RIGHT", SPACE, 0)
-    else
-        tray:SetPoint("RIGHT", handle, "LEFT", -SPACE, 0)
-    end
-    for i, c in ipairs(cells) do
-        if c:IsShown() then
-            c:ClearAllPoints()
-            local x = PAD + (i - 1) * (CELL + GAP)
-            if right then c:SetPoint("LEFT", x, 0) else c:SetPoint("RIGHT", -x, 0) end
-        end
+    tray:SetPoint(edge .. side, handle, edge .. (right and "RIGHT" or "LEFT"), right and SPACE or -SPACE, 0)
+    local corner = (up and "BOTTOM" or "TOP") .. side
+    for i = 1, n do
+        local c = cells[i]
+        local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
+        local x, dy = PAD + col * (CELL + GAP), PAD + row * (CELL + GAP)
+        c:ClearAllPoints()
+        c:SetPoint(corner, right and x or -x, up and dy or -dy)
     end
     return right
 end
@@ -106,8 +124,6 @@ local function Layout()
         c:Show()
     end
     for i = #launchers + 1, #cells do cells[i]:Hide() end
-    local n = #launchers
-    tray:SetSize(PAD * 2 + n * CELL + math.max(0, n - 1) * GAP, CELL + PAD * 2)
 end
 
 local function Motion()
@@ -187,6 +203,7 @@ local function Create()
     T.Circle(handle, "hover", HANDLE, "HIGHLIGHT"):SetPoint("CENTER")
 
     tray = CreateFrame("Frame", nil, handle)
+    tray:SetClampedToScreen(true)
     tray:Hide()
     T.Fill(tray, "panel", "BACKGROUND"):SetAllPoints()
     T.Border(tray, "border")

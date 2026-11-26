@@ -1,7 +1,8 @@
 --[[
   Init: namespace, module, saved variables, events, slash. No profile settings: the spec is per
   character, the window a tool. Sendit_UpgradeDB (account: probe, measure, auctionScanAt, auctionLast =
-  the kept auction scan, auctionWindow = scan window size), Sendit_UpgradeCharDB (character: spec, enemy
+  the kept auction scan, auctionWindow = scan window size, auctionRatings = the scan's ratings with the
+  character's fingerprint), Sendit_UpgradeCharDB (character: spec, enemy
   level, calibration, auction = the scan filters). /gc = window, /gc spec <key|auto>, /gc weights,
   /gc probe [links], /gc measure on|off|reset|window, /gc ah = auction upgrade scan. Gear, stats or level
   invalidate the context.

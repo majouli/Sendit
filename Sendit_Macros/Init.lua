@@ -1,16 +1,17 @@
 --[[
-  Init: registers the Macros module, its launcher and /macros. No settings page: the window is the module.
+  Init: registers the Macros module, its launcher and /macros (its page: Page.lua).
   Account: showAll (unlearned macros in the list).
 ]]
 local _, ns = ...
 ns.module = Sendit:RegisterModule({
     key = "macros", title = "Macros", addon = "Sendit_Macros",
-    icon = "Interface\\Icons\\INV_Misc_Book_09",
+    icon = "Interface\\AddOns\\Sendit_Macros\\Media\\Icon",
     accountDefaults = { showAll = false },
 })
 
 Sendit:AddLauncher({
-    key = "macros", order = 60, icon = "Interface\\Icons\\INV_Misc_Book_09", title = function() return ns.L.title end,
+    module = ns.module,
+    key = "macros", order = 60, icon = "Interface\\AddOns\\Sendit_Macros\\Media\\Icon", title = function() return ns.L.title end,
     toggle = function() ns.Window.Toggle() end,
     shown = function() return ns.Window.Shown() end,
 })

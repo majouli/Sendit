@@ -28,14 +28,22 @@ local function Words(text)
     return out
 end
 
--- module > page > section (each only when it differs)
+local function PageCount(m)
+    local n = 0
+    for _, page in ipairs(O:Pages()) do
+        if page.module == m and not page.core and not page.hidden then n = n + 1 end
+    end
+    return n
+end
+
+-- module > page > section; the page only when its module has several (one page is the module)
 local function Crumb(page, section)
     local parts = {}
     local m = page.module
     local mt = not page.core and m and Resolve(m.title) or nil
     local pt = Resolve(page.title)
     if mt and mt ~= "" then parts[#parts + 1] = mt end
-    if pt and pt ~= "" and pt ~= mt then parts[#parts + 1] = pt end
+    if pt and pt ~= "" and pt ~= mt and (not mt or PageCount(m) > 1) then parts[#parts + 1] = pt end
     local st = section and Resolve(section)
     if st and st ~= "" and st ~= parts[#parts] then parts[#parts + 1] = st end
     return parts
@@ -46,10 +54,9 @@ local function Entries()
     for _, page in ipairs(O:Pages()) do
         if not page.hidden then
             local built = O:BuildPage(page)
-            -- the page itself
-            local crumb = Crumb(page)
-            table.remove(crumb)
-            if #crumb == 0 then crumb[1] = L.SEARCH_PAGE end
+            -- the page itself, under its module
+            local mt = not page.core and page.module and Resolve(page.module.title)
+            local crumb = { mt and mt ~= "" and mt or L.SEARCH_PAGE }
             out[#out + 1] = { crumb = crumb, label = Resolve(page.title) or "", desc = Resolve(page.subtitle), page = page }
             for _, e in ipairs(built.entries or {}) do
                 out[#out + 1] = {

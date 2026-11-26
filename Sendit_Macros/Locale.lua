@@ -6,6 +6,8 @@ local _, ns = ...
 ns.L = Sendit.Locale.New({
     enUS = {
         title = "Macros", subtitle = "Ready macros for your class - drag them onto your bars",
+        pageWindow = "Macro window", pageWindowDesc = "Every macro of your class, sorted by specialization.", pageOpen = "Open",
+        pageShowAllDesc = "Also lists the macros whose spells you have not learned yet.",
         general = "Every specialization", showAll = "Show unlearned", hint = "Drag or click a macro, then drop it on an action bar.",
         made = "Created", unknown = "Not learned yet", lacks = "Still missing: %s",
         combat = "Not possible in combat.", full = "No macro slot left - delete one in the macro window (/macro).",
@@ -43,6 +45,8 @@ ns.L = Sendit.Locale.New({
     },
     deDE = {
         title = "Makros", subtitle = "Fertige Makros für deine Klasse - auf die Leisten ziehen",
+        pageWindow = "Makro-Fenster", pageWindowDesc = "Alle Makros deiner Klasse, nach Spezialisierung sortiert.", pageOpen = "Öffnen",
+        pageShowAllDesc = "Zeigt auch Makros, deren Zauber du noch nicht gelernt hast.",
         general = "Jede Spezialisierung", showAll = "Ungelernte zeigen", hint = "Makro ziehen oder anklicken, dann auf eine Aktionsleiste legen.",
         made = "Angelegt", unknown = "Noch nicht gelernt", lacks = "Fehlt noch: %s",
         combat = "Im Kampf nicht möglich.", full = "Kein Makroplatz frei - lösche eines im Makrofenster (/macro).",
@@ -80,6 +84,8 @@ ns.L = Sendit.Locale.New({
     },
     frFR = {
         title = "Macros", subtitle = "Des macros prêtes pour ta classe - glisse-les sur tes barres",
+        pageWindow = "Fenêtre des macros", pageWindowDesc = "Toutes les macros de ta classe, triées par spécialisation.", pageOpen = "Ouvrir",
+        pageShowAllDesc = "Montre aussi les macros dont tu n'as pas encore appris les sorts.",
         general = "Toutes les spécialisations", showAll = "Montrer les non apprises", hint = "Glisse ou clique une macro, puis pose-la sur une barre d'action.",
         made = "Créée", unknown = "Pas encore apprise", lacks = "Manque encore : %s",
         combat = "Impossible en combat.", full = "Plus de place pour une macro - supprimes-en une dans la fenêtre des macros (/macro).",
@@ -117,6 +123,8 @@ ns.L = Sendit.Locale.New({
     },
     esES = {
         title = "Macros", subtitle = "Macros listas para tu clase: arrástralas a tus barras",
+        pageWindow = "Ventana de macros", pageWindowDesc = "Todas las macros de tu clase, ordenadas por especialización.", pageOpen = "Abrir",
+        pageShowAllDesc = "Muestra también las macros cuyos hechizos aún no has aprendido.",
         general = "Todas las especializaciones", showAll = "Mostrar no aprendidas", hint = "Arrastra o pulsa una macro y suéltala en una barra de acción.",
         made = "Creada", unknown = "Aún no aprendida", lacks = "Aún falta: %s",
         combat = "No es posible en combate.", full = "No queda hueco para macros: borra una en la ventana de macros (/macro).",
@@ -154,6 +162,8 @@ ns.L = Sendit.Locale.New({
     },
     ruRU = {
         title = "Макросы", subtitle = "Готовые макросы для вашего класса - перетащите их на панели",
+        pageWindow = "Окно макросов", pageWindowDesc = "Все макросы вашего класса по специализациям.", pageOpen = "Открыть",
+        pageShowAllDesc = "Показывает и макросы, заклинания которых вы ещё не изучили.",
         general = "Все специализации", showAll = "Показать неизученные", hint = "Перетащите или щёлкните макрос и положите его на панель команд.",
         made = "Создан", unknown = "Ещё не изучено", lacks = "Ещё не хватает: %s",
         combat = "В бою невозможно.", full = "Нет свободного места для макроса - удалите один в окне макросов (/macro).",
