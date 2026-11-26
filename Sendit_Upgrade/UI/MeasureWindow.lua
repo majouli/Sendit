@@ -123,32 +123,6 @@ local function Row(parent)
     return r
 end
 
-local function Grip(f)
-    local grip = CreateFrame("Button", nil, f)
-    grip:SetSize(16, 16)
-    grip:SetPoint("BOTTOMRIGHT", -2, 2)
-    grip:SetFrameLevel(f:GetFrameLevel() + 20)
-    local lines = {}
-    for i = 1, 3 do
-        local line = grip:CreateLine(nil, "ARTWORK")
-        line:SetTexture(T.WHITE)
-        line:SetThickness(1)
-        line:SetStartPoint("BOTTOMRIGHT", grip, -2, 2 + i * 4)
-        line:SetEndPoint("BOTTOMRIGHT", grip, -2 - i * 4, 2)
-        T.Paint(line, "textMuted")
-        lines[i] = line
-    end
-    grip:SetScript("OnEnter", function() for _, l in ipairs(lines) do T.Paint(l, "accent") end end)
-    grip:SetScript("OnLeave", function() for _, l in ipairs(lines) do T.Paint(l, "textMuted") end end)
-    grip:SetScript("OnMouseDown", function(_, button) if button == "LeftButton" then f:StartSizing("BOTTOMRIGHT") end end)
-    grip:SetScript("OnMouseUp", function()
-        f:StopMovingOrSizing()
-        local s = Saved()
-        s.w, s.h = f:GetWidth(), f:GetHeight()
-        Layout()
-    end)
-end
-
 local function Create()
     local s = Saved()
     frame = CreateFrame("Frame", "SenditUpgradeMeasure", UIParent)
@@ -204,7 +178,11 @@ local function Create()
     frame:SetScript("OnShow", Layout)
     frame:RegisterEvent("PLAYER_TARGET_CHANGED")
     frame:SetScript("OnEvent", function() dirty = true end)
-    Grip(frame)
+    Sendit.Widgets.Grip(frame, function(w, h)
+        local saved = Saved()
+        saved.w, saved.h = w, h
+        Layout()
+    end)
     frame:Hide()
 end
 

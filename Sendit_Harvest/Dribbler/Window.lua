@@ -343,6 +343,7 @@ end
 local function Create()
     frame = CreateFrame("Frame", "SenditHarvestDribbler", UIParent)
     Sendit.ownFrames[frame] = true
+    Sendit.AuctionDock.Panel(frame)
     frame:Hide()
     frame:SetSize(WIDTH, HEIGHT)
     frame:SetFrameStrata("HIGH")
@@ -414,7 +415,7 @@ end
 events:SetScript("OnEvent", function(_, event)
     if event == "AUCTION_HOUSE_SHOW" then
         C_Timer.After(0, function()
-            ns.DribblerTab.Show()
+            ns.DribblerTab.Refresh()
             if Session.Active() then Window.Open() end
         end)
     elseif event == "MAIL_SHOW" then

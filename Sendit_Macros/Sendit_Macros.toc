@@ -1,0 +1,14 @@
+## Interface: 16001
+## Title: Sendit: Macros
+## Notes: Ready macros for every class and specialization - drag them onto your bars. Part of the Sendit suite.
+## Version: 0.23.0
+## X-License: GPL-3.0
+## IconTexture: Interface\Icons\INV_Misc_Book_09
+## Dependencies: Sendit
+
+Locale.lua
+Init.lua
+Catalog.lua
+Build.lua
+Store.lua
+Window.lua
