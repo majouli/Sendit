@@ -1,0 +1,13 @@
+## Interface: 16001
+## Title: Sendit: Experience
+## Notes: Experience bubbles tumble down and fly into your character. Part of the Sendit suite.
+## Version: 0.22.0
+## X-License: GPL-3.0
+## IconTexture: Interface\Icons\Spell_Holy_HolyBolt
+## Dependencies: Sendit
+
+Locale.lua
+Init.lua
+Gain.lua
+Burst.lua
+Page.lua

@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Sendit
 ## Notes: Core of the Sendit suite: one window, one design and shared profiles for every Sendit module.
-## Version: 0.21.0
+## Version: 0.22.0
 ## X-License: GPL-3.0
 ## IconTexture: Interface\AddOns\Sendit\Media\Icon
 ## AddonCompartmentFunc: Sendit_OnAddonCompartmentClick
