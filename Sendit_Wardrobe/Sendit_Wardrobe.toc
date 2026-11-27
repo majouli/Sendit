@@ -1,0 +1,33 @@
+## Interface: 16001
+## Title: Sendit: Wardrobe
+## Notes: Every transmog look of the game on your character - sets, highlights and your own outfits, with where each piece comes from. Part of the Sendit suite.
+## Version: 0.26.3
+## X-License: GPL-3.0
+## IconTexture: Interface\Icons\INV_Shirt_White_01
+## Dependencies: Sendit
+## SavedVariables: Sendit_WardrobeDB
+
+Locale.lua
+Init.lua
+Data\Items.lua
+Data\Sets.lua
+Data\Places.lua
+Data\Names_enUS.lua
+Data\Names_deDE.lua
+Data\Names_frFR.lua
+Data\Names_esES.lua
+Data\Names_ruRU.lua
+Slots.lua
+Catalog.lua
+Collection.lua
+Waypoint.lua
+Sources.lua
+Browse.lua
+Outfit.lua
+UI\Model.lua
+UI\List.lua
+UI\Rows.lua
+UI\Pieces.lua
+UI\Filters.lua
+UI\Window.lua
+Page.lua

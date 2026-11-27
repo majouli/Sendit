@@ -1,7 +1,7 @@
 --[[
   Window: the dungeon browser - list left (level order; while the boost runs the upgrades first,
   biggest first, then the other dungeons for your level, dimmed), the picked dungeon right (loading-screen banner, one card per boss).
-  Window:Open(text) / Search(text, keep) / Pick(id) / Refresh() / BoostChanged() / Hide()
+  Window:Open(text) / OpenAt(id, bossIndex) / Search(text, keep) / Pick(id) / Refresh() / BoostChanged() / Hide()
 ]]
 local _, ns = ...
 local L, DB, S = ns.L, ns.Database, ns.Style
@@ -9,7 +9,7 @@ local T, W = Sendit.Theme, Sendit.Widgets
 local Window = {}
 ns.Window = Window
 local frame, picked, query
-local results, rowPool, cards = {}, {}, {}
+local results, rowPool, cards, cardTop = {}, {}, {}, {}
 local boosted = 0
 local ROW = S.size.row + S.size.rowGap
 local BANNER = 150
@@ -78,6 +78,7 @@ local function Detail()
         cards[i] = card
         card:ClearAllPoints()
         card:SetPoint("TOPLEFT", S.space.inner, -y)
+        cardTop[i] = y
         y = y + card:Set(i, boss, width) + 8
     end
     frame.detailScroll.content:SetHeight(math.max(1, y))
@@ -245,6 +246,18 @@ function Window:Open(text)
     else
         self:Search(query, true)
     end
+end
+
+-- opens at a dungeon (any filter) scrolled to one of its bosses
+function Window:OpenAt(id, bossIndex)
+    self:Open()
+    if not frame or ns.disabled or not DB.Get(id) then return end
+    self:Pick(id)
+    local y = bossIndex and cardTop[bossIndex]
+    if not y then return end
+    local max = math.max(0, frame.detailScroll.content:GetHeight() - frame.detailScroll:GetHeight())
+    frame.detailScroll:SetVerticalScroll(math.min(y, max))
+    if cards[bossIndex] then T.FadeIn(cards[bossIndex], 0.4, 6) end
 end
 
 function Window:Hide() if frame then frame:Hide() end end

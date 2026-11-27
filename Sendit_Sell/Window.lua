@@ -238,7 +238,7 @@ local function Create()
     Sendit.ownFrames[frame] = true
     frame:Hide()
     frame:SetSize(WIDTH, HEIGHT)
-    frame:SetFrameStrata("HIGH")
+    frame:SetFrameStrata("DIALOG")  -- above the app bar (HIGH)
     frame:SetClampedToScreen(true)
     frame:EnableMouse(true)
     T.Fill(frame, "bg", "BACKGROUND"):SetAllPoints()

@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Sendit: Macros
 ## Notes: Ready macros for every class and specialization - drag them onto your bars. Part of the Sendit suite.
-## Version: 0.25.0
+## Version: 0.26.3
 ## X-License: GPL-3.0
 ## IconTexture: Interface\AddOns\Sendit_Macros\Media\Icon
 ## Dependencies: Sendit

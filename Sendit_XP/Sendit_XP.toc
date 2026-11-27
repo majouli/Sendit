@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Sendit: Experience
 ## Notes: Experience bubbles tumble down and fly into your character. Part of the Sendit suite.
-## Version: 0.25.0
+## Version: 0.26.3
 ## X-License: GPL-3.0
 ## IconTexture: Interface\AddOns\Sendit_XP\Media\Icon
 ## Dependencies: Sendit
