@@ -6,7 +6,8 @@
   RateFor(item, specKey) -> r like Rate, for another spec (a second spec)
   WeaponScore(item, specKey) -> gain with both hands empty (weapons, shields, off-hands of a second spec) |
     nil, status
-  OnChange(fn)   gear, level, spec or enemy level changed: ratings are stale
+  OnChange(fn)   gear, level, spec or enemy level changed: ratings are stale (gear and level once the
+                 character settled: SETTLE s without a gear, level or stats event)
 ]]
 local _, ns = ...
 
@@ -56,10 +57,28 @@ function api.OnChange(fn) listeners[#listeners + 1] = fn end
 
 Sendit.Provide("upgrade", api)
 
+-- Gear and level are announced once the character has settled: the client sends the new stats and
+-- level a moment after the event, and a set swap is a burst of events. Rated earlier = rated stale.
+local SETTLE = 1.5
+local pending, lastAt = false, 0
+local function Settled()
+    local wait = lastAt + SETTLE - GetTime()
+    if wait > 0 then return C_Timer.After(wait, Settled) end
+    pending = false
+    ns.Compare.Invalidate()
+    Changed()
+end
 local events = CreateFrame("Frame")
 events:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
 events:RegisterEvent("PLAYER_LEVEL_UP")
-events:SetScript("OnEvent", Changed)
+events:RegisterUnitEvent("UNIT_STATS", "player")
+events:SetScript("OnEvent", function(_, event)
+    if event == "UNIT_STATS" and not pending then return end  -- buffs alone change nothing rated
+    lastAt = GetTime()
+    if pending then return end
+    pending = true
+    C_Timer.After(SETTLE, Settled)
+end)
 -- only the spec and enemy level count (settings change all the time elsewhere)
 local lastKey ---@type string?
 Sendit.OnSettingsChanged(function()

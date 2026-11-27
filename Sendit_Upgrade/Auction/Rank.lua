@@ -41,7 +41,7 @@ local requestSecond, requestCount = 0, 0
 local stats = { loads = 0, throttled = 0, started = 0, kept = 0 }
 local deferred, deferredTop = {}, nil  -- items above the level filter's top, and that top
 local attached = false                  -- cache is the saved one (fingerprint known)
-local SAVE_VERSION = 2                  -- 2: saves of version 1 could hold "no upgrade" from an unreadable moment
+local SAVE_VERSION = 3                  -- 3: older saves could hold ratings of a character not yet settled
 
 local function Changed() for _, fn in ipairs(listeners) do fn() end end
 function Rank.OnChange(fn) listeners[#listeners + 1] = fn end

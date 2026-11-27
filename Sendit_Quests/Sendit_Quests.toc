@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Sendit: Quests
 ## Notes: Search quests and explore their chains offline. Part of the Sendit suite.
-## Version: 0.26.3
+## Version: 0.26.4
 ## X-License: GPL-3.0
 ## IconTexture: Interface\AddOns\Sendit_Quests\Media\Icon
 ## Dependencies: Sendit
