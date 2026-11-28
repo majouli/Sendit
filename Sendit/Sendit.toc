@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Sendit
 ## Notes: Core of the Sendit suite: one window, one design and shared profiles for every Sendit module.
-## Version: 1.0.0
+## Version: 1.1.0
 ## X-License: GPL-3.0
 ## X-Curse-Project-ID: 1836843
 ## IconTexture: Interface\AddOns\Sendit\Media\Icon
@@ -25,6 +25,7 @@ UI\Ornaments.lua
 UI\Widgets.lua
 UI\Chip.lua
 UI\Grip.lua
+UI\Stacked.lua
 UI\Nav.lua
 UI\BoostDialog.lua
 UI\AuctionDock.lua

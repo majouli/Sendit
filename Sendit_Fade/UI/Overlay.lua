@@ -223,7 +223,7 @@ end
 local function Legend(parent, anchor, color, text)
     local dot = T.Fill(parent, color, "ARTWORK")
     dot:SetSize(10, 10)
-    dot:SetPoint("LEFT", anchor, "RIGHT", 16, 0)
+    if anchor then dot:SetPoint("LEFT", anchor, "RIGHT", 16, 0) else dot:SetPoint("LEFT", parent, "LEFT", 16, 0) end
     local label = T.Text(parent, "small", "textDim")
     label:SetPoint("LEFT", dot, "RIGHT", 6, 0)
     label:SetText(text)
@@ -239,7 +239,7 @@ local function Build()
     frame:Hide()
 
     banner = CreateFrame("Frame", nil, frame)
-    banner:SetSize(720, 84)
+    banner:SetSize(760, 118)  -- three rows: title and Done, legend and count, size filter
     W.Movable(banner, banner, { store = ns.db.overlay, key = "point", default = { "TOP", "TOP", 0, -24 } })
     T.Fill(banner, "panel", "BACKGROUND"):SetAllPoints()
     T.Border(banner, "border")
@@ -253,9 +253,13 @@ local function Build()
         GameTooltip:Show()
     end)
     banner:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    local last = Legend(banner, title, "success", ns.L.ST_FADED)
-    last = Legend(banner, last, "danger", ns.L.R_EXCLUDED)
-    Legend(banner, last, "textMuted", ns.L.LOCK_builtin)
+    local legend = CreateFrame("Frame", nil, banner)
+    legend:SetPoint("TOPLEFT", 0, -50)
+    legend:SetPoint("TOPRIGHT", 0, -50)
+    legend:SetHeight(20)
+    local last = Legend(legend, nil, "success", ns.L.ST_FADED)
+    last = Legend(legend, last, "danger", ns.L.R_EXCLUDED)
+    last = Legend(legend, last, "textMuted", ns.L.LOCK_builtin)
     local done = W.Button(banner, ns.L.OV_DONE, function() Overlay:Hide() end, "primary")
     done:SetPoint("TOPRIGHT", -10, -10)
 
@@ -272,9 +276,11 @@ local function Build()
     suffix:SetText(ns.L.OV_SCREEN)
     banner.slider = slider
 
-    banner.count = T.Text(banner, "small", "textMuted")
-    banner.count:SetPoint("BOTTOMRIGHT", -16, 20)
+    banner.count = T.Text(legend, "small", "textMuted")
+    banner.count:SetPoint("LEFT", last, "RIGHT", 24, 0)
+    banner.count:SetPoint("RIGHT", -16, 0)
     banner.count:SetJustifyH("RIGHT")
+    banner.count:SetWordWrap(false)
 
     local acc = 0
     frame:SetScript("OnUpdate", function(_, elapsed)

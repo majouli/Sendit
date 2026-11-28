@@ -205,6 +205,7 @@ local function Create()
     local db = Db()
     frame = CreateFrame("Frame", "SenditWardrobeFrame", UIParent)
     Sendit.ownFrames[frame] = true
+    Sendit.Widgets.Stacked(frame)
     frame:SetSize(math.max(MIN_W, db.width or 0), math.max(MIN_H, db.height or 0))
     frame:SetFrameStrata("DIALOG")
     frame:SetToplevel(true)

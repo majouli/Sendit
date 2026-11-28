@@ -6,6 +6,7 @@
                                       (enc 0) by its NPC ID
   Database.Kind(d) -> "Dungeon" | "Raid" | "Open world"
   Database.Loot(boss) -> { { itemID, chance }, ... } biggest chance first
+  Database.Drops(d) -> a boss-like card of what drops anywhere in the instance (d.drops) | nil
   Database.Fit(d, level) -> "fits" (min .. max + 2) | "above" | "below" | "unknown"
   Database.Enterable(d, level);  Database.Search(text, filter, level)
 ]]
@@ -30,6 +31,7 @@ function DB.Name(d)
 end
 
 function DB.BossName(boss)
+    if boss.drops then return ns.L.dungeonDrops end
     if boss.name then return boss.name end
     if boss.enc == 0 then
         return Names().npcs[boss.npc] or ns.dungeonNames.enUS.npcs[boss.npc] or ("#" .. boss.npc)
@@ -40,6 +42,22 @@ end
 function DB.Kind(d)
     if d.map == 0 then return ns.L.openWorld end
     return d.raid and ns.L.raid or ns.L.dungeon
+end
+
+-- what drops anywhere in the instance, as a card like a boss's (no portrait, no number) | nil
+local dropCards = {}
+function DB.Drops(d)
+    if not d.drops then return nil end
+    local card = dropCards[d]
+    if not card then
+        card = { drops = true, display = 0, known = true, loot = {} }
+        for _, item in ipairs(d.drops) do
+            card.loot[#card.loot + 1] = item
+            card.loot[#card.loot + 1] = 0
+        end
+        dropCards[d] = card
+    end
+    return card
 end
 
 function DB.Loot(boss)

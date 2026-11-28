@@ -49,7 +49,10 @@ local function Detail()
     frame.detailEmpty:SetText(#results == 0 and "" or L.pick)
     frame.detailTitle:SetText(d and DB.Name(d) or "")
     -- only cards beyond this dungeon's bosses hide: hiding a shown one reloads its model
-    for i, c in ipairs(cards) do if not d or i > #d.bosses then c:Hide() end end
+    local list = {}
+    for i, boss in ipairs(d and d.bosses or {}) do list[i] = boss end
+    if d and DB.Drops(d) then list[#list + 1] = DB.Drops(d) end  -- the instance's own drops close the list
+    for i, c in ipairs(cards) do if i > #list then c:Hide() end end
     local art = ns.Art.Screen(frame.banner, d, frame.metrics.right, BANNER)
     frame.bannerFade:SetShown(art)
     if art then
@@ -63,6 +66,8 @@ local function Detail()
     frame.detailScroll:ClearAllPoints()
     frame.detailScroll:SetPoint("TOPLEFT", 0, -head)
     frame.detailScroll:SetSize(frame.metrics.right, frame.metrics.height - head)
+    local maps = Sendit.Service("maps")
+    frame.mapButton:SetShown(d ~= nil and maps ~= nil and maps.Has(d.map))
     if not d then frame.detailMeta:SetText("") return end
     local fit = DB.Fit(d, DB.Level())
     local _, _, _, hex = S.Hex(S.FitRole(fit))
@@ -73,7 +78,7 @@ local function Detail()
         L.bosses:format(#d.bosses) }
     frame.detailMeta:SetText(table.concat(parts, "   ·   "))
     local width, y = frame.metrics.right - 2 * S.space.inner, 0
-    for i, boss in ipairs(d.bosses) do
+    for i, boss in ipairs(list) do
         local card = cards[i] or ns.BossCard.Create(frame.detailScroll.content)
         cards[i] = card
         card:ClearAllPoints()
@@ -178,6 +183,13 @@ local function DetailPane()
     frame.detailTitle:SetJustifyH("LEFT")
     frame.detailMeta = T.Text(frame.detail, S.font.meta, "textDim")
     frame.detailMeta:SetPoint("TOPLEFT", frame.detailTitle, "BOTTOMLEFT", 0, -6)
+    -- the instance's map in Sendit Maps (when that module is on and has one)
+    frame.mapButton = W.Button(frame.detail, Sendit.Locale.Text(L, "map"), function()
+        local svc, d = Sendit.Service("maps"), picked and DB.Get(picked)
+        if svc and d then svc.Open(d.map) end
+    end)
+    frame.mapButton:SetPoint("TOPRIGHT", frame.detailTitle, "TOPRIGHT", 0, 2)  -- the title spans the pane
+    frame.mapButton:Hide()
     frame.detailScroll = W.ScrollArea(frame.detail)
     frame.detailScroll:SetPoint("TOPLEFT", 0, -S.size.detailHead)
     frame.detailEmpty = T.Text(frame.detail, S.font.meta, "textMuted")
@@ -197,6 +209,7 @@ end
 local function Create()
     frame = CreateFrame("Frame", "SenditDungeonsWindow", UIParent)
     Sendit.ownFrames[frame] = true
+    Sendit.Widgets.Stacked(frame)
     frame:Hide()
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("DIALOG")

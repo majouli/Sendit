@@ -32,12 +32,12 @@ O:Register({
         L:Section(Tx("SEC_WINDOWS"))
         local get, set = Bind("fontSize")
         L:Row(Tx("FONT_SIZE"), Tx("FONT_SIZE_DESC"),
-            W.Slider(c, 8, 24, 1, get, set, function(v) return v .. " pt" end), 70)
+            W.Slider(c, 8, 24, 1, get, set, function(v) return v .. " pt" end))
         get, set = Bind("bgAlpha")
-        L:Row(Tx("BACKGROUND"), Tx("BACKGROUND_DESC"), W.Slider(c, 0, 1, 0.05, get, set, Percent), 70)
+        L:Row(Tx("BACKGROUND"), Tx("BACKGROUND_DESC"), W.Slider(c, 0, 1, 0.05, get, set, Percent))
         get, set = Bind("border")
         L:Row(Tx("BORDER"), Tx("BORDER_DESC"),
-            W.Slider(c, 0, 4, 1, get, set, function(v) return v .. " px" end), 70)
+            W.Slider(c, 0, 4, 1, get, set, function(v) return v .. " px" end))
         get, set = Bind("locked")
         L:Row(Tx("LOCK"), Tx("LOCK_DESC"), W.Switch(c, get, set))
         L:Row(Tx("OWN_TABS"), Tx("OWN_TABS_DESC"),
@@ -82,7 +82,7 @@ O:Register({
         get, set = Bind("lootCards")
         L:Row(Tx("LOOT_CARDS"), Tx("LOOT_CARDS_DESC"), W.Switch(c, get, set))
         get, set = Bind("lootCardQuality")
-        L:Row(Tx("LOOT_CARD_QUALITY"), Tx("LOOT_CARD_QUALITY_DESC"), W.Slider(c, 2, 5, 1, get, set, Quality), 70)
+        L:Row(Tx("LOOT_CARD_QUALITY"), Tx("LOOT_CARD_QUALITY_DESC"), W.Slider(c, 2, 5, 1, get, set, Quality))
         L:EndSection()
     end),
 })

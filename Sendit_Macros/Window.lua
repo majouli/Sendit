@@ -146,6 +146,7 @@ end
 local function Create()
     frame = CreateFrame("Frame", "SenditMacros", UIParent)
     Sendit.ownFrames[frame] = true
+    Sendit.Widgets.Stacked(frame)
     tinsert(UISpecialFrames, "SenditMacros")
     frame:Hide()
     frame:SetSize(WIDTH, HEIGHT)

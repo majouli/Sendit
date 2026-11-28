@@ -82,7 +82,7 @@ function Layout:Row(label, desc, control, descGap)
     control:SetParent(row)
     control:ClearAllPoints()
     control:SetPoint("RIGHT", row, "RIGHT", -16, 0)
-    row.desc:SetPoint("RIGHT", control, "LEFT", -(descGap or 24), 0)
+    row.desc:SetPoint("RIGHT", control, "LEFT", -(descGap or control.lead or 24), 0)
 
     row.top = self.y + self.panelRows * SIZE.row  -- offset in the content (Reveal)
     row.section = #self.sections

@@ -352,6 +352,7 @@ end
 local function Create()
     frame = CreateFrame("Frame", "SenditQuestsWindow", UIParent)
     Sendit.ownFrames[frame] = true
+    Sendit.Widgets.Stacked(frame)
     frame:Hide()
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("DIALOG")

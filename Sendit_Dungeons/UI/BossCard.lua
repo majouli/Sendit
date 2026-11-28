@@ -52,7 +52,7 @@ function Card.Create(parent)
         self:SetWidth(width)
         self.boss = boss
         ns.Art.Portrait(self.portrait, boss, self.face)
-        self.number:SetText(("%02d"):format(index) .. (boss.rare and ("  ·  " .. ns.L.rare) or ""))
+        self.number:SetText(boss.drops and "" or (("%02d"):format(index) .. (boss.rare and ("  ·  " .. ns.L.rare) or "")))
         self.name:SetText(DB.BossName(boss))
         local loot = DB.Loot(boss)
         -- boost rated: upgrades first, the biggest gain leading; the rest keeps its order (not while

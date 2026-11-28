@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Sendit: Wardrobe
 ## Notes: Every transmog look of the game on your character - sets, highlights and your own outfits, with where each piece comes from. Part of the Sendit suite.
-## Version: 1.0.0
+## Version: 1.1.0
 ## X-License: GPL-3.0
 ## X-Curse-Project-ID: 1836843
 ## IconTexture: Interface\Icons\INV_Shirt_White_01

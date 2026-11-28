@@ -75,6 +75,7 @@ function W.Slider(parent, lo, hi, step, get, set, fmt, width)
     s.value = T.Text(s, "label", "textDim")
     s.value:SetPoint("RIGHT", s, "LEFT", -12, 0)
     s.value:SetJustifyH("RIGHT")
+    s.lead = 70  -- room the value needs left of the slider (Layout keeps a row's text out of it)
 
     local refreshing = false
     local function Show(v) s.value:SetText(fmt and fmt(v) or tostring(v)) end
