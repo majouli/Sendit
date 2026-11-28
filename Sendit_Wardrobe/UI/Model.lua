@@ -5,7 +5,9 @@
   stage:Dress({ [slot] = itemID }) / stage:ResetView() / stage.tries[slot] = { itemID, way, result }
   An item is tried on as its link, then "item:ID", then its transmog source; a refused way (a
   non-zero try-on reason) falls through to the next. The client loads the character late: the
-  outfit is worn again shortly after Load, and once a missing item's data arrives.
+  outfit is worn again on its load and shortly after Load, a missing item once its data arrives.
+  Try-ons load the model too: those loads never re-wear (else it flickers). A new outfit tries on
+  only its changed slots.
 ]]
 local _, ns = ...
 local T = Sendit.Theme
@@ -35,17 +37,33 @@ local function TryOn(m, id, hand, tries, slot)
     end
 end
 
+local function Cached(id)
+    local fn = C_Item.IsItemDataCachedByID
+    if not fn then return true end
+    local ok, has = pcall(fn, id)
+    return not ok or has == true
+end
+
+local function Put(stage, slot, id)
+    if not Cached(id) then
+        stage.missing[id] = true
+        if C_Item.RequestLoadItemDataByID then pcall(C_Item.RequestLoadItemDataByID, id) end
+    end
+    TryOn(stage.model, id, Slots.Hand(slot), stage.tries, slot)
+end
+
+-- the whole outfit from scratch (the character was loaded, or a slot was emptied)
 local function Wear(stage)
     local m = stage.model
     pcall(m.Undress, m)
     wipe(stage.tries)
+    wipe(stage.missing)
     for _, slot in ipairs(Slots.ORDER) do
         local id = stage.outfit[slot]
-        if id then
-            if C_Item.RequestLoadItemDataByID then pcall(C_Item.RequestLoadItemDataByID, id) end
-            TryOn(m, id, Slots.Hand(slot), stage.tries, slot)
-        end
+        if id then Put(stage, slot, id) end
     end
+    stage.worn = {}
+    for slot, id in pairs(stage.outfit) do stage.worn[slot] = id end
     pcall(m.SetSheathed, m, false)
 end
 
@@ -58,7 +76,7 @@ end
 
 function Model.Create(parent)
     local stage = CreateFrame("Frame", nil, parent)
-    stage.facing, stage.zoom, stage.outfit, stage.tries = 0, 0, {}, {}
+    stage.facing, stage.zoom, stage.outfit, stage.tries, stage.worn, stage.missing = 0, 0, {}, {}, {}, {}
     local sky = T.Fill(stage, "sky", "BACKGROUND")
     sky:SetAllPoints()
     T.Gradient(sky, "sky", "bg", 0.9, 0.2)
@@ -71,17 +89,22 @@ function Model.Create(parent)
     stage.hint:SetPoint("BOTTOM", 0, 8)
     stage.hint:SetText(ns.L.modelHint)
 
-    pcall(m.SetScript, m, "OnModelLoaded", function() Wear(stage) View(stage) end)
+    pcall(m.SetScript, m, "OnModelLoaded", function()
+        if not stage.loading then return end
+        stage.loading = false
+        Wear(stage)
+        View(stage)
+    end)
 
-    local wanted, soon = {}, false
+    -- a missing item's data arrived: put on just that piece
     pcall(m.RegisterEvent, m, "GET_ITEM_INFO_RECEIVED")
     m:SetScript("OnEvent", function(_, _, id)
-        if not wanted[id] or soon then return end
-        soon = true
-        C_Timer.After(0.1, function()
-            soon = false
-            Wear(stage)
-        end)
+        if not stage.missing[id] then return end
+        stage.missing[id] = nil
+        if not stage:IsVisible() then return end
+        for slot, worn in pairs(stage.worn) do
+            if worn == id then TryOn(m, id, Slots.Hand(slot), stage.tries, slot) end
+        end
     end)
 
     m:EnableMouse(true)
@@ -106,22 +129,33 @@ function Model.Create(parent)
         if button == "RightButton" then stage:ResetView() end
     end)
 
+    -- a full Wear only when a slot was emptied
     function stage:Dress(outfit)
         self.outfit = {}
-        wipe(wanted)
-        for slot, id in pairs(outfit) do
-            self.outfit[slot] = id
-            wanted[id] = true
+        for slot, id in pairs(outfit) do self.outfit[slot] = id end
+        if not self:IsShown() then return end
+        for slot in pairs(self.worn) do
+            if not self.outfit[slot] then return Wear(self) end
         end
-        if self:IsShown() then Wear(self) end
+        for _, slot in ipairs(Slots.ORDER) do
+            local id = self.outfit[slot]
+            if id and self.worn[slot] ~= id then
+                Put(self, slot, id)
+                self.worn[slot] = id
+            end
+        end
     end
 
     function stage:Load()
+        self.loading = true
         pcall(m.SetUnit, m, "player")
         Wear(self)
         View(self)
         for _, delay in ipairs(AGAIN) do
-            C_Timer.After(delay, function() if self:IsVisible() then Wear(self) end end)
+            C_Timer.After(delay, function()
+                if delay == AGAIN[#AGAIN] then self.loading = false end  -- its load never came: stop waiting
+                if self:IsVisible() then Wear(self) end
+            end)
         end
     end
 

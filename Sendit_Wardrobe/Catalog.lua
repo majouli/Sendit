@@ -6,6 +6,7 @@
   Catalog.Sets() -> { { key, kind, items, armor, classes, lvl, ilvl, q } } best item level first
   Catalog.Name(kind, id) -> the suite language's name ("items", "npcs", "objects", "sets", "skills",
   "factions"), else English, else the client's item name, else nil
+  Catalog.Add(id, raw) -> a learned item (Learn.lua) in the bundled format; looks are built again
   Catalog.ItemName(id) -> name (never nil);  Catalog.Place(kind, id) -> uiMap, x, y, side | nil
   special (highlights): "unique" | "legendary" | "cosmetic" | "shirt" | "tabard" | nil
   Only the suite language's names stay loaded (and English); a language switch needs /reload.
@@ -47,6 +48,11 @@ function Catalog.Item(id)
         boe = f[7] == "1", ilvl = tonumber(f[8]) or 0, src = Split(src or "", ";") }
     items[id] = rec
     return rec
+end
+
+function Catalog.Add(id, raw)
+    ns.items[id], items[id] = raw, nil
+    looks, lookList = nil, nil
 end
 
 local function Special(look)

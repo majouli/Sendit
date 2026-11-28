@@ -2,7 +2,8 @@
   Init: registers the Wardrobe module, its launcher and /wardrobe [search | probe]; ns.Read (safe client call),
   ns.Join(...) (detail texts without the missing parts).
   Account (Sendit): window size and the browse filter. Sendit_WardrobeDB (own saved variables):
-  { outfits = { { name, items = { [slot] = itemID } } } } - the player's saved outfits.
+  { outfits = { { name, items = { [slot] = itemID } } }, learned = { [itemID] = raw } } - the player's
+  saved outfits and the looks learned from the auction data (Learn.lua).
 ]]
 local _, ns = ...
 ns.names = {}
@@ -43,6 +44,7 @@ frame:SetScript("OnEvent", function(self, _, addon)
     Sendit_WardrobeDB = type(Sendit_WardrobeDB) == "table" and Sendit_WardrobeDB or {}
     Sendit_WardrobeDB.outfits = type(Sendit_WardrobeDB.outfits) == "table" and Sendit_WardrobeDB.outfits or {}
     ns.store = Sendit_WardrobeDB
+    ns.Learn.Restore()
 end)
 
 Sendit:AddLauncher({

@@ -226,6 +226,7 @@ local function Create()
         frame.stage:Dress(Outfit.Items())
         frame.stage:Load()
         Window.Refresh(true)
+        ns.Learn.Run()
     end)
     frame:SetScript("OnSizeChanged", function() if frame:IsShown() then frame.pieces:Refresh() end end)
     Rows.onPick = Pick
@@ -284,6 +285,10 @@ local function Soon()
     end)
 end
 ns.Collection.OnChange(function()
+    stats = nil
+    Soon()
+end)
+ns.Learn.OnChange(function()
     stats = nil
     Soon()
 end)

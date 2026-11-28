@@ -5,7 +5,8 @@
   web data (Auction/Web.lua's lines, per unit). The newer is asked first, the other for what it lacks: the
   web data has no trade goods (cloth, herbs, ore - the API lists none on Forever), the scan has them.
   Prices.Begin() / Add(itemID, unitCopper, count) / Finish(at) while a scan reads;  Prices.Get(itemID) ->
-  unit, count, at, web | nil;  Prices.At() -> at, web | nil
+  unit, count, at, web | nil;  Prices.At() -> at, web | nil;  Prices.Ids() -> { itemID, ... } of every
+  listed item (both sources; the wardrobe learns looks its data lacks from them)
 ]]
 local _, ns = ...
 local Prices = {}
@@ -79,4 +80,14 @@ function Prices.Get(itemID)
     return nil
 end
 
-Sendit.Provide("auctionPrices", { Get = Prices.Get, At = Prices.At })
+function Prices.Ids()
+    local seen, out = {}, {}
+    for _, src in ipairs(Sources()) do
+        for id in pairs(src[1]) do
+            if not seen[id] then seen[id], out[#out + 1] = true, id end
+        end
+    end
+    return out
+end
+
+Sendit.Provide("auctionPrices", { Get = Prices.Get, At = Prices.At, Ids = Prices.Ids })
