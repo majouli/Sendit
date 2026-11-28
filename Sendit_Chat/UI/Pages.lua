@@ -16,7 +16,7 @@ end
 local function Percent(v) return math.floor(v * 100 + 0.5) .. "%" end
 
 local function Quality(v)
-    local name = _G["ITEM_QUALITY" .. v .. "_DESC"] or tostring(v)
+    local name = Sendit.Locale.Global("ITEM_QUALITY" .. v .. "_DESC") or tostring(v)
     local r, g, b = ns.Loot.QualityRGB(v)
     return ("|cff%02x%02x%02x%s|r"):format(math.floor(r * 255), math.floor(g * 255), math.floor(b * 255), name)
 end

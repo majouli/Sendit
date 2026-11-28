@@ -1,6 +1,6 @@
 --[[
-  Locale: texts of the auction house upgrade scan in five languages (ns.AL). Quality names come from
-  the client (ITEM_QUALITYn_DESC).
+  Locale: texts of the auction house upgrade scan in five languages (ns.AL). Quality names are the
+  client's (ITEM_QUALITYn_DESC) in the suite language.
 ]]
 local _, ns = ...
 ns.AL = Sendit.Locale.New({

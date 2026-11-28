@@ -25,7 +25,10 @@ local function Draw()
     local hide = ns.disabled or not configID or Method("IsInspecting") or #Route.ForClass(class) == 0
     picker:SetShown(not hide)
     Markers.Clear()
-    if hide then return end
+    if hide then
+        picker.timeline:SetAvailable(false)  -- it hangs on the overlay, not on the picker
+        return
+    end
     local rankOf = Tree.RankOf(configID)
     local choice = ns.Choice(configID)
     local route = choice ~= "off" and (Route.Find(class, choice) or Route.Suggest(class, rankOf)) or nil
@@ -43,7 +46,7 @@ local function Draw()
 end
 
 function ns.Refresh()
-    if pending or not overlay then return end
+    if pending or not overlay or not overlay:IsVisible() then return end  -- OnShow draws
     pending = true
     C_Timer.After(0, Draw)
 end

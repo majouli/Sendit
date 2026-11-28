@@ -141,7 +141,7 @@ local function PaintSteps(steps)
 end
 
 local function Paint()
-    if not panel or not panel:IsShown() then return end
+    if not panel or not panel:IsVisible() then return end  -- shown inside a closed map; OnShow paints
     local followed = ns.Guide.Following()
     if followed then return PaintSteps(ns.Guide.Steps(followed)) end
     local id = current or ns.Progress.Selected()

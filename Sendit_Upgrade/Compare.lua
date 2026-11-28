@@ -147,7 +147,7 @@ end
 
 local function Change(metric, now, new)
     return {
-        label = metric.label, unit = metric.unit, abs = new - now,
+        label = metric.label, key = metric.key, unit = metric.unit, abs = new - now,
         pct = now > EPSILON and (new / now - 1) * 100 or nil,
     }
 end

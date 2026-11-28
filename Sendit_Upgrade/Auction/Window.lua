@@ -194,6 +194,7 @@ local function Repaint()
     elseif ok and (reason == "loading" or reason == "nodata") then
         spec = lastSpec
     end
+    frame.title:SetText(AL.title)
     frame.sub:SetText(spec and AL.forSpec:format(spec) or AL.noUpgrade)
     PaintFresh()
     local text, fraction = Status()

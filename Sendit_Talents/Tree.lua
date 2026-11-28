@@ -125,6 +125,6 @@ function Tree.Effect(configID, nodeID, rank)
     end
     if type(text) ~= "string" or text == "" then return nil end
     text = text:gsub("%s+", " ")
-    if GetLocale() ~= "enUS" and English(text) then return nil end
+    if GetLocale():sub(1, 2) ~= "en" and English(text) then return nil end
     return text
 end

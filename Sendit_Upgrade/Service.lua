@@ -81,8 +81,12 @@ events:SetScript("OnEvent", function(_, event)
 end)
 -- only the spec and enemy level count (settings change all the time elsewhere)
 local lastKey ---@type string?
+local function Key()
+    return table.concat({ ns.charDB and ns.charDB.spec or "auto", ns.Settings.TargetDelta() }, "/")
+end
+Sendit.OnReady(function() lastKey = lastKey or Key() end)  -- so the first change of a session counts
 Sendit.OnSettingsChanged(function()
-    local key = table.concat({ ns.charDB and ns.charDB.spec or "auto", ns.Settings.TargetDelta() }, "/")
+    local key = Key()
     if lastKey and key ~= lastKey then Changed() end
     lastKey = key
 end)

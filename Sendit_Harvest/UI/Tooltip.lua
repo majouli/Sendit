@@ -140,6 +140,11 @@ modifier:SetScript("OnEvent", function(_, _, key)
     if not ns.Get("shiftOnly") or (key ~= "LSHIFT" and key ~= "RSHIFT") then return end
     pcall(function()
         local refresh = GameTooltip["RefreshData"]
-        if refresh and GameTooltip:IsShown() then refresh(GameTooltip) end
+        if not (refresh and GameTooltip:IsShown()) then return end
+        local get = GameTooltip["GetTooltipData"]
+        local data = get and get(GameTooltip)
+        local kind = data and data.type
+        if data and (not Plain(kind) or kind == T.Unit) then return end
+        refresh(GameTooltip)
     end)
 end)

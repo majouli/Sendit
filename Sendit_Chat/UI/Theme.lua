@@ -13,7 +13,6 @@ local WHITE = "Interface\\Buttons\\WHITE8x8"
 local CIRCLE_MASK = "Interface\\CHARACTERFRAME\\TempPortraitAlphaMask"
 Theme.WHITE = WHITE
 Theme.FONT = STANDARD_TEXT_FONT
-Theme.STYLES = { "modern", "azeroth" }
 Theme.style, Theme.palette = "modern", "dusk"
 
 Theme.C = setmetatable({}, { __index = function(_, k) return Core.Current().chat[k] end })

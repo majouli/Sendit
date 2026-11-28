@@ -121,10 +121,6 @@ function ns.Print(msg)
     if cf then cf:AddMessage("|cffe6ba66Sendit Chat|r " .. tostring(msg)) end
 end
 
-local function IsLoaded(name)
-    return C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded(name) and true or false
-end
-
 ns.Listen("ADDON_LOADED", function(_, name)
     if name ~= addonName then return end
     local char = type(Sendit_ChatCharDB) == "table" and Sendit_ChatCharDB or {}

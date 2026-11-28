@@ -53,23 +53,34 @@ local function Ask(id)
 end
 
 -- "done" | "later" (data not there yet)
+-- GetItemInfo on an uncached item asks the server itself, so it only runs once the data is there
+local function Cached(id)
+    local fn = C_Item.IsItemDataCachedByID
+    if not fn then return true end
+    local ok, cached = pcall(fn, id)
+    return not ok or cached ~= false
+end
+
 local function Read(id)
     if ns.items[id] or skip[id] then return "done" end
+    local t = tries[id]
+    if t and GetTime() - t.at < WAIT then return "later" end  -- asked, the answer may still come
     local ok, _, _, _, equipLoc, _, classID, subclassID = pcall(C_Item.GetItemInfoInstant, id)
     if ok and equipLoc ~= nil then
         local inv = INV[equipLoc]
         if not inv or not Slots.Of(inv) then skip[id] = true return "done" end
     end
-    local got, itemName, _, quality, itemLevel, minLevel = pcall(C_Item.GetItemInfo, id)
-    local name = got and itemName or nil
-    local look = ns.Read(C_TransmogCollection and C_TransmogCollection.GetItemInfo, id)
+    local name, quality, itemLevel, minLevel
+    if Cached(id) then
+        local got, itemName, _, q, ilvl, req = pcall(C_Item.GetItemInfo, id)
+        if got then name, quality, itemLevel, minLevel = itemName, q, ilvl, req end
+    end
     if not (ok and equipLoc and name) then
-        local t = tries[id]
-        if t and GetTime() - t.at < WAIT then return "later" end  -- asked, the answer may still come
         if t and t.n >= TRIES then skip[id] = true return "done" end
         if Ask(id) then tries[id] = { at = GetTime(), n = (t and t.n or 0) + 1 } end
         return "later"
     end
+    local look = ns.Read(C_TransmogCollection and C_TransmogCollection.GetItemInfo, id)
     if type(look) ~= "number" or look == 0 then skip[id] = true return "done" end
     local raw = ("%d,%d,%d,%d,%d,0,1,%d|"):format(look, INV[equipLoc], (classID or 0) * 100 + (subclassID or 0),
         quality or 1, minLevel or 0, itemLevel or 0)

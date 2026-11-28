@@ -1,7 +1,7 @@
 --[[
   GearSlots: the slot groups a gear boost filters by (Quests, Dungeons).
   Sendit.GearSlots.GROUPS = { { key, locs = { equipLoc, ... }, own = locale key | nil } }
-  GearSlots.Group(equipLoc) -> key | nil;  GearSlots.Label(group, L) -> the client's slot name or L[own]
+  GearSlots.Group(equipLoc) -> key | nil;  GearSlots.Label(group, L) -> the slot's client name in the suite language or L[own]
   GearSlots.On(db, key) / Set(db, key, on) / Wanted(db, equipLoc)   db.boostSlots[key] = false: off
 ]]
 local _, ns = ...
@@ -43,6 +43,5 @@ end
 
 function GearSlots.Label(g, L)
     if g.own then return L[g.own] end
-    local name = _G[g.locs[1]]
-    return type(name) == "string" and name or g.key
+    return ns.Locale.Global(g.locs[1]) or g.key
 end

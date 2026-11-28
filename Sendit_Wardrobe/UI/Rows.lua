@@ -107,7 +107,7 @@ local function SetCreate(parent)
         for _, id in ipairs(self.entry.set.items) do
             local it = Catalog.Item(id)
             local have = Collection.Item(id)
-            local qr, qg, qb = Quality(it.q)
+            local qr, qg, qb = Quality(it and it.q)
             GameTooltip:AddDoubleLine(Catalog.ItemName(id), have and L.collected or (have == false and L.missing or ""),
                 qr, qg, qb, have and 0.4 or 0.7, have and 0.85 or 0.7, have and 0.6 or 0.7)
         end
@@ -120,7 +120,7 @@ end
 
 local function ArmorName(kind)
     if not kind then return nil end
-    return ns.Read(C_Item.GetItemSubClassInfo, 4, kind % 100)
+    return Sendit.Locale.SubClass(4, kind % 100) or ns.Read(C_Item.GetItemSubClassInfo, 4, kind % 100)
 end
 
 local function SetPaint(r, e)
@@ -176,7 +176,7 @@ end
 
 local function Kind(it)
     local cls, sub = math.floor(it.kind / 100), it.kind % 100
-    return ns.Read(C_Item.GetItemSubClassInfo, cls, sub)
+    return Sendit.Locale.SubClass(cls, sub) or ns.Read(C_Item.GetItemSubClassInfo, cls, sub)
 end
 
 local function LookPaint(r, e)
@@ -185,7 +185,7 @@ local function LookPaint(r, e)
     local it = Catalog.Item(id)
     r.entry, r.item = e, id
     r.icon:SetTexture(Icon(id))
-    local qr, qg, qb = Quality(it.q)
+    local qr, qg, qb = Quality(it and it.q)
     r.frame:SetVertexColor(qr, qg, qb, 0.9)
     r.name:SetText(Catalog.ItemName(id) .. (#look.items > 1 and ("  |cff8a8f9e+" .. (#look.items - 1) .. "|r") or ""))
     r.name:SetTextColor(qr, qg, qb)

@@ -1,6 +1,6 @@
 --[[
   Widgets: the chat's controls in its look; texts may be a locale key or a function (read when shown).
-  Text(v) / IconButton(parent, kind, tip, onClick) / Badge(parent) / Slider(...) / Switch(...) /
+  Text(v) / IconButton(parent, kind, tip, onClick) / Badge(parent) / Switch(...) /
   Button(...) / Input(parent, placeholder, size) / Grip(frame, onDone) /
   Menu(items) (at the cursor; item = { text, fn [, checked] }) /
   Drag(handle, frame, canMove, onDone)
@@ -74,50 +74,6 @@ function Widgets.Badge(parent)
         self.anim:Play()
     end
     f:Hide()
-    return f
-end
-
-function Widgets.Slider(parent, label, min, max, step, get, set, fmt)
-    local f = CreateFrame("Frame", nil, parent)
-    f:SetSize(220, 38)
-    f.label = T.Text(f, 11, "textDim")
-    f.label:SetPoint("TOPLEFT")
-    f.label:SetText(label)
-    f.value = T.Text(f, 11, "text")
-    f.value:SetPoint("TOPRIGHT")
-    f.value:SetJustifyH("RIGHT")
-    local s = CreateFrame("Slider", nil, f)
-    s:SetOrientation("HORIZONTAL")
-    s:SetPoint("BOTTOMLEFT", 0, 4)
-    s:SetPoint("BOTTOMRIGHT", 0, 4)
-    s:SetHeight(14)
-    s:SetMinMaxValues(min, max)
-    s:SetValueStep(step)
-    s:SetObeyStepOnDrag(true)
-    s:EnableMouseWheel(true)
-    local track = T.Tex(s, "BACKGROUND", "ink", 0.14)
-    track:SetPoint("LEFT"); track:SetPoint("RIGHT"); track:SetHeight(2)
-    s.fill = T.Tex(s, "ARTWORK", "accent", 0.9)
-    s.fill:SetPoint("LEFT"); s.fill:SetHeight(2)
-    local thumb = s:CreateTexture(nil, "OVERLAY")
-    thumb:SetTexture(T.WHITE)
-    thumb:SetSize(8, 12)
-    T.Color(thumb, "accent")
-    s:SetThumbTexture(thumb)
-    local function Show(v)
-        f.value:SetText(fmt and fmt(v) or tostring(v))
-        local w = s:GetWidth() or 0
-        s.fill:SetWidth(math.max(1, w * (v - min) / math.max(1e-6, max - min)))
-    end
-    s:SetScript("OnValueChanged", function(_, v)
-        v = math.floor(v / step + 0.5) * step
-        Show(v)
-        if v ~= get() then set(v) end
-    end)
-    s:SetScript("OnMouseWheel", function(self, d) self:SetValue(self:GetValue() + d * step) end)
-    s:SetScript("OnSizeChanged", function() Show(get()) end)
-    function f.Refresh() s:SetValue(get()); Show(get()) end
-    f.slider = s
     return f
 end
 

@@ -29,8 +29,8 @@ local SCHOOL_INDEX = { holy = 2, fire = 3, nature = 4, frost = 5, shadow = 6, ar
 Character.SCHOOL_INDEX = SCHOOL_INDEX
 local FORMS = { [1] = "cat", [5] = "bear", [8] = "bear" }  -- GetShapeshiftFormID
 
--- Agility per 1% melee crit at level 60, Classic (reference "Critical
--- strike"; vanilla-wow wiki). Same ratio gives dodge for these classes.
+-- Agility per 1% melee crit at level 60, Classic (community reference
+-- "Critical strike"). Same ratio gives dodge for these classes.
 local AGI_PER_CRIT_60 = {
     WARRIOR = 20, PALADIN = 20, HUNTER = 53, ROGUE = 29, DRUID = 20,
     SHAMAN = 20, MAGE = 20, PRIEST = 20, WARLOCK = 20,

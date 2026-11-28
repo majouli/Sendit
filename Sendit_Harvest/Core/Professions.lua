@@ -57,7 +57,17 @@ local events = CreateFrame("Frame")
 for _, e in ipairs({ "PLAYER_LOGIN", "SKILL_LINES_CHANGED", "SPELLS_CHANGED", "LEARNED_SPELL_IN_TAB" }) do
     pcall(events.RegisterEvent, events, e)
 end
+local function Signature()
+    local parts = {}
+    for _, prof in ipairs(P.KEYS) do parts[#parts + 1] = P.Knows(prof) and "1" or "0" end
+    return table.concat(parts)
+end
+
+local known
 events:SetScript("OnEvent", function()
     cache = nil
+    local now = Signature()
+    if now == known then return end
+    known = now
     ns.SettingsChanged()
 end)

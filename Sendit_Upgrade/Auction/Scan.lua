@@ -8,7 +8,7 @@
     phase "loading" | "reading" | "items" | "done" | "throttled" | "closed"; Scan.WaitMinutes()
   Scan.Last() -> at, auctions, web | nil;  Scan.LoadLast(onChange) -> the newer of the kept scan and the
     web data (Auction/Web.lua, state.web) as a finished scan
-  Rules (a flood of item requests and link reads crashed the client on a 235k auction house):
+  Rules (a flood of item requests and link reads crashes the client):
   - a row's link is read only when the client has all its data (the row's hasAllInfo);
   - rows without: their item is asked for once per scan, at most REQUESTS per second, and only when
     the row passes the slot, quality and price filters; phase "items" then waits for the client

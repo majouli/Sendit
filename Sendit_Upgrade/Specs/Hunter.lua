@@ -13,8 +13,8 @@
   Aimed Shot's cast pausing auto shots is left out (assumption).
   The pet: its damage does not grow with the hunter's gear in Classic, but it
   is part of what kills the mob, so it is added as a constant - without it a
-  better bow would read as twice the real gain. the classic server's pet stats
-  (Pet.cpp): hunter pet weapon damage per second = level *
+  better bow would read as twice the real gain. The classic server's pet stats:
+  hunter pet weapon damage per second = level *
   (0.75 + 1.125) / 2 / 2 = 0.46875 * level; attack power 2 per strength - 20
   (creature rule) with strength from pet_levelstats (entry 1); happy pet +25%
   (assumption: kept happy), hit table of a normal melee attacker.

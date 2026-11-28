@@ -5,7 +5,7 @@
   Subclasses without a skill (misc armor, relics, misc weapons) count as wearable.
   Wearable.Can(itemID) -> bool
   Wearable.Types() -> { armor = { type }, weapons = { type } }: the armor and weapon types the character
-    can use, type = { key = "class:subclass", name = client subclass name }; shields sit with the weapons
+    can use, type = { key = "class:subclass", name = client subclass name in the suite language }; shields sit with the weapons
   Wearable.TypeKey(itemID, equipLoc) -> "class:subclass" | nil (no type: cloaks are cloth for every class)
 ]]
 local _, ns = ...
@@ -59,6 +59,8 @@ local WEAPON_ORDER = {
 local legacySubName = "GetItemSubClassInfo"
 
 local function Name(classID, subclassID)
+    local own = Sendit.Locale.SubClass(classID, subclassID)
+    if own then return own end
     local fn = (C_Item and C_Item.GetItemSubClassInfo) or _G[legacySubName]
     local ok, name = pcall(fn, classID, subclassID)
     return ok and type(name) == "string" and name ~= "" and name or (classID .. ":" .. subclassID)

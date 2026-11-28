@@ -25,7 +25,7 @@ local function Call(h, method, frame)
     local ok, r = pcall(h.handler[method], h.handler, frame)
     if ok then return r end
     if not h.broken then
-        ns.Print(("|cffff5555%s switched off after an error:|r %s"):format(h.handler.name, tostring(r)))
+        ns.Print("|cffff5555" .. ns.L.SPECIAL_OFF:format(h.handler.name) .. "|r " .. tostring(r))
     end
     h.broken = true
 end

@@ -72,6 +72,5 @@ end
 local events = CreateFrame("Frame")
 events:RegisterEvent("AUCTION_HOUSE_SHOW")
 events:RegisterEvent("AUCTION_HOUSE_CLOSED")
-events:SetScript("OnEvent", function(_, event)
-    if event == "AUCTION_HOUSE_SHOW" then C_Timer.After(0, Dock.Layout) else Dock.Layout() end
-end)
+-- next frame: the auction house UI handles both events after us
+events:SetScript("OnEvent", function() C_Timer.After(0, Dock.Layout) end)

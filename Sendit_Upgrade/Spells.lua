@@ -29,7 +29,7 @@ ns.Spells = Spells
 local GCD = 1.5  -- Classic global cooldown
 
 -- Paladin heals keep the coefficients the Paladin model was built and checked
--- with: SpellCoeffsForever Data.lua overrides (MIT, "exact" for Forever). The
+-- with: an open Forever spell coefficient table (listed as exact for Forever). The
 -- client's tables say 0.714 / 0.429 - sources disagree, marked uncertain.
 Spells.COEF_OVERRIDE = { HOLY_LIGHT = 0.8571, FLASH_OF_LIGHT = 0.4286 }
 

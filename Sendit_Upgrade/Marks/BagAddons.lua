@@ -1,8 +1,7 @@
 --[[
   BagAddons: the green upgrade arrows in bag addons that replace Blizzard's bags, through their public
   interfaces (we call them, they never call into our data):
-  - Baganator: a corner widget (Baganator.API.RegisterCornerWidget; installed files API/Main.lua,
-    2026-11-26) - it makes our arrow per button and asks onUpdate(corner, details) per item: true shows
+  - Baganator: a corner widget (Baganator.API.RegisterCornerWidget) - it makes our arrow per button and asks onUpdate(corner, details) per item: true shows
     it, nil means "not known yet" (RequestItemButtonsRefresh redraws once the verdict is there).
     Default corner top right (the item level sits top left); players can move it in its settings.
   - EllesmereUI Bags: EUI_Bags.RegisterItemOverlayIcon(name, fn(button, data)) for every painted slot;

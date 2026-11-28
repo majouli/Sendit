@@ -3,6 +3,9 @@
   Sendit.Locale.New(tables) -> L   L.key = active language, else English, else the key
   Sendit.Locale.Code()             "auto" resolved (esMX -> esES, enGB -> enUS)
   Sendit.Locale.LANGUAGES / Text(L, key) (a function: follows a switch) / Missing(L)
+  Sendit.Locale.Global(name) -> a client text (slot, quality) in the suite language (Data/ClientNames.lua),
+    else the client's own _G[name] | nil;  Sendit.Locale.SubClass(classID, subclassID) -> weapon/armor
+    item sub class name (weapon, armor, trade goods, ...) the same way | nil
 ]]
 local _, ns = ...
 
@@ -55,6 +58,21 @@ function Locale.Missing(L)
         if out[lang.code] then table.sort(out[lang.code]) end
     end
     return out
+end
+
+local function ClientNames() return ns.clientNames and ns.clientNames[Locale.Code()] end
+
+function Locale.Global(name)
+    local t = ClientNames()
+    local v = t and t.globals[name]
+    if v then return v end
+    v = _G[name]
+    return type(v) == "string" and v or nil
+end
+
+function Locale.SubClass(classID, subclassID)
+    local t = ClientNames()
+    return t and t.subclasses[classID .. ":" .. subclassID] or nil
 end
 
 function Locale.Text(L, key)

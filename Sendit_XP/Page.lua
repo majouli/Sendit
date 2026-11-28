@@ -32,7 +32,7 @@ O:Register({
         get, set = Bind("size")
         Lay:Row(Tx("size"), nil, W.Slider(c, 0.6, 1.8, 0.1, get, set,
             function(v) return ("%d%%"):format(math.floor(v * 100 + 0.5)) end))
-        Lay:Row(Tx("preview"), Tx("previewDesc"), W.Button(c, L.play, Preview))
+        Lay:Row(Tx("preview"), Tx("previewDesc"), W.Button(c, Tx("play"), Preview))
         Lay:EndSection()
     end),
 })

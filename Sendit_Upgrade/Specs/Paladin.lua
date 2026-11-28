@@ -24,11 +24,11 @@ local Model, C, Character = ns.Model, ns.SpecCommon, ns.Character
 
 -- Seal of Righteousness: holy damage per hit scales with weapon speed, so per
 -- second it is coef * spell damage, independent of speed. 0.108 (2H) / 0.092
--- (1H) per second of weapon speed: most cited Classic figure (allakhazam
--- "spell coefficient (WoW)", reference talk page Seal of Righteousness).
+-- (1H) per second of weapon speed: the most cited Classic figure (community
+-- spell coefficient tables).
 -- Sources disagree (per-hit 10%/12% also quoted): marked uncertain.
 local SOR_COEF = { twoHand = 0.108, oneHand = 0.092 }
--- Consecration: periodic, duration / 15 = 8 / 15 over 8 s (SpellCoeffsForever formula).
+-- Consecration: periodic, duration / 15 = 8 / 15 over 8 s (the standard periodic coefficient formula).
 local CONSECRATION_PER_SEC = (8 / 15) / 8
 local RIGHTEOUS_FURY = 1.6   -- Classic: +60% threat from holy spells
 -- Seal of Command: client spell 20424 deals 70% weapon damage as Holy with a

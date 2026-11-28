@@ -128,7 +128,7 @@ function Sidebar.Create(parent, onChange)
         items = function()
             local out = {}
             for i, q in ipairs(Filter.QUALITIES) do
-                out[i] = { key = q, name = _G["ITEM_QUALITY" .. q .. "_DESC"] or tostring(q), color = QualityColor(q) }
+                out[i] = { key = q, name = Sendit.Locale.Global("ITEM_QUALITY" .. q .. "_DESC") or tostring(q), color = QualityColor(q) }
             end
             return out
         end,

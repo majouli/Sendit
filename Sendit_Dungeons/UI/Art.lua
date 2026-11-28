@@ -38,7 +38,7 @@ function Art.Thumb(tex, d)
 end
 
 -- A model from the boss's display ID, else its NPC ID (Forever's own bosses).
--- Repaints are frequent: a model already showing this boss is left alone (reloading made it shake).
+-- Repaints are frequent: a model already showing this boss is left alone (a reload restarts it).
 local function Load(model, boss)
     local key = (boss.display or 0) > 0 and ("d" .. boss.display) or (boss.npc or 0) > 0 and ("n" .. boss.npc) or nil
     if not key then model.senditKey = nil return false end
@@ -51,7 +51,7 @@ local function Load(model, boss)
 end
 Art.Load = Load
 
--- A portrait stands still: zoom to the head and freeze the first frame (idle animation shook).
+-- A portrait stands still: zoom to the head and freeze the first frame.
 function Art.Still(model)
     pcall(model.SetScript, model, "OnModelLoaded", function(self)
         pcall(self.SetPortraitZoom, self, 1)
@@ -61,7 +61,7 @@ end
 
 local Face
 -- tex is masked round: never SetTexCoord on it (the client refuses). A face already showing this boss
--- is left alone: repaints while the boost rates came every second and re-zoomed the model (flicker).
+-- is left alone (a repaint must not re-zoom the model).
 function Art.Portrait(tex, boss, model)
     local display = boss.display or 0
     local key = display > 0 and ("d" .. display) or ("n" .. (boss.npc or 0))

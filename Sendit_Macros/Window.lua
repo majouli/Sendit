@@ -146,6 +146,7 @@ end
 local function Create()
     frame = CreateFrame("Frame", "SenditMacros", UIParent)
     Sendit.ownFrames[frame] = true
+    tinsert(UISpecialFrames, "SenditMacros")
     frame:Hide()
     frame:SetSize(WIDTH, HEIGHT)
     frame:SetPoint("CENTER", -200, 40)
@@ -223,7 +224,6 @@ end
 
 Sendit.OnSettingsChanged(Soon)
 local events = CreateFrame("Frame")
-for _, e in ipairs({ "SPELLS_CHANGED", "UPDATE_MACROS", "PLAYER_LEVEL_UP", "UNIT_PET" }) do
-    pcall(events.RegisterEvent, events, e)
-end
+for _, e in ipairs({ "SPELLS_CHANGED", "UPDATE_MACROS", "PLAYER_LEVEL_UP" }) do events:RegisterEvent(e) end
+events:RegisterUnitEvent("UNIT_PET", "player")
 events:SetScript("OnEvent", Soon)

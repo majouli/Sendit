@@ -78,7 +78,13 @@ local function Pick(e, button)
         if button == "RightButton" then
             W.ShowMenu(GetMouseFoci and GetMouseFoci()[1] or frame, { { "load", L.load }, { "delete", L.delete } },
                 nil, function(v)
-                    if v == "load" then Outfit.Load(e.index) else Outfit.Delete(e.index) end
+                    if v == "load" then
+                        Outfit.Load(e.index)
+                        frame.name:SetText(e.outfit.name)
+                    else
+                        Outfit.Delete(e.index)
+                        Window.Refresh(true)  -- the rows after it hold new indexes
+                    end
                 end)
             return
         end

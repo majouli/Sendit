@@ -62,6 +62,8 @@ local function Describe(unit)
     return { name = name, class = ns.ClassOf(unit), level = ns.Call(UnitLevel, unit) }
 end
 
+local retrying = false  -- one retry chain while items load, however many events ask
+
 function Inspect.Own()
     local guid = ns.GUID("player")
     if not guid then return end
@@ -70,7 +72,10 @@ function Inspect.Own()
     entry.score, entry.ilvl = r.score, r.ilvl
     entry.trees = Talents.Own()
     Store(guid, entry)
-    if not r.complete then C_Timer.After(1, Inspect.Own) end
+    if not r.complete and not retrying then
+        retrying = true
+        C_Timer.After(1, function() retrying = false; Inspect.Own() end)
+    end
 end
 
 local function FindUnit(guid, hint)

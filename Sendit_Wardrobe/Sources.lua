@@ -129,7 +129,7 @@ local function Services(it, out)
     local dungeons = Sendit.Service("dungeons")
     for _, d in ipairs(dungeons and dungeons.Drops(it.id) or {}) do
         out[#out + 1] = { kind = d.raid and "raid" or "dungeon", item = it.id, title = d.dungeon,
-            detail = ns.Join(d.bossName, L.chance:format(d.chance)),
+            detail = ns.Join(d.bossName, (d.chance or 0) > 0 and L.chance:format(d.chance) or nil),  -- 0: too few kills recorded
             action = function() dungeons.Open(d.id, d.boss) end, hint = L.hintDungeon }
     end
     local quests = Sendit.Service("quests")

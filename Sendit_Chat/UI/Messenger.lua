@@ -223,7 +223,11 @@ local function Build()
     BuildBody()
     frame.grip = Widgets.Grip(frame, SavePosition)
     frame:SetScript("OnShow", Messenger.Refresh)
-    frame:SetScript("OnHide", function() glowAnim:Stop() end)
+    frame:SetScript("OnHide", function()  -- Escape hides it directly: closing still counts as read
+        glowAnim:Stop()
+        local cur = ns.Conversation.Current()
+        if cur then W.MarkRead(cur) end
+    end)
     table.insert(UISpecialFrames, "SenditMessenger")
     Place()
 end

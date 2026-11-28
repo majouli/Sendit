@@ -40,7 +40,6 @@ function M.Failed() return state.failed == true end
 local function KeyString(key)
     return key.itemID .. ":" .. (key.itemLevel or 0) .. ":" .. (key.itemSuffix or 0)
 end
-M.KeyString = KeyString
 
 local function Sorts()
     local order = Enum.AuctionHouseSortOrder and Enum.AuctionHouseSortOrder.Price or 0

@@ -40,11 +40,9 @@ local API_KEYS = {
     ITEM_MOD_ATTACK_POWER_SHORT = "ap", ITEM_MOD_RANGED_ATTACK_POWER_SHORT = "rap",
     ITEM_MOD_FERAL_ATTACK_POWER_SHORT = "feralAp",
     ITEM_MOD_SPELL_POWER_SHORT = "spellPower", ITEM_MOD_SPELLPOWER_SHORT = "spellPower",
-    -- Classic Era 1.15 names spell power without _SHORT (the reference sim Stats.lua,
-    -- /dump in game 2026-10-28); counted only when the _SHORT key is not there too
+    -- Classic Era 1.15 names spell power without _SHORT; counted only when the _SHORT key is not there too
     ITEM_MOD_SPELL_POWER = "spellPower",
-    -- one school's spell damage: in GetItemStats on Forever (the reference sim harvest,
-    -- 2026-10-17: 52 fire, 80 frost, 24 arcane, 58 shadow items)
+    -- one school's spell damage: in GetItemStats on Forever
     ITEM_MOD_FIRE_DAMAGE_DONE_SHORT = "fireDmg", ITEM_MOD_FROST_DAMAGE_DONE_SHORT = "frostDmg",
     ITEM_MOD_ARCANE_DAMAGE_DONE_SHORT = "arcaneDmg", ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT = "shadowDmg",
     ITEM_MOD_HOLY_DAMAGE_DONE_SHORT = "holyDmg", ITEM_MOD_NATURE_DAMAGE_DONE_SHORT = "natureDmg",

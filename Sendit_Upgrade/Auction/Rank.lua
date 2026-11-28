@@ -5,13 +5,13 @@
   gold), so a ticked slot shows at once. Rated first: what the filters show and the client already knows,
   then what they show, then the rest (known first) - items the client must load wait for REQUESTS a second.
   Background rules: each step works at most BUDGET ms (less while the window is closed), pauses in
-  combat, and asks the server for at most REQUESTS unloaded items per second (a request flood crashed
+  combat, and asks the server for at most REQUESTS unloaded items per second (a request flood crashes
   the client). Ratings are cached per variant until gear, level or spec change; then all are rated again.
   Items above the level filter's top are put aside unrated (most of an auction house) and come back
   when the top is raised. Ratings are kept in Sendit_UpgradeDB.auctionRatings with a fingerprint of
   the character (spec, level, enemy level, worn links): after a reload the list is there at once.
   Rank.Start(candidates) / Stop() / Progress() -> rated, total, running, missing (never loaded)
-  Rank.Groups() -> { { key, group, list = { candidate + pct, unit, gate } } } in Sendit.GearSlots order
+  Rank.Groups() -> { { key, group, list = { candidate + pct, unit (metric text key), gate } } } in Sendit.GearSlots order
   Rank.Count() -> upgrades shown;  Rank.Dirty() after a filter or sort change;  Rank.OnChange(fn)
   Rank.SetFast(on): the larger budget while the window is open
   Rank.Stats() -> { total, rated, missing, queued, deferred, kept, loads, throttled, limit, seconds,
@@ -27,7 +27,7 @@ local RETRIES, RETRY_AFTER, REQUESTS = 8, 1.5, 20
 local Clock = debugprofilestop or function() return 0 end
 local listeners = {}
 -- the queue runs from head to tail; taken slots are cleared, so its length is never asked
--- (# of a table with holes is any border: the queue lost its end and spun without work)
+-- (# of a table with holes is any border)
 local all, queue, head, tail, generation, running = {}, {}, 1, 0, 0, false
 
 local function Push(c)
@@ -41,7 +41,7 @@ local requestSecond, requestCount = 0, 0
 local stats = { loads = 0, throttled = 0, started = 0, kept = 0 }
 local deferred, deferredTop = {}, nil  -- items above the level filter's top, and that top
 local attached = false                  -- cache is the saved one (fingerprint known)
-local SAVE_VERSION = 3                  -- 3: older saves could hold ratings of a character not yet settled
+local SAVE_VERSION = 4                  -- 4: unit is the metric's text key (older saves hold a translated label)
 
 local function Changed() for _, fn in ipairs(listeners) do fn() end end
 function Rank.OnChange(fn) listeners[#listeners + 1] = fn end
@@ -133,12 +133,13 @@ local function Rate(c)
     if known == nil then
         if (c.reqLevel or 0) > Top() then return "deferred" end
         local ok, r = pcall(ns.Compare.Evaluate, c.link)
+        if not ok then return "wait" end  -- an error is retried, never kept as "no upgrade"
         -- the character is not readable for a moment (gear loading, sheet secret): later, never "no upgrade"
         if ok and r and r.item and (r.status == "loading" or r.status == "nodata") then return "later" end
         if ok and r and r.status == "loading" then return "wait" end
         local gain = ok and r and r.status == "ok" and r.primary and type(r.primary.pct) == "number"
             and r.primary.pct > 0
-        known = gain and { pct = r.primary.pct, unit = r.primary.label, gate = r.levelGate } or false
+        known = gain and { pct = r.primary.pct, unit = r.primary.key, gate = r.levelGate } or false
         cache[c.key] = known
     end
     if known then

@@ -39,7 +39,7 @@ end
 
 local function Gain(c)
     local s = ("+%.1f"):format(c.pct):gsub("%.", L.decimal)
-    return s .. " % " .. (c.unit or "")
+    return s .. " % " .. (c.unit and L[c.unit] or "")
 end
 
 local LABELS = { searching = "searching", ready = "confirm", buying = "searching", bought = "bought", gone = "gone" }

@@ -131,9 +131,9 @@ local function Run(args)
     end
     local equipped = 0
     for _ in pairs(probe.equipped) do equipped = equipped + 1 end
-    ns.Print(("Probe: %d APIs ok, %d secret, %d fehlen, %d Fehler; %d angelegte, %d verlinkte Items.")
+    ns.Print(("Probe: %d APIs ok, %d secret, %d missing, %d errors; %d items made, %d linked.")
         :format(counts.ok, counts.secret, counts.missing, counts.error, equipped, #probe.linked))
-    ns.Print("Gespeichert. Jetzt /reload, damit es auf die Festplatte geschrieben wird.")
+    ns.Print("Saved. /reload now to write it to disk.")
     return probe
 end
 

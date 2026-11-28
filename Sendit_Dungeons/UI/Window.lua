@@ -48,7 +48,7 @@ local function Detail()
     frame.detailEmpty:SetShown(d == nil)
     frame.detailEmpty:SetText(#results == 0 and "" or L.pick)
     frame.detailTitle:SetText(d and DB.Name(d) or "")
-    -- only cards beyond this dungeon's bosses hide: hiding a shown one reloads its model (flicker)
+    -- only cards beyond this dungeon's bosses hide: hiding a shown one reloads its model
     for i, c in ipairs(cards) do if not d or i > #d.bosses then c:Hide() end end
     local art = ns.Art.Screen(frame.banner, d, frame.metrics.right, BANNER)
     frame.bannerFade:SetShown(art)
@@ -132,7 +132,7 @@ function Window:Search(text, keep)
     self:Refresh()
 end
 
--- while items are rated, at most one repaint per THROTTLE seconds (every batch repainting flickered)
+-- while items are rated, at most one repaint per THROTTLE seconds
 local waiting = false
 function Window:BoostChanged()
     if not frame or not frame:IsShown() then return end

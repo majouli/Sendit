@@ -1,7 +1,7 @@
 --[[
   Services: is the player dealing with a service NPC (vendor, bank, flight master ...)? From events: a
   service window is open, or the gossip has options but no quests. Cleared on PLAYER_ENTERING_WORLD.
-  Services:IsServiceNPC();  Services:OnWindowOpen(fn)
+  Services:OnWindowOpen(fn)
 ]]
 local _, ns = ...
 
@@ -41,10 +41,6 @@ end
 function Services:IsServiceGossip()
     if GossipCount("GetNumAvailableQuests") + GossipCount("GetNumActiveQuests") > 0 then return false end
     return GossipCount("GetOptions") > 0
-end
-
-function Services:IsServiceNPC()
-    return self:IsWindowOpen() or self:IsServiceGossip()
 end
 
 function Services:OnWindowOpen(fn)

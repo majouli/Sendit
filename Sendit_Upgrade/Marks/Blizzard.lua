@@ -3,7 +3,7 @@
   UpdateItems), loot (the loot list's elements), loot rolls (GroupLootFrame_SetupItemDisplay), the
   merchant (MerchantFrame_UpdateMerchantInfo) and quest rewards (QuestInfo_ShowRewards, the quest
   frame's and the map's). Only post-hooks and reads; the arrows are our own frames (Arrow.lua).
-  Source: the client's UI code (game type camelot, mainline family), checked 2026-11-26.
+  Source: the client's UI code (game type camelot, mainline family).
 ]]
 local _, ns = ...
 local Arrow = ns.Arrow

@@ -14,7 +14,7 @@ O:Register({
     subtitle = Tx("subtitle"),
     build = O.SettingsPage(function(Lay, c)
         Lay:Section(Tx("title"))
-        Lay:Row(Tx("pageWindow"), Tx("pageWindowDesc"), W.Button(c, L.pageOpen, function()
+        Lay:Row(Tx("pageWindow"), Tx("pageWindowDesc"), W.Button(c, Tx("pageOpen"), function()
             O:Hide()
             ns.Window.Open()
         end))

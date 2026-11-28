@@ -1,7 +1,7 @@
 --[[
   Triggers: when the UI must be awake. Unit values are secret: never read health or casts - events
   carry it (UNIT_HEALTH ticks until full, spellcast start / stop, PLAYER_REGEN_*). Power regen is no
-  trigger (mana ticks woke the UI over and over).
+  trigger.
 ]]
 local _, ns = ...
 

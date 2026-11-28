@@ -11,7 +11,9 @@ ns.Filters = Filters
 local GROUPS = { "auction", "vendor", "quest", "crafted", "dungeon", "drop", "rep", "pvp", "special", "unknown" }
 local DEFAULT = { slot = "all", armor = "mine", source = "all", have = "all" }
 
-local function Armor(sub) return ns.Read(C_Item.GetItemSubClassInfo, 4, sub) or tostring(sub) end
+local function Armor(sub)
+    return Sendit.Locale.SubClass(4, sub) or ns.Read(C_Item.GetItemSubClassInfo, 4, sub) or tostring(sub)
+end
 
 local OPTIONS = {
     slot = function()

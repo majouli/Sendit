@@ -137,7 +137,7 @@ local function Collect(elements)
                 end
                 local rest = e.owner:sub(#famKey + 1):gsub("^[_%-%s]+", "")
                 g = { owner = e.owner, title = Names.Pretty(e.owner), family = fam, items = {}, faded = 0,
-                      subtitle = e.owner == famKey and "Core" or Names.Pretty(rest) }
+                      subtitle = e.owner == famKey and ns.L.CORE or Names.Pretty(rest) }
                 groups[e.owner] = g
                 fam.groups[#fam.groups + 1] = g
             end

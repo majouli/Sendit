@@ -167,8 +167,7 @@ end
 
 -- One cast of a spell (Spells.Get) with this much spell power and crit (%):
 -- the direct part can crit (critBonus: 0.5 = 150%, talents raise it); periodic
--- damage crits too on Forever (Classic: never - critical ticks seen in
--- game 2026-11-17), at the base 150%: talents that raise crit damage are
+-- damage crits too on Forever (Classic: never), at the base 150%: talents that raise crit damage are
 -- assumed to touch the direct part only; healing over time is assumed not to
 -- crit. dotCritBonus: talents that raise the ticks' crit damage (Pandemic,
 -- Shadowform: 1.0 = 200%). Damage only counts the share that hits.
@@ -214,10 +213,7 @@ end
 -- 5 s have passed since the last cast - and drink back to full once the mana
 -- is below half. Output per second of fighting and drinking; the walk to the
 -- next mob is the same whatever the gear, so it is not counted - but the
--- spirit regen during it is. A fight of fixed length with no refill made
--- every point of mana count as fully as a point of output (+10 intellect
--- worth ten times +10 healing); "cast until OOM, then one break" made the bar
--- size the bottleneck. Here, as in play: spirit and mana per 5 refill between
+-- spirit regen during it is. As in play: spirit and mana per 5 refill between
 -- pulls, spell power ends fights sooner (less mana per kill), and a bigger
 -- bar mostly means fewer drink sessions - drinking itself refills at the
 -- drink's fixed rate. The same reference scenario the reference sim sims

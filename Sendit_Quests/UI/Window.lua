@@ -33,7 +33,7 @@ local function OwnFaction()
 end
 
 local function FactionOptions()
-    return { { "alliance", _G["FACTION_ALLIANCE"] or L.alliance }, { "horde", _G["FACTION_HORDE"] or L.horde },
+    return { { "alliance", L.alliance }, { "horde", L.horde },
         { "all", L.bothFactions } }
 end
 
@@ -451,7 +451,7 @@ function Window:Notice(text)
     return text
 end
 
--- settings change often: repaint texts, never search again (re-sorting ran too long)
+-- settings change often: repaint texts, never search again (a search sorts every quest)
 Sendit.OnSettingsChanged(function()
     ns.GroupPicker.Hide()
     if frame then Window:Refresh() end

@@ -31,7 +31,7 @@ local INFO = {
 local UNKNOWN_ICON = 134400  -- the question mark the client shows for an item without a picture
 
 function Slots.Of(inv) return OF[inv] end
-function Slots.Name(key) return _G[INFO[key][1]] or key end
+function Slots.Name(key) return Sendit.Locale.Global(INFO[key][1]) or key end
 function Slots.Equipped(key) return INFO[key][2] end
 function Slots.Icon(key) return "Interface\\PaperDoll\\UI-PaperDoll-Slot-" .. INFO[key][3] end
 

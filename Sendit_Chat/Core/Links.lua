@@ -93,7 +93,8 @@ function Links.Mention(text, name)
     end
     if not text:find(name, 1, true) then return text, false end
     local hit = false
-    local pat = "%f[%w]" .. name:gsub("%p", "%%%0") .. "%f[^%w]"
+    -- bytes from 128 on are letters too (Cyrillic and accented names are UTF-8)
+    local pat = "%f[%w\128-\255]" .. name:gsub("%p", "%%%0") .. "%f[^%w\128-\255]"
     local out = Links.MapPlain(text, function(piece)
         return (piece:gsub(pat, function(m)
             hit = true

@@ -136,7 +136,7 @@ function ns:PLAYER_ENTERING_WORLD()
         ns.Triggers:Wake("login")
         local r = ns:Rescan()
         if ns.db.announce then
-            ns.Print(("%d UI elements, %d faded (profile %s). /fa opens the settings."):format(
+            ns.Print(ns.L.LOGIN_LINE:format(
                 r.total, (ns.Fader:Count()), ns.Profiles:Active()))
         end
     end)

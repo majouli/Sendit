@@ -181,7 +181,7 @@ local function ShowTooltip(self)
     GameTooltip:SetText("Sendit", T.Color("accent"))
     local r, g, b = T.Color("textDim")
     for _, key in ipairs({ "APPBAR_CLICK", "APPBAR_RIGHT", "APPBAR_DRAG" }) do
-        GameTooltip:AddLine(Tx(key), r, g, b)
+        GameTooltip:AddLine(L[key], r, g, b)
     end
     GameTooltip:Show()
 end

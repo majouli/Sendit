@@ -190,7 +190,7 @@ local function SafeCollect()
     local ok, err = pcall(Collect)
     if not ok then
         Overlay:Hide()
-        ns.Print("|cffff5555Show on screen stopped after an error:|r " .. tostring(err))
+        ns.Print("|cffff5555" .. ns.L.OVERLAY_OFF .. "|r " .. tostring(err))
     end
     return ok
 end

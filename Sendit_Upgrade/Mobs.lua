@@ -1,8 +1,8 @@
 --[[
   Mobs: the average normal mob of a level - the leveling target.
   Mobs.Armor(level) / Hit(level) / Health(level) / Drink(level) / Ammo(level)
-  Source: AzerothCore creature_classlevelstats (class 1, basearmor) - emulator data from Classic
-  sniffs, an approximation (shown as estimated).
+  Source: classic server data creature_classlevelstats (class 1, basearmor) - built from Classic
+  captures, an approximation (shown as estimated).
 ]]
 local _, ns = ...
 
@@ -21,7 +21,7 @@ local ARMOR = {
 
 -- Average raw melee hit by mob level: classic server data creature_template_
 -- classlevelstats, class 1, (BaseDamageExp0 + BaseMeleeAttackPower / 14) * 2.0
--- (Creature.cpp damage per hit, assumption: a normal mob swings every 2.0 s).
+-- (the classic server's damage per hit, assumption: a normal mob swings every 2.0 s).
 -- Only used for how much a block stops: an estimate, like the armor.
 local HIT = {
     2, 2, 3, 4, 5, 7, 9, 10, 12, 13, 15, 17, 18, 20, 22, 23, 25, 26, 28, 29, 31,

@@ -1,8 +1,9 @@
 ## Interface: 16001
 ## Title: Sendit: Graphics
 ## Notes: Every graphics detail beyond the graphics menu, with sliders. Part of the Sendit suite.
-## Version: 0.27.0
+## Version: 1.0.0
 ## X-License: GPL-3.0
+## X-Curse-Project-ID: 1836843
 ## IconTexture: Interface\AddOns\Sendit_Graphics\Media\Icon
 ## Dependencies: Sendit
 ## SavedVariables: SenditGraphicsDB

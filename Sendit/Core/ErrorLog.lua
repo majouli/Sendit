@@ -57,7 +57,9 @@ end
 local function Versions()
     local out = {}
     local api = _G["C_AddOns"]
-    for _, name in ipairs({ "Sendit", "Sendit_Fade", "Sendit_Chat", "Sendit_GearScore", "Sendit_Harvest", "Sendit_Upgrade" }) do
+    local names = { "Sendit" }
+    for _, a in ipairs(ns.Suite and ns.Suite.Addons() or {}) do names[#names + 1] = a.name end
+    for _, name in ipairs(names) do
         local loaded = api and api.IsAddOnLoaded and api.IsAddOnLoaded(name)
         if loaded then
             local v = api.GetAddOnMetadata and api.GetAddOnMetadata(name, "Version") or "?"

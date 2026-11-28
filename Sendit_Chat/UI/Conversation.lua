@@ -81,7 +81,7 @@ end
 function Conversation.Copy()
     local c = current
     if not c then return end
-    local me = UnitName("player") or "?"
+    local me = Safe.Str(Safe.Call(UnitName, "player")) or "?"
     local lines = {}
     for _, m in ipairs(c.msgs or {}) do
         lines[#lines + 1] = { date("%d.%m. %H:%M", m.t) .. "  " .. (m.o and me or c.name or "?") .. ": " .. (m.m or "") }

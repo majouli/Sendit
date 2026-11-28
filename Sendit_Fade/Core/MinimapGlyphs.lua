@@ -1,7 +1,7 @@
 --[[
   MinimapGlyphs: a Specials handler for what the engine draws on the minimap (player arrow, blips,
-  quest ring), which ignores alpha. Verified on Forever: texture setters fail and shrinking breaks
-  addons (some measure the zone name in it) - hiding the Minimap works. Only an unprotected
+  quest ring), which ignores alpha. Texture setters fail and shrinking breaks addons that measure
+  it; hiding the Minimap works. Only an unprotected
   Minimap is hidden (a protected one gets its icons shrunk), shown again only if still hidden, with
   the old rect for hover and a zoom step to force a redraw. Never change its size or scale.
 ]]

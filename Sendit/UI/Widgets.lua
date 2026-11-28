@@ -109,11 +109,12 @@ function W.Button(parent, text, onClick, style)
     if primary then T.NoShadow(b.text) end
     b.text:SetPoint("CENTER")
     function b:SetLabel(t)
-        self.text:SetText(t)
+        self.label = t
+        self.text:SetText(ns.Locale.Resolve(t))
         self:SetWidth(math.max(80, self.text:GetStringWidth() + 28))
     end
     b:SetLabel(text)
-    function b.Refresh() end  -- lets a button sit in a Layout row
+    function b:Refresh() self:SetLabel(self.label) end  -- a function label follows a language switch
     b:SetScript("OnClick", function(self, ...)
         ClickSound()
         onClick(self, ...)
@@ -128,7 +129,6 @@ function W.Segmented(parent, options, get, set)
     T.Fill(f, "panelAlt", "BACKGROUND"):SetAllPoints()
     T.Border(f, "border")
     f.buttons = {}
-    local x = 1
     for i, opt in ipairs(options) do
         local b = CreateFrame("Button", nil, f)
         b.value = opt[1]

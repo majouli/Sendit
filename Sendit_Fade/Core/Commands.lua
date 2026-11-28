@@ -7,14 +7,17 @@ local _, ns = ...
 local commands = ns.commands
 local Safe = ns.Safe
 
-local function OnOff(v) return v and "|cff6bd99aon|r" or "|cfff57373off|r" end
+local L = ns.L
+
+local function OnOff(v) return v and ("|cff6bd99a" .. L.CMD_ON .. "|r") or ("|cfff57373" .. L.CMD_OFF .. "|r") end
 
 local function Changed()
     ns.Fader:Sync()
     ns.SettingsChanged()
 end
 
-local function Say(text) ns.Print(text .. "  (profile " .. ns.Profiles:Active() .. ")") end
+local function Say(text) ns.Print(L.CMD_PROFILE:format(text, ns.Profiles:Active())) end
+local function Usage(text) ns.Print(L.CMD_USAGE:format(text)) end
 
 local function FadedCount()
     return (ns.Fader:Count())
@@ -24,7 +27,7 @@ function commands.toggle()
     ns.profile.enabled = not ns.profile.enabled
     if ns.profile.enabled then ns.Fader:Reset() end
     Changed()
-    ns.Print("Fading " .. OnOff(ns.profile.enabled))
+    ns.Print(L.CMD_FADING:format(OnOff(ns.profile.enabled)))
 end
 
 -- always restarts the fader (recovers from a paused error)
@@ -32,7 +35,7 @@ function commands.on()
     ns.profile.enabled = true
     ns.Fader:Reset()
     Changed()
-    ns.Print("Fading " .. OnOff(true))
+    ns.Print(L.CMD_FADING:format(OnOff(true)))
 end
 
 function commands.off()
@@ -41,29 +44,29 @@ end
 
 function commands.alpha(v)
     v = tonumber(v)
-    if not v or v < 0 or v > 1 then return ns.Print("Usage: /fa alpha <0-1>") end
+    if not v or v < 0 or v > 1 then return Usage("/fa alpha <0-1>") end
     ns.profile.alpha = v
     Changed()
-    Say("Faded alpha: " .. v)
+    Say(L.CMD_ALPHA:format(v))
 end
 
 function commands.delay(v)
     v = tonumber(v)
-    if not v or v < 0 then return ns.Print("Usage: /fa delay <seconds>") end
+    if not v or v < 0 then return Usage("/fa delay <" .. L.CMD_SECONDS .. ">") end
     ns.profile.delay = v
     Changed()
-    Say("Fade delay: " .. v .. "s")
+    Say(L.CMD_DELAY:format(v))
 end
 
 function commands.speed(rest)
     local out, inn = rest:match("^(%S+)%s*(%S*)$")
     out, inn = tonumber(out), tonumber(inn)
-    if not out then return ns.Print("Usage: /fa speed <fade-out seconds> [fade-in seconds]") end
+    if not out then return Usage("/fa speed <out> [in]") end
     local p = ns.profile
     p.fadeOut = out
     if inn then p.fadeIn = inn end
     Changed()
-    Say(("Fade out %.2fs, fade in %.2fs"):format(p.fadeOut, p.fadeIn))
+    Say(L.CMD_SPEED:format(p.fadeOut, p.fadeIn))
 end
 
 function commands.trigger(name)
@@ -73,11 +76,11 @@ function commands.trigger(name)
         local parts = {}
         for k, v in pairs(t) do parts[#parts + 1] = k .. " " .. OnOff(v) end
         table.sort(parts)
-        return Say("Triggers: " .. table.concat(parts, ", ") .. "  (toggle: /fa trigger <name>)")
+        return Say(L.CMD_TRIGGERS:format(table.concat(parts, ", ")))
     end
     t[name] = not t[name]
     Changed()
-    Say(("Trigger %s: %s"):format(name, OnOff(t[name])))
+    Say(L.CMD_TRIGGER:format(name, OnOff(t[name])))
 end
 
 function commands.exclude(text)
@@ -87,20 +90,20 @@ function commands.exclude(text)
         local t = {}
         for k in pairs(patterns) do t[#t + 1] = k end
         table.sort(t)
-        return Say("Excluded patterns: " .. (#t > 0 and table.concat(t, ", ") or "none"))
+        return Say(L.CMD_EXCLUDED:format(#t > 0 and table.concat(t, ", ") or L.CMD_NONE))
     end
     patterns[text] = true
     Changed()
-    Say(("Excluding everything matching '%s' (%d elements faded now)"):format(text, FadedCount()))
+    Say(L.CMD_EXCLUDE:format(text, FadedCount()))
 end
 
 function commands.include(text)
     local patterns = ns.profile.exclude.patterns
     text = text:lower()
-    if not patterns[text] then return Say(("'%s' is not an excluded pattern."):format(text)) end
+    if not patterns[text] then return Say(L.CMD_NOT_EXCLUDED:format(text)) end
     patterns[text] = nil
     Changed()
-    Say(("Pattern '%s' removed (%d elements faded now)"):format(text, FadedCount()))
+    Say(L.CMD_INCLUDE:format(text, FadedCount()))
 end
 
 function commands.status()
@@ -191,20 +194,20 @@ function commands.profile(rest)
     for _, n in ipairs(P:List()) do
         names[#names + 1] = n == P:Active() and ("|cffe6ba66" .. n .. "|r") or n
     end
-    ns.Print("Profiles: " .. table.concat(names, ", ") .. "  (/fa profile <name> | new | copy | delete <name>)")
+    ns.Print(L.CMD_PROFILES:format(table.concat(names, ", ")))
 end
 
 function commands.icon()
     ns.db.icon.show = not ns.db.icon.show
     ns.SettingsChanged()
-    ns.Print("Toggle icon " .. OnOff(ns.db.icon.show))
+    ns.Print(L.CMD_ICON:format(OnOff(ns.db.icon.show)))
 end
 
 function commands.minimap()
     local m = Sendit.db.minimap
     m.hide = not m.hide
     ns.SettingsChanged()
-    ns.Print("Sendit minimap button " .. OnOff(not m.hide))
+    ns.Print(L.CMD_MINIMAP:format(OnOff(not m.hide)))
 end
 
 function ns.OpenSettings()
@@ -226,17 +229,16 @@ function commands.cinema(arg)
     if arg:lower() == "services" then
         p.cinemaServices = not p.cinemaServices
         ns.SettingsChanged()
-        return Say("Cinema at vendors, bankers, flight masters " .. OnOff(p.cinemaServices))
+        return Say(L.CMD_CINEMA_SERVICES:format(OnOff(p.cinemaServices)))
     end
     if arg:lower() == "camera" then
         p.cinemaCamera = not p.cinemaCamera
         ns.SettingsChanged()
-        return Say("Cinema camera orbit " .. OnOff(p.cinemaCamera))
+        return Say(L.CMD_CINEMA_CAMERA:format(OnOff(p.cinemaCamera)))
     end
     p.cinema = not p.cinema
     ns.SettingsChanged()
-    Say("Cinema while Spoken narrates " .. OnOff(p.cinema)
-        .. (ns.Cinema:HasSpoken() and "" or " (Spoken not loaded)"))
+    Say(L.CMD_CINEMA:format(OnOff(p.cinema)) .. (ns.Cinema:HasSpoken() and "" or L.CMD_NO_SPOKEN))
 end
 
 function commands.probe()
@@ -251,25 +253,7 @@ end
 
 function commands.help(_)
     ns.Print("v" .. ns.version)
-    print("  /fa                  - open the settings")
-    print("  /fa on | off         - enable / disable fading")
-    print("  /fa status           - current settings")
-    print("  /fa alpha <0-1>      - alpha of faded elements")
-    print("  /fa delay <s>        - seconds until the UI fades")
-    print("  /fa speed <out> [in] - fade durations in seconds")
-    print("  /fa trigger [name]   - toggle a wake trigger (no name: list)")
-    print("  /fa exclude [text]   - never fade elements matching text (no text: list)")
-    print("  /fa include <text>   - remove such a pattern")
-    print("  /fa scan | list [text] - rescan / list detected elements")
-    print("  /fa show             - outline all elements on screen, click one to find it")
-    print("  /fa inspect          - what happens to the element under the mouse")
-    print("  /fa profile [name]   - list / activate profiles (new|copy|delete <name>)")
-    print("  /fa cinema [camera|services|test] - toggle the cinema look / its camera orbit /")
-    print("                       film at service NPCs, or preview it")
-    print("  /fa icon             - show / hide the on-screen toggle icon")
-    print("  /fa minimap          - show / hide the Sendit minimap button")
-    print("  /fa debug            - toggle debug output")
-    print("  /fa probe            - minimap arrow diagnostics")
+    for line in L.HELP:gmatch("[^\n]+") do print("  " .. line) end
 end
 
 SLASH_SENDITFADE1 = "/fa"

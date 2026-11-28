@@ -337,8 +337,6 @@ end
 
 function Windows.Main() return list[1] end
 function Windows.Get(id) return list[id] end
-function Windows.All() return list end
-
 function Windows.Refresh()
     local valid, order = {}, Tabs.All()
     for _, i in ipairs(order) do valid[i] = true end

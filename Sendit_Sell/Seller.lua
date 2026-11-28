@@ -19,7 +19,10 @@ function Seller.OnChange(fn) listeners[#listeners + 1] = fn end
 function Seller.Busy() return queue ~= nil end
 function Seller.Progress() return done, queue and #queue or 0 end
 
+local run = 0  -- each sale's own step chain; a finished or restarted sale stops the old one
+
 local function Finish()
+    run = run + 1
     if queue and done > 0 then
         Sendit.Print(ns.L.sold:format(done, ns.Money(earned)))
     end
@@ -27,7 +30,8 @@ local function Finish()
     Changed()
 end
 
-local function Step(index)
+local function Step(index, id)
+    if id ~= run then return end
     if not queue or not open then return Finish() end
     local e = queue[index]
     if not e then return Finish() end
@@ -36,13 +40,14 @@ local function Step(index)
         done, earned = done + 1, earned + (e.vendor or 0)
     end
     Changed()
-    C_Timer.After(STEP, function() Step(index + 1) end)
+    C_Timer.After(STEP, function() Step(index + 1, id) end)
 end
 
 local function Start(list)
     queue, done, earned = list, 0, 0
+    run = run + 1
     Changed()
-    Step(1)
+    Step(1, run)
 end
 
 StaticPopupDialogs["SENDIT_SELL_MANY"] = {

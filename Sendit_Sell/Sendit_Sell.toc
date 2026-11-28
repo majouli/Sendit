@@ -1,8 +1,9 @@
 ## Interface: 16001
 ## Title: Sendit: Sell
 ## Notes: At a merchant: what to sell there and what the auction house pays more for. Part of the Sendit suite.
-## Version: 0.27.0
+## Version: 1.0.0
 ## X-License: GPL-3.0
+## X-Curse-Project-ID: 1836843
 ## IconTexture: Interface\Icons\INV_Misc_Coin_02
 ## Dependencies: Sendit
 ## OptionalDeps: Sendit_Upgrade, Sendit_Harvest

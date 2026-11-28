@@ -77,9 +77,11 @@ local function Skip(s, why)
     Debug(("skipping %s (%s): %s"):format(s.e.label, s.e.owner, why))
 end
 
+local paused = false  -- after an error until Reset (/fa on): a rescan must not fail and report again
+
 function Fader:Sync(r)
     r = r or ns.Scanner.last
-    if not r then return end
+    if not r or paused then return end
     Rules:Refresh()
     local keep = {}
     local enabled = ns.Active()
@@ -137,6 +139,7 @@ local function KeptInCinema(s, focus, keep)
 end
 
 function Fader:Reset()
+    paused = false
     for _, s in ipairs(list) do pcall(Release, s) end
     wipe(managed)
     wipe(list)
@@ -391,7 +394,8 @@ local function Pause(err)
     for _, s in ipairs(list) do pcall(Release, s) end
     wipe(managed)
     wipe(list)
-    ns.Print("|cffff5555Fading paused after an error|r (/fa on to retry):")
+    paused = true
+    ns.Print("|cffff5555" .. ns.L.PAUSED .. "|r")
     print("  " .. tostring(err))
 end
 

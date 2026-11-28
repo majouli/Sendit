@@ -55,7 +55,7 @@ local WEAKENED_SOUL = 15        -- Power Word: Shield again on the same target a
 
 -- metric.label is read when shown, so it follows a language switch.
 function Common.Metric(textKey, unit, fn)
-    return setmetatable({ unit = unit, fn = fn }, { __index = function(_, k)
+    return setmetatable({ key = textKey, unit = unit, fn = fn }, { __index = function(_, k)
         if k == "label" then return L[textKey] end
     end })
 end

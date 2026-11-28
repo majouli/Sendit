@@ -114,8 +114,12 @@ local function Instant(link)
     local item = _G["C_Item"]
     local fn = (item and item.GetItemInfoInstant) or Legacy("GetItemInfoInstant")
     if not fn then return nil end
-    local ok, id, _, subType, equipLoc, icon, classID = pcall(fn, link)
+    local ok, id, _, subType, equipLoc, icon, classID, subclassID = pcall(fn, link)
     if not ok then return nil end
+    -- slot and sub category in the suite language; the client's own text when the table lacks it
+    if type(classID) == "number" and type(subclassID) == "number" then
+        subType = Sendit.Locale.SubClass(classID, subclassID) or subType
+    end
     return id, subType, equipLoc, icon, classID
 end
 
@@ -147,7 +151,7 @@ function Loot.Item(link)
     if not link:find("|Hitem:", 1, true) then return info end
     local _, subType, equipLoc, icon, classID = Instant(link)
     info.icon = icon
-    local slot = type(equipLoc) == "string" and equipLoc ~= "" and _G[equipLoc]
+    local slot = type(equipLoc) == "string" and equipLoc ~= "" and Sendit.Locale.Global(equipLoc)
     if classID == 2 then
         info.detail = Safe.Str(subType)
     elseif classID == 4 and type(slot) == "string" then
@@ -188,11 +192,11 @@ end
 
 -- event when known (the client does not always tell): else the templates decide
 function Loot.Style(text, event)
-    if not ns.db.lootStyle then return text end
     local ev = Safe.Str(event)
     if ev and not EVENTS[ev] then return text end
-    local roll = ns.Rolls and ns.Rolls.Style(text)
+    local roll = ns.Rolls and ns.Rolls.Style(text)  -- the roll summary has its own switch
     if roll ~= nil then return roll end  -- false = drop the line
+    if not ns.db.lootStyle then return text end
     local info, s, e = Loot.Parse(text)
     if not info or not Loot.SystemPrefix(text, s) then return text end
     -- an item you just won: the "won" line already said it

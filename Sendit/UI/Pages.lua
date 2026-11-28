@@ -118,8 +118,8 @@ Options:Register({
             end
         end
         nameBox:SetScript("OnEnterPressed", function() Create(false) end)
-        local create = W.Button(c, L.CREATE, function() Create(false) end)
-        local duplicate = W.Button(c, L.DUPLICATE, function() Create(true) end)
+        local create = W.Button(c, Tx("CREATE"), function() Create(false) end)
+        local duplicate = W.Button(c, Tx("DUPLICATE"), function() Create(true) end)
         Lay:Row(Tx("NEW"), Tx("NEW_DESC"), W.Inline(c, { nameBox, create, duplicate }))
 
         local deleteBox = W.Dropdown(c, 150, function() return ProfileChoices(Profiles.DEFAULT) end,
@@ -128,7 +128,7 @@ Options:Register({
                 return toDelete
             end,
             function(name) toDelete = name end)
-        local deleteButton = W.Button(c, L.DELETE, function()
+        local deleteButton = W.Button(c, Tx("DELETE"), function()
             if not toDelete then return Say(L.DELETE_PICK, "danger") end
             local dialog = StaticPopup_Show("SENDIT_DELETE_PROFILE", L.DELETE_ASK:format(toDelete))
             if dialog then dialog.data = toDelete end

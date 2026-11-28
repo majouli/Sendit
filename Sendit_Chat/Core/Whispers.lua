@@ -72,12 +72,6 @@ function W.Archived()
     return list
 end
 
-function W.Unread()
-    local n = 0
-    for _, c in pairs(Convs()) do n = n + (c.unread or 0) end
-    return n
-end
-
 function W.UnreadChats()
     local n = 0
     for _, c in pairs(Convs()) do if (c.unread or 0) > 0 then n = n + 1 end end
@@ -108,6 +102,7 @@ end
 
 local function PlayerKey(full)
     local name, realm = full:match("^([^%-]+)%-?(.*)$")
+    if not name then return nil end
     local own = Safe.Str(Safe.Call(_G["GetNormalizedRealmName"])) or ""
     if realm == "" or realm == own then return "p:" .. name:lower() end
     return "p:" .. (name .. "-" .. realm):lower()
@@ -158,7 +153,9 @@ function W.Open(name)
     name = strtrim(name)
     if name == "" then return nil end
     name = name:sub(1, 1):upper() .. name:sub(2)
-    local c = Ensure(PlayerKey(name), { target = name, realm = RealmPart(name) })
+    local key = PlayerKey(name)
+    if not key then return nil end
+    local c = Ensure(key, { target = name, realm = RealmPart(name) })
     c.name = c.name or Short(name)
     c.archived = nil
     TrimConvs()
@@ -232,8 +229,9 @@ function W.Add(out, text, who, guid, bnID)
         c.name = (tag and tag:match("^([^#]+)")) or c.name or Safe.Str(who) or "Battle.net"
     else
         local full = Safe.Str(who)
-        if not full or full == "" then return nil end
-        c = Ensure(PlayerKey(full), { target = full, class = ClassOf(guid), realm = RealmPart(full) })
+        local key = full and PlayerKey(full)
+        if not key then return nil end
+        c = Ensure(key, { target = full, class = ClassOf(guid), realm = RealmPart(full) })
         c.name = Short(full)
     end
     local msg = { t = time(), o = out or nil, m = text }
